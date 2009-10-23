@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="GB2312"?>
+<config>
+	<tu>
+		<!--可选的包括UA/PROXY/REGISTAR-->
+		<core>UA</core>
+		<route>sip:proxy@192.168.1.120:5060</route>
+	</tu>
+	<transaction>
+		<T1>500</T1>
+	</transaction>
+	<transport>
+		<!--主机：用于填写Via头域的sendby字段-->
+		<sendby>www.ts.com:5060</sendby>
+	</transport>
+	<syntax>
+		<dir>sip.abnf</dir>
+	</syntax>
+	<conn>
+			<!--程序监听地址，地址为*表示监听所有地址-->
+			<item protocol="UDP" addr="*" port="5060"/>
+			<item protocol="TCP" addr="*" port="5061"/>
+	</conn>
+</config>

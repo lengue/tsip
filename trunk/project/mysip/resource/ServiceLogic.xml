@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- service logic -->
+<ServiceLogicTable>
+	<ServiceLogic version="china0.01"> 
+		<ServiceFlow name="NORMAL">
+			<LegState OLS="N" ICLS="N">
+				<!-- 初始主叫摘机放拨号音 -->
+				<Event name="OffHook">
+					<ConditionList>
+						<Condition name="OnHook"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<StartSignal SignalType="DialTone"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="ALL"/>
+					</ServiceSupportList>
+					<NextServiceFlow name="NORMAL"/>
+				</Event>
+				<!-- 收号成功创建呼叫腿 -->	
+				<Event name="NormalNumber" FailToDo="RecvNumberFail">
+					<ConditionList>
+						<Condition name="OffHook"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<CreateLeg LegType="CallLeg" CreateMethod="UserNumber"/>
+						<ActiveLeg LegType="CallLeg" LegSubType="NoCurrentLeg" ActiveMode="Preempt"/>
+						<SetCurrentLeg LegSubType="NoCurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="ALL"/>
+					</ServiceSupportList>
+					<NextServiceFlow name="NORMAL"/>
+				</Event>
+				<!-- 收号失败放等待挂机复合信号 -->
+				<Event name="RecvNumberFail">
+					<ConditionList>
+						<Condition name="OffHook"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<StartSignal SignalType="WaitHook"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="ALL"/>
+					</ServiceSupportList>
+					<NextServiceFlow name="NORMAL"/>
+				</Event>            
+			</LegState>            
+			<LegState OLS="N" ICLS="W">
+				<!-- 对端振铃本端放回铃音 -->
+				<Event name="PeerAlert">
+					<ConditionList/>      
+					<SpecificFlagList/>   
+					<ActionList>          
+						<StartSignal SignalType="RingBackTone"/>
+					</ActionList>         
+					<ServiceSupportList>  
+						<SID name="ALL"/>   
+					</ServiceSupportList> 
+					<NextServiceFlow name="NORMAL"/>
+				</Event>
+				<!-- 对端摘机进入通话 -->            
+				<Event name="PeerOffHook">
+					<ConditionList/>      
+					<SpecificFlagList/>   
+					<ActionList/>         
+					<ServiceSupportList>  
+						<SID name="ALL"/>   
+					</ServiceSupportList> 
+					<NextServiceFlow name="NORMAL"/>
+				</Event>                      
+			</LegState>            
+			<LegState OLS="N" ICLS="A">
+				<!-- 普通呼叫用户排叉HOLD当前腿 -->             
+				<Event name="Hooking">     
+					<ConditionList/>      
+					<SpecificFlagList/>   
+					<ActionList>          
+						<HoldLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+					</ActionList>         
+					<ServiceSupportList>  
+						<SID name="HOLD"/>  
+						<SID name="MCID"/>  
+						<SID name="CW"/>    
+						<SID name="HOLD"/>  
+						<SID name="TPTY"/>  
+						<SID name="CONF"/>  
+					</ServiceSupportList> 
+					<NextServiceFlow name="HOLD"/>
+				</Event>	            
+			</LegState>            
+		</ServiceFlow>
+		<ServiceFlow name="HOLD">
+			<LegState OLS="N" ICLS="H">
+				<!-- HOLD当前腿成功放拨号音 -->
+				<Event name="NegoSucc" LegType="CallLeg" CLegType="CurrentLeg">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<StartSignal SignalType="SpecialDialTone"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="HOLD"/>  
+						<SID name="MCID"/>  
+						<SID name="CW"/>    
+						<SID name="HOLD"/>  
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="HOLD"/>
+				</Event>
+				<!-- HOLD当前腿成功再排叉恢复当前腿 -->
+				<Event name="Hooking">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<ResumeLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="HOLD"/>  
+						<SID name="MCID"/>  
+						<SID name="CW"/>    
+						<SID name="HOLD"/>  
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="HOLD"/>
+				</Event>	
+				<!-- 收到普通号码连接第三方 -->
+				<Event name="NormalNumber" FailToDo="RecvNumberFail">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<CreateLeg LegType="CallLeg" CreateMethod="UserNumber"/>
+						<ActiveLeg LegType="CallLeg" LegSubType="NoCurrentLeg" ActiveMode="Preempt"/>
+						<SetCurrentLeg LegSubType="NoCurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>       
+						<SID name="TPTY"/>  
+						<SID name="CONF"/>
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 收到SCC号码发起MCID业务 -->
+				<Event name="SccNumber" FailToDo="RecvNumberFail">
+					<ConditionList>
+						<Condition name="Callee"/>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<CreateLeg LegType="ControlLeg" CreateMethod="SccNumber"/>
+						<ActiveLeg LegType="ControlLeg" LegSubType="any" ActiveMode="Preempt"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="MCID"/>       
+					</ServiceSupportList>
+					<NextServiceFlow name="MCID"/>
+				</Event>
+				<!-- 收号失败发送段忙音 -->
+				<Event name="RecvNumberFail">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<StartSignal SignalType="ShortBusyTone"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="HOLD"/>  
+						<SID name="MCID"/>  
+						<SID name="CW"/>    
+						<SID name="HOLD"/>  
+						<SID name="TPTY"/>  
+						<SID name="CONF"/>       
+					</ServiceSupportList>
+					<NextServiceFlow name="HOLD"/>
+				</Event>
+				<!-- 段忙音完成切回普通业务 -->
+				<Event name="SignalComplete" SignalType="ShortBusyTone">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<ResumeLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="HOLD"/>  
+						<SID name="MCID"/>  
+						<SID name="CW"/>    
+						<SID name="HOLD"/>  
+						<SID name="TPTY"/>  
+						<SID name="CONF"/>       
+					</ServiceSupportList>
+					<NextServiceFlow name="HOLD"/>
+				</Event>            
+			</LegState>
+			<LegState OLS="N" ICLS="A">
+				<!-- 恢复当前腿成功切回普通业务 -->
+				<Event name="NegoSucc" LegType="CallLeg" CLegType="CurrentLeg">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList/>
+					<ServiceSupportList>
+						<SID name="HOLD"/>  
+						<SID name="MCID"/>  
+						<SID name="CW"/>    
+						<SID name="HOLD"/>  
+						<SID name="TPTY"/>  
+						<SID name="CONF"/>       
+					</ServiceSupportList>
+					<NextServiceFlow name="NORMAL"/>
+				</Event>
+			</LegState>                        
+		</ServiceFlow>
+		<ServiceFlow name="DC">
+			<LegState OLS="N" ICLS="H">
+				<!-- 回振铃过程中摘机恢复通话 -->
+				<Event name="OffHook">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<ResumeLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="HOLD"/>
+				</Event>			
+			</LegState>
+			<LegState OLS="N" ICLS="WH">
+				<!-- 双通话建立过程中对端振铃本端放回铃音 -->
+				<Event name="PeerAlert" LegType="CallLeg" CLegType="CurrentLeg">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<StartSignal SignalType="RingBack"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 双通话建立过程中对端摘机建立双通话 -->
+				<Event name="PeerOffHook" LegType="CallLeg" CLegType="CurrentLeg">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList/>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 双通话建立过程中挂机回振铃 -->
+				<Event name="OnHook">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<ReleaseLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+						<StartSignal SignalType="ring"/>
+						<ActiveLeg LegType="CallLeg" CLegType="NoCurrentLeg"/>
+						<SetCurret LegType="CallLeg" CLegType="NoCurrentLeg"/>
+						<StartTimer TimerName="BackRing"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>           
+			</LegState>
+			<LegState OLS="N" ICLS="AH">
+				<!-- 双通话过程中排叉HOLD当前腿 -->
+				<Event name="Hooking">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<HoldLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 双通话过程中挂机回振铃 -->
+				<Event name="OnHook">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<ReleaseLeg LegType="CallLeg" CLegType="CurrentLeg"/>
+						<StartSignal SignalType="ring"/>
+						<StartTimer TimeName="BackRing"/>
+						<ActiveLeg LegType="CallLeg" CLegType="NoCurrentLeg"/>
+						<SetCurrent CLegType="NoCurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>           
+			</LegState>
+			<LegState OLS="N" ICLS="HH">
+				<!-- HOLD成功放拨号音 -->
+				<Event name="NegoSucc" LegType="CallLeg" CLegType="CurrentLeg">
+					<ConditionList/>
+					<SpecificFlagList/>
+					<ActionList>
+						<StartSignal SignalType="DialTone"/>
+					</ActionList>
+					<ServiceSupportList>   
+						<SID name="TPTY"/>  
+						<SID name="CONF"/>       
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 拨1释放当前腿，连接非当前腿 -->
+				<Event name="SOC1">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 拨2释放当前腿，连接非当前腿 -->
+				<Event name="SOC2">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="DC"/>   
+					</ServiceSupportList>
+					<NextServiceFlow name="DC"/>
+				</Event>
+				<!-- 拨3实现三方业务 -->
+				<Event name="SOC3" FailToDo="RecvNumberFail">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<ActiveLeg LegType="CallLeg" CLegType="NoCurrentLeg" ActiveMode="Mix"/>
+					</ActionList>
+					<ServiceSupportList>   
+						<SID name="TPTY"/>   
+					</ServiceSupportList>
+					<NextServiceFlow name="TPTY"/>
+				</Event>
+				<!-- 拨3实现会议业务 -->
+				<Event name="SOC3">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<CreateLeg LegType="ControlLeg" CreateMethod="Conf"/>
+					</ActionList>
+					<ServiceSupportList>  
+						<SID name="CONF"/> 
+					</ServiceSupportList>
+					<NextServiceFlow name="CONF"/>
+				</Event>
+				<!-- 拨4实现呼叫转移业务 -->				
+				<Event name="SOC4">
+					<ConditionList>
+						<Condition name="NoNegotiating"/>
+					</ConditionList>
+					<SpecificFlagList/>
+					<ActionList>
+						<ReferLeg FromLegType="CallLeg" FromCLegType="NoCurrentLeg" ReferType="Leg" ToLegType="CallLeg" ToCLegType="CurrentLeg"/>
+					</ActionList>
+					<ServiceSupportList>
+						<SID name="ECT"/>   
+					</ServiceSupportList>
+					<NextServiceFlow name="ECT"/>
+				</Event>             
+			</LegState>                         
+		</ServiceFlow>
+		<ServiceFlow name="CONF">
+		</ServiceFlow>
+		<ServiceFlow name="ECT">
+		</ServiceFlow>
+		<ServiceFlow name="CW">
+		</ServiceFlow>
+		<ServiceFlow name="MCID">
+		</ServiceFlow>		            
+	</ServiceLogic>            
+</ServiceLogicTable>            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
