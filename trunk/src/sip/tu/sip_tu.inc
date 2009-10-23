@@ -1,0 +1,1 @@
+ULONG SIP_TU_Init(SIP_TU_CFG_S *pstCfg);

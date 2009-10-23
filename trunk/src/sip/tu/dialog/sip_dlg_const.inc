@@ -1,0 +1,20 @@
+/* SIP应用，目前有会话和订阅两种，会话由INVITE创建，BYE释放，订阅由SUBSCRIBE或者
+REFER创建，相关的NOTIFY释放 */
+typedef enum tagSIP_APPLICATION_TYPE_E
+{
+    SIP_APPLICATION_SESSION,
+    SIP_APPLICATION_SUBSCRIPTION,
+    SIP_APPLICATION_BUTT
+}SIP_APPLICATION_TYPE_E;
+
+/* 媒体协商状态,用于session和early-session两种部署类型，这里的接受和发送都是对本
+端而言 */
+typedef enum tagSIP_NEGO_STATE_E
+{
+    SIP_NEGO_STATE_NULL,
+    SIP_NEGO_STATE_RECV_OFFER,
+    SIP_NEGO_STATE_SEND_OFFER,
+    SIP_NEGO_STATE_COMPLETE,
+    SIP_NEGO_STATE_BUTT
+}SIP_NEGO_STATE_E;
+
