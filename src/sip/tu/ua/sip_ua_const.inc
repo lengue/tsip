@@ -1,0 +1,2 @@
+#define SIP_TU_UAC_NUM 100
+#define SIP_TU_UAS_NUM 100

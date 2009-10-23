@@ -1,0 +1,1 @@
+extern SIP_SHELL_CFG_S g_stSiphellCfg;;
