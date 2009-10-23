@@ -27,3 +27,6 @@ typedef struct tagUBUF_HEADER_S
     ULONG ulCurrentLen;
     struct tagUBUF_HEADER_S *pNext;
 }UBUF_HEADER_S;
+
+/* 在UBUF中的指针实际上是个偏移 */
+typedef unsigned int UBUF_PTR;
