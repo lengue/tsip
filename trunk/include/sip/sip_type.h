@@ -383,12 +383,11 @@ typedef ULONG (*SIP_START_TIMER_PROC)(ULONG ulName,
                                       SIP_TIMER_TYPE_E eType,
                                       ULONG *pulHandle);
 typedef VOID (*SIP_STOP_TIMER_PROC)(ULONG ulHandle);
-typedef ULONG (*SIP_SEND_UP_REQUEST_MSG_PROC)(ULONG ulDlgID,
-                                              ULONG ulUasID,
-                                              UBUF_HEADER_S * pstUbufSipMsg);
-typedef ULONG (*SIP_SEND_UP_RESPONSE_MSG_PROC)(ULONG ulAppID,
-                                               ULONG ulDlgID,
-                                               UBUF_HEADER_S * pstUbufSipMsg);
+typedef ULONG (*SIP_SEND_UP_MSG_PROC)(ULONG  ulStackRef1,
+                                      ULONG  ulStackRef2,
+                                      ULONG *pulAppRef1,
+                                      ULONG *pulAppRef2,
+                                      UBUF_HEADER_S * pstUbufSipMsg);
 typedef ULONG (*SIP_SEND_DOWN_MSG_PROC)(UBUF_HEADER_S  *pstSipMsgUbuf,
                                         SIP_LOCATION_S *pstPeerLocation);
 
@@ -420,8 +419,7 @@ typedef struct tagSIP_SHELL_CFG_S
 {
     SIP_START_TIMER_PROC   pfnStartTimer;
     SIP_STOP_TIMER_PROC    pfnStopTimer;
-    SIP_SEND_UP_REQUEST_MSG_PROC   pfnSendUpRequestMsg;
-    SIP_SEND_UP_RESPONSE_MSG_PROC  pfnSendUpResponseMsg;
+    SIP_SEND_UP_MSG_PROC   pfnSendUpMsg;
     SIP_SEND_DOWN_MSG_PROC pfnSendDownMsg;
     SIP_GENERATE_RANDOM_STRING_PROC pfnGenerateRandom;
 }SIP_SHELL_CFG_S;
