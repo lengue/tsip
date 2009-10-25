@@ -45,7 +45,7 @@ ULONG SIP_Txp_RecvDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
     ULONG ulRet;
     SIP_MSG_S *pstSipMsg = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstSipMsgUbuf, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstSipMsgUbuf);
 
     /* 如果是请求需要添加Via头域 */
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
@@ -70,7 +70,7 @@ ULONG SIP_Txp_RecvUpMsg(SIP_LOCATION_S *pstPeerLocation,
     ULONG ulRet;
     SIP_MSG_S     *pstSipMsg = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     /* 按消息类型处理 */
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
@@ -91,21 +91,16 @@ ULONG SIP_Txp_ReceiveRequest(SIP_LOCATION_S *pstPeerLocation,
     ULONG ulRet;
     UCHAR *pucAddr = NULL_PTR;
     ULONG ulTxnID;
-    UBUF_PTR   upTempUbufPtr;
     SIP_MSG_S *pstSipMsg = NULL_PTR;
-    SIP_HEADER_S *pstHeader = NULL_PTR;
     SIP_HEADER_VIA_S *pstViaHeader = NULL_PTR;
-    SIP_VIA_PARM_S *pstViaPara = NULL_PTR;
+    SIP_VIA_PARM_S   *pstViaPara = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     /* 检查sent-by字段 */
-    upTempUbufPtr = pstSipMsg->aupstHeaders[SIP_HEADER_VIA];
-    pstHeader = UBUF_UBufPtr2Ptr(pstUbufSipMsg, upTempUbufPtr);
-    pstViaHeader = (SIP_HEADER_VIA_S *)pstHeader->pstSpec;
-    pstViaPara= UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstViaHeader->upstViaParm);
-    pucAddr = UBUF_UBufPtr2Ptr(pstUbufSipMsg,
-                               pstViaPara->stSendBy.stHost.upucAddrStr);
+    pstViaHeader = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara= pstViaHeader->pstViaParm;
+    pucAddr = pstViaPara->stSendBy.stHost.pucAddrStr;
     if ((pstViaPara->stSendBy.stHost.eHostType == URI_HOST_DOMAIN)
       ||(strncmp(pucAddr,pstPeerLocation->aucIPStr, strlen(pstPeerLocation->aucIPStr))))
     {
@@ -132,21 +127,16 @@ ULONG SIP_Txp_ReceiveReponse(SIP_LOCATION_S *pstPeerLocation,
     ULONG ulRet = SUCCESS;
 //    ULONG ulIpAddr;
     ULONG ulTxnID;
-    UBUF_PTR   upTempUbufPtr;
     SIP_MSG_S *pstSipMsg = NULL_PTR;
-    SIP_HEADER_S *pstHeader = NULL_PTR;
     SIP_HEADER_VIA_S *pstViaHeader = NULL_PTR;
     SIP_VIA_PARM_S *pstViaPara = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
-
-    upTempUbufPtr = pstSipMsg->aupstHeaders[SIP_HEADER_VIA];
-    pstHeader = UBUF_UBufPtr2Ptr(pstUbufSipMsg, upTempUbufPtr);
-    pstViaHeader = (SIP_HEADER_VIA_S *)pstHeader->pstSpec;
-    pstViaPara= UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstViaHeader->upstViaParm);
+    pstSipMsg    = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    pstViaHeader = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara   = pstViaHeader->pstViaParm;
 
     /*检查send-by字段*/
-    if (ulRet != SUCCESS)
+    if (pstViaPara == NULL_PTR)
     {
         /* 检查失败则丢弃消息 */
         return FAIL;
@@ -172,18 +162,15 @@ ULONG SIP_Txp_AddViaHeaderInRequest(UBUF_HEADER_S *pstUbufSipMsg,
                                     SIP_LOCATION_S *pstPeerLocation)
 {
     SIP_MSG_S        *pstSipMsg = NULL_PTR;
-    SIP_HEADER_S     *pstHeader = NULL_PTR;
     SIP_HEADER_VIA_S *pstVia    = NULL_PTR;
     SIP_VIA_PARM_S   *pstViaPara =  NULL_PTR;
     UCHAR            *pucString = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     /* 生成Via头域 */
-    pstHeader = UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstVia = (SIP_HEADER_VIA_S *)pstHeader->pstSpec;
-    pstViaPara = UBUF_UBufPtr2Ptr(pstUbufSipMsg,
-                                  pstVia->upstViaParm);
+    pstVia     = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara = pstVia->pstViaParm;
 #if 0
     /* 目标地址是多播地址 */
     if ((pstPeerLocation->ulIpAddr&0xe0000000) == 0xe0000000)
@@ -200,9 +187,8 @@ ULONG SIP_Txp_AddViaHeaderInRequest(UBUF_HEADER_S *pstUbufSipMsg,
     pstViaPara->stSendBy.usPort = NULL_USHORT;
     pstViaPara->stSendBy.stHost.eHostType = URI_HOST_DOMAIN;
 
-    pucString = UBUF_AddComponent(pstUbufSipMsg,
-                                  strlen(g_pucSipTxpSendBy) + 1,
-                                 &pstViaPara->stSendBy.stHost.upucAddrStr);
+    pucString = UBUF_AddComponent(pstUbufSipMsg, (ULONG)strlen(g_pucSipTxpSendBy) + 1);
+    pstViaPara->stSendBy.stHost.pucAddrStr = pucString;
     memcpy(pucString, g_pucSipTxpSendBy, strlen(g_pucSipTxpSendBy)+1);
     return SUCCESS;
 }

@@ -9,9 +9,9 @@
     ABNF_GRAMMAR_NODE_S *pstGrammarNode: 结构的ABNF节点表示
     UCHAR               *pucString     : 被解析的文本
     UBUF_HEADER_S       *pstUbuf       : 解析输出的UBUF结构
-    UBUF_PTR            *pupStruct     : 待解析结构的在UBUF中的偏移(UBUF指针)
+    void               **ppStruct     : 待解析结构指针
 2、 如果结构只包含多个可选的子结构，则是否分配空间在解析子结构时再决定
-3、 非原则2的情况根据pupStruct参数来判断是否需要分配空间，有效则认为调用者已经申
+3、 非原则2的情况根据ppStruct参数来判断是否需要分配空间，有效则认为调用者已经申
     请了空间，无须再申请，否则该函数申请
 4、 对于结构的子结构解析，为了统一解析函数的形参，需要构造子结构UBUF指针传递给被
     调用函数
@@ -45,7 +45,7 @@ SIP-message    =  Request / Response
 ULONG SIP_ParseSIPmessage(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
@@ -56,11 +56,11 @@ ULONG SIP_ParseSIPmessage(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REQUEST))
     {
-        ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST)(pstNode, pucString, pstUbuf, pupStruct);
+        ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST)(pstNode, pucString, pstUbuf, ppStruct);
     }
     else
     {
-        ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_RESPONSE)(pstNode, pucString, pstUbuf, pupStruct);
+        ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_RESPONSE)(pstNode, pucString, pstUbuf, ppStruct);
     }
 
     return ulRet;
@@ -75,16 +75,16 @@ Request        =  Request-Line
 ULONG SIP_ParseRequest(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                        UCHAR               *pucString,
                        UBUF_HEADER_S       *pstUbuf,
-                       UBUF_PTR            *pupStruct)
+                       void               **ppStruct)
 {
     ULONG ulRet;
-    ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
+    ABNF_GRAMMAR_NODE_S *pstNode   = NULL_PTR;
     SIP_MSG_S           *pstSipMsg = NULL_PTR;
-    UBUF_PTR             upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
     /* 原则3: 如果不是确定分配或者不分配空间，则根据UBUF指针来判断，有效则认为调
     用者已经申请了空间，无须再申请，否则此处申请，下同 */
-    SIP_GET_COMPONET_PTR(pstSipMsg, SIP_MSG_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstSipMsg, SIP_MSG_S, pstUbuf, ppStruct);
 
     pstSipMsg->eMsgType = SIP_MSG_TYPE_REQUEST;
 
@@ -93,15 +93,11 @@ ULONG SIP_ParseRequest(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REQUEST_LINE))
         {
-            /* 原则4: 对于结构的子结构解析，为了统一解析函数的形参，需要构造子结
-            构UBUF指针传递给被调用函数，下同 */
-            upStruct = (ULONG)*pupStruct
-                      +(ULONG)&pstSipMsg->uStartLine.stRequstLine
-                      -(ULONG)pstSipMsg;
+            pStruct = &pstSipMsg->uStartLine.stRequstLine;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST_LINE)(pstNode,
                                                                    pucString,
                                                                    pstUbuf,
-                                                                  &upStruct);
+                                                                  &pStruct);
             if (ulRet != SUCCESS)
             {
                 /* 起始行不能错 */
@@ -113,14 +109,14 @@ ULONG SIP_ParseRequest(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstNode,
                                                              pucString,
                                                              pstUbuf,
-                                                             pupStruct);
+                                                             ppStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_MESSAGE_BODY))
         {
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                           pupStruct);
+                                                           ppStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -138,14 +134,14 @@ Response          =  Status-Line
 ULONG SIP_ParseResponse(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG       ulRet;
     SIP_MSG_S  *pstSipMsg = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void       *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstSipMsg, SIP_MSG_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstSipMsg, SIP_MSG_S, pstUbuf, ppStruct);
 
     pstSipMsg->eMsgType = SIP_MSG_TYPE_RESPONSE;
 
@@ -154,13 +150,11 @@ ULONG SIP_ParseResponse(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_STATUS_LINE))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstSipMsg->uStartLine.stStatusLine
-                      -(ULONG)pstSipMsg;
+            pStruct = &pstSipMsg->uStartLine.stStatusLine;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_STATUS_LINE)(pstNode,
                                                                   pucString,
                                                                   pstUbuf,
-                                                                 &upStruct);
+                                                                 &pStruct);
             if (ulRet != SUCCESS)
             {
                 /* 起始行不能错 */
@@ -172,14 +166,14 @@ ULONG SIP_ParseResponse(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstNode,
                                                             pucString,
                                                             pstUbuf,
-                                                            pupStruct);
+                                                            ppStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_MESSAGE_BODY))
         {
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                           pupStruct);
+                                                           ppStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -194,44 +188,40 @@ Request-Line   =  Method SP Request-URI SP SIP-Version CRLF
 ULONG SIP_ParseRequestLine(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                            UCHAR               *pucString,
                            UBUF_HEADER_S       *pstUbuf,
-                           UBUF_PTR            *pupStruct)
+                           void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     SIP_REQUEST_LINE_S  *pstRequestLine = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstRequestLine, SIP_REQUEST_LINE_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstRequestLine, SIP_REQUEST_LINE_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_METHOD))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstRequestLine->eMethod
-                      -(ULONG)pstRequestLine;
+            pStruct = &pstRequestLine->eMethod;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_METHOD)(pstNode,
                                                              pucString,
                                                              pstUbuf,
-                                                            &upStruct);
+                                                            &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REQUEST_URI))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST_URI)(pstNode,
                                                                   pucString,
                                                                   pstUbuf,
-                                                                 &pstRequestLine->upRequestURI);
+                                                                 &pstRequestLine->pstRequestURI);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIP_VERSION))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstRequestLine->ucVersion
-                      -(ULONG)pstRequestLine;
+            pStruct = &pstRequestLine->ucVersion;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(pstNode,
                                                                   pucString,
                                                                   pstUbuf,
-                                                                 &upStruct);
+                                                                 &pStruct);
         }
 
         if(ulRet != SUCCESS)
@@ -251,37 +241,33 @@ Status-Line     =  SIP-Version SP Status-Code SP Reason-Phrase CRLF
 ULONG SIP_ParseStatusLine(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
-    ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG ulRet = SUCCESS;
-    SIP_STATUS_LINE_S *pstStatusLine = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
+    SIP_STATUS_LINE_S   *pstStatusLine = NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstStatusLine, SIP_STATUS_LINE_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstStatusLine, SIP_STATUS_LINE_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIP_VERSION))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstStatusLine->ucVersion
-                      -(ULONG)pstStatusLine;
+            pStruct = &pstStatusLine->ucVersion;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &upStruct);
+                                                               &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_STATUS_CODE))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstStatusLine->eStatusCode
-                      -(ULONG)pstStatusLine;
+            pStruct = &pstStatusLine->eStatusCode;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_STATUS_CODE)(pstNode,
                                                                   pucString,
                                                                   pstUbuf,
-                                                                 &upStruct);
+                                                                 &pStruct);
         }
 
         if(ulRet != SUCCESS)
@@ -345,18 +331,16 @@ message-header  =  (Accept
 ULONG SIP_ParseMessageHeader(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                              UCHAR               *pucString,
                              UBUF_HEADER_S       *pstUbuf,
-                             UBUF_PTR            *pupStruct)
+                             void               **ppStruct)
 {
     ULONG ulHeader;
     ULONG ulAppIndex;
-    ULONG ulStructSize;
     ABNF_GRAMMAR_NODE_S *pstNode   = NULL_PTR;
-    UBUF_PTR             upStruct  = UBUF_NULL_PTR;
-    UBUF_PTR            *pupstHeader = NULL_PTR;
-    SIP_HEADER_S        *pstHeader = NULL_PTR;
+    void                *pStruct   = NULL_PTR;
+    SIP_HEADER_S       **ppstHeader = NULL_PTR;
     SIP_MSG_S           *pstSipMsg = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstSipMsg, SIP_MSG_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstSipMsg, SIP_MSG_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     for(ulHeader = 0; ulHeader < SIP_HEADER_BUTT; ulHeader++)
@@ -379,23 +363,18 @@ ULONG SIP_ParseMessageHeader(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         }
 
         /* 找到最后一个有效的头域 */
-        pupstHeader = &pstSipMsg->aupstHeaders[ulHeader];
-        while(*pupstHeader != UBUF_NULL_PTR)
+        ppstHeader = &pstSipMsg->apstHeaders[ulHeader];
+        while(*ppstHeader != NULL_PTR)
         {
-            pstHeader = (SIP_HEADER_S *)UBUF_UBufPtr2Ptr(pstUbuf, *pupstHeader);
-            pupstHeader = &pstHeader->upstNext;
+            ppstHeader = &(*ppstHeader)->pstNext;
         }
 
-        ulStructSize = SIP_GET_HEADER_SPEC_SIZE(ulHeader);
-        pstHeader = UBUF_AddComponent(pstUbuf,
-                                      sizeof(SIP_HEADER_S) + ulStructSize,
-                                      pupstHeader);
-        memset(pstHeader, 0xff, sizeof(SIP_HEADER_S) + ulStructSize);
-        upStruct = *pupstHeader + sizeof(SIP_HEADER_S);
+        *ppstHeader = UBUF_AddComponent(pstUbuf, SIP_GET_HEADER_SPEC_SIZE(ulHeader));
+        memset(*ppstHeader, 0xff, SIP_GET_HEADER_SPEC_SIZE(ulHeader));
         return SIP_GET_PARSE_FUNC(ulAppIndex)(pstNode,
                                               pucString,
                                               pstUbuf,
-                                             &upStruct);
+                                              ppstHeader);
     }
 
     return SUCCESS;
@@ -407,7 +386,7 @@ message-body  =  *OCTET
 ULONG SIP_ParseMessageBody(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                            UCHAR               *pucString,
                            UBUF_HEADER_S       *pstUbuf,
-                           UBUF_PTR            *pupStruct)
+                           void               **ppStruct)
 {
     return SUCCESS;
 }
@@ -420,12 +399,12 @@ Method            =  INVITEm / ACKm / OPTIONSm / BYEm
 ULONG SIP_ParseMethod(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                       UCHAR               *pucString,
                       UBUF_HEADER_S       *pstUbuf,
-                      UBUF_PTR            *pupStruct)
+                      void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     SIP_METHOD_E        *peMthod  = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(peMthod, SIP_METHOD_E, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(peMthod, SIP_METHOD_E, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_INVITE_M))
@@ -466,7 +445,7 @@ Request-URI    =  SIP-URI / SIPS-URI / absoluteURI
 ULONG SIP_ParseRequestURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
@@ -478,14 +457,14 @@ ULONG SIP_ParseRequestURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_URI)(pstNode,
                                                           pucString,
                                                           pstUbuf,
-                                                          pupStruct);
+                                                          ppStruct);
     }
     else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIPS_URI))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIPS_URI)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                           pupStruct);
+                                                           ppStruct);
     }
     else
     {
@@ -501,13 +480,13 @@ SIP-Version    =  "SIP" "/" 1*DIGIT "." 1*DIGIT
 ULONG SIP_ParseSIPVersion(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
     UCHAR *pucChar = NULL_PTR;
     UCHAR  ucVersion= 0;
     UCHAR *pucVersion = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pucVersion, UCHAR, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pucVersion, UCHAR, pstUbuf, ppStruct);
 
     /* 需要跳过"SIP/"，只算整数部分，小数不管 */
     pucChar = SIP_GET_OFFSET_POINT(pucString, pstGrammarNode->ulOffset + 4);
@@ -529,13 +508,13 @@ Status-Code     =  Informational
 ULONG SIP_ParseStatusCode(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
     UCHAR *pucChar = NULL_PTR;
     ULONG  ulStatusCode = 0;
     SIP_STATUS_CODE_E *peStatusCode = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(peStatusCode, SIP_STATUS_CODE_E, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(peStatusCode, SIP_STATUS_CODE_E, pstUbuf, ppStruct);
 
     /* 直接计算错误码 */
     pucChar = SIP_GET_OFFSET_POINT(pucString, pstGrammarNode->ulOffset);
@@ -552,15 +531,15 @@ SIP-URI          =  "sip:" [ userinfo ] hostport
 ULONG SIP_ParseSipURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                       UCHAR               *pucString,
                       UBUF_HEADER_S       *pstUbuf,
-                      UBUF_PTR            *pupStruct)
+                      void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode     = NULL_PTR;
     URI_USER_INFO_S     *pstUserInfo = NULL_PTR;
     URI_S *pstUri = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstUri, URI_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstUri, URI_S, pstUbuf, ppStruct);
 
     pstUri->eUriType = URI_TYPE_SIP;
     pstNode = pstGrammarNode->pstChild;
@@ -571,17 +550,15 @@ ULONG SIP_ParseSipURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_USERINFO)(pstNode,
                                                                pucString,
                                                                pstUbuf,
-                                                              &pstUri->u.stSipUri.upstUserInfo);
+                                                              &pstUri->u.stSipUri.pstUserInfo);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOSTPORT))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstUri->u.stSipUri.stHostPort
-                      -(ULONG)pstUri;
+            pStruct = &pstUri->u.stSipUri.stHostPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOSTPORT)(pstNode,
                                                                pucString,
                                                                pstUbuf,
-                                                              &upStruct);
+                                                              &pStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -597,15 +574,14 @@ SIPS-URI         =  "sips:" [ userinfo ] hostport
 ULONG SIP_ParseSipsURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                        UCHAR               *pucString,
                        UBUF_HEADER_S       *pstUbuf,
-                       UBUF_PTR            *pupStruct)
+                       void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode     = NULL_PTR;
-    URI_USER_INFO_S     *pstUserInfo = NULL_PTR;
     URI_S               *pstUri      = NULL_PTR;
-    UBUF_PTR             upStruct    = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstUri, URI_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstUri, URI_S, pstUbuf, ppStruct);
 
     pstUri->eUriType = URI_TYPE_SIPS;
     pstNode = pstGrammarNode->pstChild;
@@ -616,17 +592,15 @@ ULONG SIP_ParseSipsURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_USERINFO)(pstNode,
                                                                pucString,
                                                                pstUbuf,
-                                                              &pstUri->u.stSipUri.upstUserInfo);
+                                                              &pstUri->u.stSipUri.pstUserInfo);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOSTPORT))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstUri->u.stSipUri.stHostPort
-                      -(ULONG)pstUri;
+            pStruct = &pstUri->u.stSipUri.stHostPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOSTPORT)(pstNode,
                                                                pucString,
                                                                pstUbuf,
-                                                              &upStruct);
+                                                              &pStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -641,24 +615,24 @@ userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 ULONG SIP_ParseUserinfo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     UCHAR *pucStr = NULL_PTR;
     URI_USER_INFO_S *pstUserInfo = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstUserInfo, URI_USER_INFO_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstUserInfo, URI_USER_INFO_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_USER))
         {
-            SIP_GET_STRING(pucStr, pstNode, pucString, pstUbuf, &pstUserInfo->upucUserInfo);
+            SIP_GET_STRING(pucStr, pstNode, pucString, pstUbuf, &pstUserInfo->pucUserInfo);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_USER))
         {
-            SIP_GET_STRING(pucStr, pstNode, pucString, pstUbuf, &pstUserInfo->upucPassword);
+            SIP_GET_STRING(pucStr, pstNode, pucString, pstUbuf, &pstUserInfo->pucPassword);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -673,14 +647,14 @@ hostport         =  host [ ":" port ]
 ULONG SIP_ParseHostport(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG ulRet;
     URI_HOST_PORT_S *pstHostPort = NULL_PTR;
-    UBUF_PTR upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstHostPort, URI_HOST_PORT_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstHostPort, URI_HOST_PORT_S, pstUbuf, ppStruct);
 
     /* 初始化非0字段 */
     pstHostPort->usPort = NULL_USHORT;
@@ -690,23 +664,19 @@ ULONG SIP_ParseHostport(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstHostPort->stHost
-                      -(ULONG)pstHostPort;
+            pStruct = &pstHostPort->stHost;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
                                                           pucString,
                                                           pstUbuf,
-                                                         &upStruct);
+                                                         &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_PORT))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstHostPort->usPort
-                      -(ULONG)pstHostPort;
+            pStruct = &pstHostPort->usPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_PORT)(pstNode,
                                                                   pucString,
                                                                   pstUbuf,
-                                                                 &upStruct);
+                                                                 &pStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -721,13 +691,13 @@ host             =  hostname / IPv4address / IPv6reference
 ULONG SIP_ParseHost(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                     UCHAR               *pucString,
                     UBUF_HEADER_S       *pstUbuf,
-                    UBUF_PTR            *pupStruct)
+                    void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     UCHAR       *pucStrPtr = NULL_PTR;
     URI_HOST_S *pstHost = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstHost, URI_HOST_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstHost, URI_HOST_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST_NAME))
@@ -748,7 +718,7 @@ ULONG SIP_ParseHost(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         return FAIL;
     }
 
-    SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstHost->upucAddrStr);
+    SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstHost->pucAddrStr);
 
     return SUCCESS;
 }
@@ -759,13 +729,13 @@ port           =  1*DIGIT
 ULONG SIP_ParsePort(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                     UCHAR               *pucString,
                     UBUF_HEADER_S       *pstUbuf,
-                    UBUF_PTR            *pupStruct)
+                    void               **ppStruct)
 {
     UCHAR *pucChar = NULL_PTR;
     USHORT usPort = 0;
     USHORT *pusPort = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pusPort, USHORT, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pusPort, USHORT, pstUbuf, ppStruct);
 
     /* 直接计算错误码 */
     pucChar = SIP_GET_OFFSET_POINT(pucString, pstGrammarNode->ulOffset);
@@ -782,14 +752,14 @@ from-spec   =  ( name-addr / addr-spec )
 ULONG SIP_ParseFromSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG ulRet;
-    SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    SIP_HEADER_FROM_S   *pstFrom = NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstFrom, SIP_HEADER_FROM_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstFrom, SIP_HEADER_FROM_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
@@ -797,13 +767,11 @@ ULONG SIP_ParseFromSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_NAME_ADDR))
         {
             pstFrom->stNameAddr.bName = TRUE;
-            upStruct = *pupStruct
-                      +(ULONG)&pstFrom->stNameAddr
-                      -(ULONG)pstFrom;
+            pStruct = &pstFrom->stNameAddr;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &upStruct);
+                                                               &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
         {
@@ -811,14 +779,14 @@ ULONG SIP_ParseFromSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &pstFrom->stNameAddr.upstUri);
+                                                               &pstFrom->stNameAddr.pstUri);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_FROM_PARAM))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_FROM_PARAM)(pstNode,
                                                                  pucString,
                                                                  pstUbuf,
-                                                                 pupStruct);
+                                                                 ppStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -833,28 +801,28 @@ name-addr      =  [ display-name ] LAQUOT addr-spec RAQUOT
 ULONG SIP_ParseNameAddr(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode     = NULL_PTR;
     ULONG                ulRet;
     UCHAR               *pucStrPtr   = NULL_PTR;
     SIP_NAME_ADDR_S     *pstNameAddr = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstNameAddr, SIP_NAME_ADDR_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstNameAddr, SIP_NAME_ADDR_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_DISPLAY_NAME))
         {
-            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstNameAddr->upucName);
+            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstNameAddr->pucName);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &pstNameAddr->upstUri);
+                                                               &pstNameAddr->pstUri);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -869,7 +837,7 @@ addr-spec      =  SIP-URI / SIPS-URI / absoluteURI
 ULONG SIP_ParseAddrSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG       ulRet;
@@ -880,14 +848,14 @@ ULONG SIP_ParseAddrSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_URI)(pstNode,
                                                           pucString,
                                                           pstUbuf,
-                                                          pupStruct);
+                                                          ppStruct);
     }
     else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIPS_URI))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIPS_URI)(pstNode,
                                                           pucString,
                                                           pstUbuf,
-                                                          pupStruct);
+                                                          ppStruct);
     }
     else
     {
@@ -903,12 +871,12 @@ from-param  =  tag-param / generic-param
 ULONG SIP_ParseFromParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                          UCHAR               *pucString,
                          UBUF_HEADER_S       *pstUbuf,
-                         UBUF_PTR            *pupStruct)
+                         void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     SIP_HEADER_FROM_S   *pstFrom = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstFrom, SIP_HEADER_FROM_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstFrom, SIP_HEADER_FROM_S, pstUbuf, ppStruct);
 
     /* 目前只处理tag参数 */
     pstNode = pstGrammarNode->pstChild;
@@ -917,7 +885,7 @@ ULONG SIP_ParseFromParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         return SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TAG_PARAM)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                          &pstFrom->upucTag);
+                                                          &pstFrom->pucTag);
     }
 
     return SUCCESS;
@@ -929,12 +897,12 @@ to-param  =  tag-param / generic-param
 ULONG SIP_ParseToParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                        UCHAR               *pucString,
                        UBUF_HEADER_S       *pstUbuf,
-                       UBUF_PTR            *pupStruct)
+                       void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     SIP_HEADER_TO_S     *pstTo = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstTo, SIP_HEADER_TO_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstTo, SIP_HEADER_TO_S, pstUbuf, ppStruct);
 
     /* 目前只处理tag参数 */
     pstNode = pstGrammarNode->pstChild;
@@ -943,7 +911,7 @@ ULONG SIP_ParseToParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         return SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TAG_PARAM)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                          &pstTo->upucTag);
+                                                          &pstTo->pucTag);
     }
 
     return SUCCESS;
@@ -955,7 +923,7 @@ tag-param   =  "tag" EQUAL token
 ULONG SIP_ParseTagParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                        UCHAR               *pucString,
                        UBUF_HEADER_S       *pstUbuf,
-                       UBUF_PTR            *pupStruct)
+                       void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     UCHAR *pucStrPtr = NULL_PTR;
@@ -965,7 +933,7 @@ ULONG SIP_ParseTagParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TOKEN))
         {
-            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, pupStruct);
+            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, ppStruct);
             return SUCCESS;
         }
 
@@ -981,15 +949,15 @@ callid   =  word [ "@" word ]
 ULONG SIP_ParseCallID(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                        UCHAR               *pucString,
                        UBUF_HEADER_S       *pstUbuf,
-                       UBUF_PTR            *pupStruct)
+                       void               **ppStruct)
 {
     UCHAR *pucStrPtr = NULL_PTR;
     SIP_HEADER_CALL_ID_S *pstCallID = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstCallID, SIP_HEADER_CALL_ID_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstCallID, SIP_HEADER_CALL_ID_S, pstUbuf, ppStruct);
 
     /* 先简单实现 */
-    SIP_GET_STRING(pucStrPtr, pstGrammarNode, pucString, pstUbuf, &pstCallID->upucCallID);
+    SIP_GET_STRING(pucStrPtr, pstGrammarNode, pucString, pstUbuf, &pstCallID->pucCallID);
 
     return SUCCESS;
 }
@@ -1000,14 +968,14 @@ via-parm          =  sent-protocol LWS sent-by *( SEMI via-params )
 ULONG SIP_ParseViaParm(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                        UCHAR               *pucString,
                        UBUF_HEADER_S       *pstUbuf,
-                       UBUF_PTR            *pupStruct)
+                       void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
-    UBUF_PTR        upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
     SIP_VIA_PARM_S *pstViaParm = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstViaParm, SIP_VIA_PARM_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstViaParm, SIP_VIA_PARM_S, pstUbuf, ppStruct);
 
     /* 初始化非0字段 */
     pstViaParm->ulTtl = NULL_ULONG;
@@ -1017,30 +985,26 @@ ULONG SIP_ParseViaParm(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SENT_PROTOCOL))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstViaParm->eProtocolType
-                      -(ULONG)pstViaParm;
+            pStruct = &pstViaParm->eProtocolType;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SENT_PROTOCOL)(pstNode,
                                                                     pucString,
                                                                     pstUbuf,
-                                                                   &upStruct);
+                                                                   &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SENT_BY))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstViaParm->stSendBy
-                      -(ULONG)pstViaParm;
+            pStruct = &pstViaParm->stSendBy;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SENT_BY)(pstNode,
                                                               pucString,
                                                               pstUbuf,
-                                                             &upStruct);
+                                                             &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_PARMS))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_PARMS)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                                pupStruct);
+                                                                ppStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -1056,7 +1020,7 @@ sent-protocol     =  protocol-name SLASH protocol-version
 ULONG SIP_ParseSentProtocol(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                             UCHAR               *pucString,
                             UBUF_HEADER_S       *pstUbuf,
-                            UBUF_PTR            *pupStruct)
+                            void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG ulRet;
@@ -1069,7 +1033,7 @@ ULONG SIP_ParseSentProtocol(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TRANSPORT)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                                pupStruct);
+                                                                ppStruct);
             break;
         }
 
@@ -1086,12 +1050,12 @@ transport         =  "UDP" / "TCP" / "TLS" / "SCTP"
 ULONG SIP_ParseTransport(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                          UCHAR               *pucString,
                          UBUF_HEADER_S       *pstUbuf,
-                         UBUF_PTR            *pupStruct)
+                         void               **ppStruct)
 {
     UCHAR      *pucStrPtr = NULL_PTR;
     SIP_TRANSPORT_PROTOCOL_E *peProtocol = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(peProtocol, SIP_TRANSPORT_PROTOCOL_E, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(peProtocol, SIP_TRANSPORT_PROTOCOL_E, pstUbuf, ppStruct);
 
     pucStrPtr = SIP_GET_OFFSET_POINT(pucString, pstGrammarNode->ulOffset);
     if (SUCCESS == strncmp(pucStrPtr, "UDP", strlen("UDP")))
@@ -1124,14 +1088,14 @@ sent-by           =  host [ COLON port ]
 ULONG SIP_ParseSentBy(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                       UCHAR               *pucString,
                       UBUF_HEADER_S       *pstUbuf,
-                      UBUF_PTR            *pupStruct)
+                      void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG ulRet;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
     URI_HOST_PORT_S     *pstSentBy = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstSentBy, URI_HOST_PORT_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstSentBy, URI_HOST_PORT_S, pstUbuf, ppStruct);
 
     /* 初始化非0字段 */
     pstSentBy->usPort = NULL_USHORT;
@@ -1141,23 +1105,19 @@ ULONG SIP_ParseSentBy(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstSentBy->stHost
-                      -(ULONG)pstSentBy;
+            pStruct = &pstSentBy->stHost;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                          &upStruct);
+                                                          &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_PORT))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstSentBy->usPort
-                      -(ULONG)pstSentBy;
+            pStruct = &pstSentBy->usPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                          &upStruct);
+                                                          &pStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -1174,50 +1134,48 @@ via-params        =  via-ttl / via-maddr
 ULONG SIP_ParseViaParams(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                          UCHAR               *pucString,
                          UBUF_HEADER_S       *pstUbuf,
-                         UBUF_PTR            *pupStruct)
+                         void               **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     URI_HOST_S          *pstHost = NULL_PTR;
     SIP_VIA_RECEIVED_S  *pstViaReceived = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
     SIP_VIA_PARM_S *pstViaParm = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstViaParm, SIP_VIA_PARM_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstViaParm, SIP_VIA_PARM_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_TTL))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstViaParm->ulTtl
-                      -(ULONG)pstViaParm;
+            pStruct = &pstViaParm->ulTtl;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_TTL)(pstNode,
                                                               pucString,
                                                               pstUbuf,
-                                                             &upStruct);
+                                                             &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_MADDR))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_MADDR)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &pstViaParm->upstMaddr);
+                                                               &pstViaParm->pstMaddr);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_RECEIVED))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_RECEIVED)(pstNode,
                                                                    pucString,
                                                                    pstUbuf,
-                                                                  &pstViaParm->upstReceived);
+                                                                  &pstViaParm->pstReceived);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_BRANCH))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_BRANCH)(pstNode,
                                                                  pucString,
                                                                  pstUbuf,
-                                                                 pupStruct);
+                                                                 ppStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -1232,14 +1190,14 @@ via-ttl           =  "ttl" EQUAL ttl
 ULONG SIP_ParseViaTtl(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                       UCHAR               *pucString,
                       UBUF_HEADER_S       *pstUbuf,
-                      UBUF_PTR            *pupStruct)
+                      void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     UCHAR *pucChar = NULL_PTR;
     ULONG ulTtl;
     ULONG *pulTtl = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pulTtl, ULONG, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pulTtl, ULONG, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
@@ -1264,7 +1222,7 @@ via-maddr         =  "maddr" EQUAL host
 ULONG SIP_ParseViaMaddr(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ULONG ulRet;
@@ -1277,7 +1235,7 @@ ULONG SIP_ParseViaMaddr(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
                                                            pucString,
                                                            pstUbuf,
-                                                           pupStruct);
+                                                           ppStruct);
             break;
         }
 
@@ -1293,13 +1251,13 @@ via-received      =  "received" EQUAL (IPv4address / IPv6address)
 ULONG SIP_ParseViaReceived(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                            UCHAR               *pucString,
                            UBUF_HEADER_S       *pstUbuf,
-                           UBUF_PTR            *pupStruct)
+                           void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     UCHAR *pucStrPtr = NULL_PTR;
     SIP_VIA_RECEIVED_S  *pstViaReceived = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstViaReceived, SIP_VIA_RECEIVED_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstViaReceived, SIP_VIA_RECEIVED_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
@@ -1307,13 +1265,13 @@ ULONG SIP_ParseViaReceived(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_IPV4_ADDRESS))
         {
             pstViaReceived->eIpType = SIP_IP_TYPE_IPV4;
-            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaReceived->u.upucIPV4);
+            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaReceived->u.pucIPV4);
             break;
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_IPV6_ADDRESS))
         {
             pstViaReceived->eIpType = SIP_IP_TYPE_IPV6;
-            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaReceived->u.upucIPV6);
+            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaReceived->u.pucIPV6);
             break;
         }
 
@@ -1329,21 +1287,21 @@ via-branch        =  "branch" EQUAL token
 ULONG SIP_ParseViaBranch(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                          UCHAR               *pucString,
                          UBUF_HEADER_S       *pstUbuf,
-                         UBUF_PTR            *pupStruct)
+                         void               **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     UCHAR *pucStrPtr = NULL_PTR;
     SIP_VIA_PARM_S *pstViaParm = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstViaParm, SIP_VIA_PARM_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstViaParm, SIP_VIA_PARM_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TOKEN))
         {
-            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaParm->upucBranch);
+            SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaParm->pucBranch);
             break;
         }
 
@@ -1361,7 +1319,7 @@ Accept         =  "Accept" HCOLON
 ULONG SIP_ParseHeaderAccept(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                             UCHAR               *pucString,
                             UBUF_HEADER_S       *pstUbuf,
-                            UBUF_PTR            *pupStruct)
+                            void               **ppStruct)
 {
     return SUCCESS;
 }
@@ -1373,7 +1331,7 @@ Accept-Encoding  =  "Accept-Encoding" HCOLON
 ULONG SIP_ParseHeaderAcceptEncoding(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                     UCHAR               *pucString,
                                     UBUF_HEADER_S       *pstUbuf,
-                                    UBUF_PTR            *pupStruct)
+                                    void               **ppStruct)
 {
     return SUCCESS;
 }
@@ -1384,7 +1342,7 @@ Call-ID  =  ( "Call-ID" / "i" ) HCOLON callid
 ULONG SIP_ParseHeaderCallID(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                             UCHAR               *pucString,
                             UBUF_HEADER_S       *pstUbuf,
-                            UBUF_PTR            *pupStruct)
+                            void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
@@ -1397,7 +1355,7 @@ ULONG SIP_ParseHeaderCallID(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_CALLID)(pstNode,
                                                              pucString,
                                                              pstUbuf,
-                                                             pupStruct);
+                                                             ppStruct);
             if (ulRet != SUCCESS)
             {
                 return FAIL;
@@ -1418,15 +1376,15 @@ CSeq  =  "CSeq" HCOLON 1*DIGIT LWS Method
 ULONG SIP_ParseHeaderCseq(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     SIP_HEADER_CSEQ_S *pstSeq = NULL_PTR;
     UCHAR *pucChar = NULL_PTR;
     ULONG ulRet;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstSeq, SIP_HEADER_CSEQ_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstSeq, SIP_HEADER_CSEQ_S, pstUbuf, ppStruct);
 
     /* 直接获取序号值，至少跳过"CSeq" */
     pucChar = SIP_GET_OFFSET_POINT(pucString, pstGrammarNode->ulOffset+ strlen("CSeq"));
@@ -1443,13 +1401,11 @@ ULONG SIP_ParseHeaderCseq(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     {
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_METHOD))
         {
-            upStruct = *pupStruct
-                      +(ULONG)&pstSeq->eMethod
-                      -(ULONG)pstSeq;
+            pStruct = &pstSeq->eMethod;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_METHOD)(pstNode,
                                                              pucString,
                                                              pstUbuf,
-                                                            &upStruct);
+                                                            &pStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -1464,7 +1420,7 @@ From        =  ( "From" / "f" ) HCOLON from-spec
 ULONG SIP_ParseHeaderFrom(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                           UCHAR               *pucString,
                           UBUF_HEADER_S       *pstUbuf,
-                          UBUF_PTR            *pupStruct)
+                          void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
@@ -1477,7 +1433,7 @@ ULONG SIP_ParseHeaderFrom(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                                pupStruct);
+                                                                ppStruct);
             if (ulRet != SUCCESS)
             {
                 return FAIL;
@@ -1499,14 +1455,14 @@ To        =  ( "To" / "t" ) HCOLON ( name-addr
 ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                         UCHAR               *pucString,
                         UBUF_HEADER_S       *pstUbuf,
-                        UBUF_PTR            *pupStruct)
+                        void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     SIP_HEADER_TO_S     *pstTo   = NULL_PTR;
-    UBUF_PTR    upStruct = UBUF_NULL_PTR;
+    void                *pStruct   = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstTo, SIP_HEADER_TO_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstTo, SIP_HEADER_TO_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
@@ -1514,13 +1470,11 @@ ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_NAME_ADDR))
         {
             pstTo->stNameAddr.bName = TRUE;
-            upStruct = *pupStruct
-                      +(ULONG)&pstTo->stNameAddr
-                      -(ULONG)pstTo;
+            pStruct = &pstTo->stNameAddr;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &upStruct);
+                                                               &pStruct);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
         {
@@ -1528,14 +1482,14 @@ ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &pstTo->stNameAddr.upstUri);
+                                                               &pstTo->stNameAddr.pstUri);
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TO_PARAM))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                                pupStruct);
+                                                                ppStruct);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -1550,17 +1504,16 @@ Via               =  ( "Via" / "v" ) HCOLON via-parm *(COMMA via-parm)
 ULONG SIP_ParseHeaderVia(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                          UCHAR               *pucString,
                          UBUF_HEADER_S       *pstUbuf,
-                         UBUF_PTR            *pupStruct)
+                         void               **ppStruct)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode    = NULL_PTR;
     SIP_HEADER_VIA_S    *pstVia     = NULL_PTR;
-    UBUF_PTR            *pupstViaParm = NULL_PTR;
-    SIP_VIA_PARM_S      *pstViaParm = NULL_PTR;
+    SIP_VIA_PARM_S     **ppstViaParm = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstVia, SIP_HEADER_VIA_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstVia, SIP_HEADER_VIA_S, pstUbuf, ppStruct);
 
-    pupstViaParm = &pstVia->upstViaParm;
+    ppstViaParm = &pstVia->pstViaParm;
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
@@ -1569,14 +1522,14 @@ ULONG SIP_ParseHeaderVia(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_PARM)(pstNode,
                                                                pucString,
                                                                pstUbuf,
-                                                               pupstViaParm);
+                                                               ppstViaParm);
             if (ulRet != SUCCESS)
             {
                 return FAIL;
             }
             else
             {
-                pupstViaParm = &pstViaParm->upstNext;
+                ppstViaParm = &(*ppstViaParm)->pstNext;
             }
         }
 
@@ -1592,12 +1545,12 @@ Max-Forwards  =  "Max-Forwards" HCOLON 1*DIGIT
 ULONG SIP_ParseHeaderMaxForwards(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                  UCHAR               *pucString,
                                  UBUF_HEADER_S       *pstUbuf,
-                                 UBUF_PTR            *pupStruct)
+                                 void               **ppStruct)
 {
     SIP_HEADER_MAX_FORWARDS_S *pstMaxForwards = NULL_PTR;
     UCHAR *pucChar = NULL_PTR;
 
-    SIP_GET_COMPONET_PTR(pstMaxForwards, SIP_HEADER_MAX_FORWARDS_S, pstUbuf, pupStruct);
+    SIP_GET_COMPONET_PTR(pstMaxForwards, SIP_HEADER_MAX_FORWARDS_S, pstUbuf, ppStruct);
 
     /* 直接获取数字，至少跳过"Max-Forwards" */
     pucChar = SIP_GET_OFFSET_POINT(pucString, pstGrammarNode->ulOffset + strlen("Max-Forwards"));

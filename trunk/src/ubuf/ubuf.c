@@ -38,13 +38,28 @@ UBUF_HEADER_S* UBUF_AllocUBuf(ULONG ulLen)
     return pstUBuf;
 }
 
+/* 释放联合UBUF */
+void UBUF_FreeBuffer(UBUF_HEADER_S *pstUBuf)
+{
+    if (pstUBuf == NULL_PTR)
+    {
+        return;
+    }
+
+    if (pstUBuf->pNext != NULL_PTR)
+    {
+        UBUF_FreeBuffer(pstUBuf->pNext);
+    }
+
+    free(pstUBuf);
+    return;
+}
+
 /* 向一块联合缓存添加组件
-pstComponent 返回组件在该UBUF中的UBUF_PTR类型的地址
 函数返回实际地址，方便操作
 */
 VOID* UBUF_AddComponent(UBUF_HEADER_S *pstUBuf,
-                        ULONG ulComponentLen,
-                        UBUF_PTR *pupComponent)
+                        ULONG ulComponentLen)
 {
     UBUF_HEADER_S *pstTemp = NULL_PTR;
     ULONG          ulTemp;
@@ -75,79 +90,8 @@ VOID* UBUF_AddComponent(UBUF_HEADER_S *pstUBuf,
         pstTemp = pstTemp->pNext;
     }
 
-    *pupComponent          = pstUBuf->ulMsgLen;
     pstUBuf->ulMsgLen     += ulComponentLen;
     ulTemp = pstTemp->ulCurrentLen;
     pstTemp->ulCurrentLen += ulComponentLen;
     return (UCHAR *)pstTemp + sizeof(UBUF_HEADER_S) + ulTemp;
-}
-
-/* 释放联合UBUF */
-void UBUF_FreeBuffer(UBUF_HEADER_S *pstUBuf)
-{
-    if (pstUBuf == NULL_PTR)
-    {
-        return;
-    }
-
-    if (pstUBuf->pNext != NULL_PTR)
-    {
-        UBUF_FreeBuffer(pstUBuf->pNext);
-    }
-
-    free(pstUBuf);
-    return;
-}
-
-/* 将UBUF中的指针转化为实际指针 */
-VOID* UBUF_UBufPtr2Ptr(UBUF_HEADER_S *pstUBuf, UBUF_PTR pUBufPtr)
-{
-    ULONG ulTemp;
-    UBUF_HEADER_S *pstTemp = NULL_PTR;
-
-    if (pstUBuf == NULL_PTR)
-    {
-        return NULL_PTR;
-    }
-
-    ulTemp  = pUBufPtr;
-    pstTemp = pstUBuf;
-    while (ulTemp > pstTemp->ulCurrentLen)
-    {
-        if (pstTemp->pNext == NULL_PTR)
-        {
-            return NULL_PTR;
-        }
-
-        ulTemp -= pstTemp->ulCurrentLen;
-        pstTemp = pstTemp->pNext;
-    }
-
-    return (UCHAR *)pstTemp + sizeof(UBUF_HEADER_S) + ulTemp;
-}
-
-/* 将UBUF克隆一份 */
-UBUF_HEADER_S* UBUF_UBufClone(UBUF_HEADER_S *pstSrcUBuf)
-{
-    UBUF_HEADER_S *pstDstUBuf = NULL_PTR;
-    UBUF_HEADER_S *pstSrcTemp = NULL_PTR;
-    UBUF_HEADER_S **ppstDstTemp = NULL_PTR;
-
-    ppstDstTemp = &pstDstUBuf;
-    pstSrcTemp  =  pstSrcUBuf;
-    while (pstSrcTemp != NULL_PTR)
-    {
-        *ppstDstTemp = UBUF_AllocUBuf(pstSrcUBuf->ulSegmentLen);
-        if (*ppstDstTemp = NULL_PTR)
-        {
-            UBUF_FreeBuffer(pstDstUBuf);
-            return NULL_PTR;
-        }
-
-        memcpy(*ppstDstTemp, pstSrcTemp, sizeof(UBUF_HEADER_S) + pstSrcUBuf->ulSegmentLen);
-        ppstDstTemp = &(*ppstDstTemp)->pNext;
-        pstSrcTemp  = pstSrcTemp->pNext;
-    }
-
-    return pstDstUBuf;
 }

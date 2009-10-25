@@ -37,8 +37,7 @@
 /*******************************************************************************
 SIP-message    =  Request / Response
 *******************************************************************************/
-ULONG SIP_CodeSIPmessage(UBUF_HEADER_S *pstUbufMsg,
-                         void *pstStruct,
+ULONG SIP_CodeSIPmessage(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_MSG_S *pstSipMsg= NULL_PTR;
@@ -46,11 +45,11 @@ ULONG SIP_CodeSIPmessage(UBUF_HEADER_S *pstUbufMsg,
     pstSipMsg = (SIP_MSG_S *)pstStruct;
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
-        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST)(pstUbufMsg, pstSipMsg, pstBuffer);
+        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST)(pstSipMsg, pstBuffer);
     }
     else if (pstSipMsg->eMsgType == SIP_MSG_TYPE_RESPONSE)
     {
-        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_RESPONSE)(pstUbufMsg, pstSipMsg, pstBuffer);
+        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_RESPONSE)(pstSipMsg, pstBuffer);
     }
 
     return FAIL;
@@ -62,8 +61,7 @@ Request        =  Request-Line
                   CRLF
                   [ message-body ]
 *******************************************************************************/
-ULONG SIP_CodeRequest(UBUF_HEADER_S *pstUbufMsg,
-                      void *pstStruct,
+ULONG SIP_CodeRequest(void *pstStruct,
                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
@@ -71,13 +69,13 @@ ULONG SIP_CodeRequest(UBUF_HEADER_S *pstUbufMsg,
 
     pstSipMsg = (SIP_MSG_S *)pstStruct;
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST_LINE)(pstUbufMsg, &pstSipMsg->uStartLine.stRequstLine, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST_LINE)(&pstSipMsg->uStartLine.stRequstLine, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
     }
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstUbufMsg, pstSipMsg, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstSipMsg, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -85,7 +83,7 @@ ULONG SIP_CodeRequest(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, "\r\n");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstUbufMsg, pstSipMsg, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstSipMsg, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -100,21 +98,20 @@ Response          =  Status-Line
                      CRLF
                      [ message-body ]
 *******************************************************************************/
-ULONG SIP_CodeResponse(UBUF_HEADER_S *pstUbufMsg,
-                       void *pstStruct,
+ULONG SIP_CodeResponse(void *pstStruct,
                        SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_MSG_S *pstSipMsg= NULL_PTR;
 
     pstSipMsg = (SIP_MSG_S *)pstStruct;
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_STATUS_LINE)(pstUbufMsg, &pstSipMsg->uStartLine.stStatusLine, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_STATUS_LINE)(&pstSipMsg->uStartLine.stStatusLine, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
     }
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstUbufMsg, pstSipMsg, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstSipMsg, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -122,7 +119,7 @@ ULONG SIP_CodeResponse(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, "\r\n");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstUbufMsg, pstSipMsg, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstSipMsg, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -134,16 +131,14 @@ ULONG SIP_CodeResponse(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 Request-Line   =  Method SP Request-URI SP SIP-Version CRLF
 *******************************************************************************/
-ULONG SIP_CodeRequestLine(UBUF_HEADER_S *pstUbufMsg,
-                          void *pstStruct,
+ULONG SIP_CodeRequestLine(void *pstStruct,
                           SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_REQUEST_LINE_S *pstRequestLine = NULL_PTR;
-    URI_S *pstRequestUri = NULL_PTR;
 
     pstRequestLine = (SIP_REQUEST_LINE_S *)pstStruct;
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_METHOD)(pstUbufMsg, &pstRequestLine->eMethod, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_METHOD)(&pstRequestLine->eMethod, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -151,8 +146,7 @@ ULONG SIP_CodeRequestLine(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, " ");
 
-    pstRequestUri = UBUF_UBufPtr2Ptr(pstUbufMsg, pstRequestLine->upRequestURI);
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST_URI)(pstUbufMsg, pstRequestUri, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST_URI)(pstRequestLine->pstRequestURI, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -160,7 +154,7 @@ ULONG SIP_CodeRequestLine(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, " ");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(pstUbufMsg, &pstRequestLine->ucVersion, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(&pstRequestLine->ucVersion, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -173,15 +167,14 @@ ULONG SIP_CodeRequestLine(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 Status-Line     =  SIP-Version SP Status-Code SP Reason-Phrase CRLF
 *******************************************************************************/
-ULONG SIP_CodeStatusLine(UBUF_HEADER_S *pstUbufMsg,
-                         void *pstStruct,
+ULONG SIP_CodeStatusLine(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_STATUS_LINE_S *pstStateLine = NULL_PTR;
 
     pstStateLine = (SIP_STATUS_LINE_S *)pstStruct;
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(pstUbufMsg, &pstStateLine->ucVersion, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(&pstStateLine->ucVersion, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -189,7 +182,7 @@ ULONG SIP_CodeStatusLine(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, " ");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_STATUS_CODE)(pstUbufMsg, &pstStateLine->eStatusCode, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_STATUS_CODE)(&pstStateLine->eStatusCode, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -197,7 +190,7 @@ ULONG SIP_CodeStatusLine(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, " ");
 
-    ulRet = SIP_CodeReasonPhrase(pstUbufMsg, &pstStateLine->eStatusCode, pstBuffer);
+    ulRet = SIP_CodeReasonPhrase(&pstStateLine->eStatusCode, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -254,17 +247,14 @@ message-header  =  (Accept
                 /  WWW-Authenticate
                 /  extension-header) CRLF
 *******************************************************************************/
-ULONG SIP_CodeMessageHeader(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
+ULONG SIP_CodeMessageHeader(void *pstStruct,
                             SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     ULONG ulLoop;
     ULONG ulAppIndex;
-    SIP_MSG_S *pstSipMsg = NULL_PTR;
-    UBUF_PTR      upstHeader = UBUF_NULL_PTR;
+    SIP_MSG_S    *pstSipMsg  = NULL_PTR;
     SIP_HEADER_S *pstHeader  = NULL_PTR;
-    void         *pstHeaderSpec = NULL_PTR;
 
     pstSipMsg = (SIP_MSG_S *)pstStruct;
     for (ulLoop = 0; ulLoop < SIP_HEADER_BUTT; ulLoop++)
@@ -277,13 +267,10 @@ ULONG SIP_CodeMessageHeader(UBUF_HEADER_S *pstUbufMsg,
         }
 
         /* 可能存在多个相同头域，挨个编码 */
-        upstHeader = pstSipMsg->aupstHeaders[ulLoop];
-        while (upstHeader!= UBUF_NULL_PTR)
+        pstHeader = pstSipMsg->apstHeaders[ulLoop];
+        while (pstHeader!= NULL_PTR)
         {
-            pstHeader = UBUF_UBufPtr2Ptr(pstUbufMsg, upstHeader);
-            pstHeaderSpec = pstHeader->pstSpec;
-            ulRet = SIP_GET_CODE_FUNC(ulAppIndex)(pstUbufMsg,
-                                                  pstHeaderSpec,
+            ulRet = SIP_GET_CODE_FUNC(ulAppIndex)(pstHeader,
                                                   pstBuffer);
             if (ulRet == SUCCESS)
             {
@@ -294,7 +281,7 @@ ULONG SIP_CodeMessageHeader(UBUF_HEADER_S *pstUbufMsg,
                 return FAIL;
             }
 
-            upstHeader = pstHeader->upstNext;
+            pstHeader = pstHeader->pstNext;
         }
     }
 
@@ -304,8 +291,7 @@ ULONG SIP_CodeMessageHeader(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 message-body  =  *OCTET
 *******************************************************************************/
-ULONG SIP_CodeMessageBody(UBUF_HEADER_S *pstUbufMsg,
-                          void *pstStruct,
+ULONG SIP_CodeMessageBody(void *pstStruct,
                           SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
@@ -319,8 +305,7 @@ Method            =  INVITEm / ACKm / OPTIONSm / BYEm
                      / CANCELm / REGISTERm
                      / extension-method
 *******************************************************************************/
-ULONG SIP_CodeMethod(UBUF_HEADER_S *pstUbufMsg,
-                     void *pstStruct,
+ULONG SIP_CodeMethod(void *pstStruct,
                      SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_METHOD_E eMethod;
@@ -362,8 +347,7 @@ ULONG SIP_CodeMethod(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 Request-URI    =  SIP-URI / SIPS-URI / absoluteURI
 *******************************************************************************/
-ULONG SIP_CodeRequestURI(UBUF_HEADER_S *pstUbufMsg,
-                         void *pstStruct,
+ULONG SIP_CodeRequestURI(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     URI_S *pstRequestURI = NULL_PTR;
@@ -371,11 +355,11 @@ ULONG SIP_CodeRequestURI(UBUF_HEADER_S *pstUbufMsg,
     pstRequestURI = (URI_S *)pstStruct;
     if (pstRequestURI->eUriType == URI_TYPE_SIP)
     {
-        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_URI)(pstUbufMsg, &pstRequestURI->u.stSipUri, pstBuffer);
+        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_URI)(&pstRequestURI->u.stSipUri, pstBuffer);
     }
     else if (pstRequestURI->eUriType == URI_TYPE_SIPS)
     {
-        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIPS_URI)(pstUbufMsg, &pstRequestURI->u.stSipUri, pstBuffer);
+        return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIPS_URI)(&pstRequestURI->u.stSipUri, pstBuffer);
     }
 
     return FAIL;
@@ -384,8 +368,7 @@ ULONG SIP_CodeRequestURI(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 SIP-Version    =  "SIP" "/" 1*DIGIT "." 1*DIGIT
 *******************************************************************************/
-ULONG SIP_CodeSIPVersion(UBUF_HEADER_S *pstUbufMsg,
-                         void *pstStruct,
+ULONG SIP_CodeSIPVersion(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR ucVersion;
@@ -402,8 +385,7 @@ ULONG SIP_CodeSIPVersion(UBUF_HEADER_S *pstUbufMsg,
 SIP-URI          =  "sip:" [ userinfo ] hostport
                     uri-parameters [ headers ]
 *******************************************************************************/
-ULONG SIP_CodeSipURI(UBUF_HEADER_S *pstUbufMsg,
-                     void *pstStruct,
+ULONG SIP_CodeSipURI(void *pstStruct,
                      SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
@@ -414,17 +396,16 @@ ULONG SIP_CodeSipURI(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, "sip:");
 
-    if (pstSipURI->upstUserInfo != UBUF_NULL_PTR)
+    if (pstSipURI->pstUserInfo != NULL_PTR)
     {
-        pstUserInfo = UBUF_UBufPtr2Ptr(pstUbufMsg, pstSipURI->upstUserInfo);
-        ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_USERINFO)(pstUbufMsg, pstUserInfo, pstBuffer);
+        ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_USERINFO)(pstSipURI->pstUserInfo, pstBuffer);
         if (ulRet!= SUCCESS)
         {
             return ulRet;
         }
     }
 
-    ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOSTPORT)(pstUbufMsg, &pstSipURI->stHostPort, pstBuffer);
+    ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOSTPORT)(&pstSipURI->stHostPort, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -439,8 +420,7 @@ ULONG SIP_CodeSipURI(UBUF_HEADER_S *pstUbufMsg,
 SIPS-URI         =  "sips:" [ userinfo ] hostport
                     uri-parameters [ headers ]
 *******************************************************************************/
-ULONG SIP_CodeSipsURI(UBUF_HEADER_S *pstUbufMsg,
-                      void *pstStruct,
+ULONG SIP_CodeSipsURI(void *pstStruct,
                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
@@ -450,17 +430,16 @@ ULONG SIP_CodeSipsURI(UBUF_HEADER_S *pstUbufMsg,
     pstSipsURI = (SIP_URI_S *)pstStruct;
     SIP_ADD_STRING(pstBuffer, "sips:");
 
-    if (pstSipsURI->upstUserInfo != UBUF_NULL_PTR)
+    if (pstSipsURI->pstUserInfo != NULL_PTR)
     {
-        pstUserInfo = UBUF_UBufPtr2Ptr(pstUbufMsg, pstSipsURI->upstUserInfo);
-        ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_USERINFO)(pstUbufMsg, pstUserInfo, pstBuffer);
+        ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_USERINFO)(pstSipsURI->pstUserInfo, pstBuffer);
         if (ulRet!= SUCCESS)
         {
             return ulRet;
         }
     }
 
-    ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOSTPORT)(pstUbufMsg, &pstSipsURI->stHostPort, pstBuffer);
+    ulRet= SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOSTPORT)(&pstSipsURI->stHostPort, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -474,8 +453,7 @@ ULONG SIP_CodeSipsURI(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 *******************************************************************************/
-ULONG SIP_CodeUserinfo(UBUF_HEADER_S *pstUbufMsg,
-                       void *pstStruct,
+ULONG SIP_CodeUserinfo(void *pstStruct,
                        SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
@@ -483,17 +461,17 @@ ULONG SIP_CodeUserinfo(UBUF_HEADER_S *pstUbufMsg,
     URI_USER_INFO_S *pstUserInfo = NULL_PTR;
 
     pstUserInfo = (URI_USER_INFO_S *)pstStruct;
-    pucString   = UBUF_UBufPtr2Ptr(pstUbufMsg, pstUserInfo->upucUserInfo);
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_USER)(pstUbufMsg, pucString, pstBuffer);
+    pucString   = pstUserInfo->pucUserInfo;
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_USER)(pucString, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
     }
 
-    if (pstUserInfo->upucPassword!= UBUF_NULL_PTR)
+    if (pstUserInfo->pucPassword!= NULL_PTR)
     {
         SIP_ADD_STRING(pstBuffer, ":");
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstUserInfo->upucPassword);
+        pucString = pstUserInfo->pucPassword;
         SIP_ADD_STRING(pstBuffer, pucString);
     }
 
@@ -505,8 +483,7 @@ ULONG SIP_CodeUserinfo(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 *******************************************************************************/
-ULONG SIP_CodeUser(UBUF_HEADER_S *pstUbufMsg,
-                   void *pstStruct,
+ULONG SIP_CodeUser(void *pstStruct,
                    SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucUserInfo = NULL_PTR;
@@ -519,15 +496,14 @@ ULONG SIP_CodeUser(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 hostport         =  host [ ":" port ]
 *******************************************************************************/
-ULONG SIP_CodeHostport(UBUF_HEADER_S *pstUbufMsg,
-                       void *pstStruct,
+ULONG SIP_CodeHostport(void *pstStruct,
                        SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_HOST_PORT_S *pstHostPort = NULL_PTR;
 
     pstHostPort = (URI_HOST_PORT_S *)pstStruct;
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(pstUbufMsg, &pstHostPort->stHost, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(&pstHostPort->stHost, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -536,7 +512,7 @@ ULONG SIP_CodeHostport(UBUF_HEADER_S *pstUbufMsg,
     if (pstHostPort->usPort != NULL_USHORT)
     {
         SIP_ADD_STRING(pstBuffer, ":");
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_PORT)(pstUbufMsg, &pstHostPort->usPort, pstBuffer);
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_PORT)(&pstHostPort->usPort, pstBuffer);
     }
 
     return SUCCESS;
@@ -545,15 +521,14 @@ ULONG SIP_CodeHostport(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 host             =  hostname / IPv4address / IPv6reference
 *******************************************************************************/
-ULONG SIP_CodeHost(UBUF_HEADER_S *pstUbufMsg,
-                   void *pstStruct,
+ULONG SIP_CodeHost(void *pstStruct,
                    SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
-    UCHAR *pucString = NULL_PTR;
+    UCHAR      *pucString = NULL_PTR;
     URI_HOST_S *pstHost = NULL_PTR;
 
     pstHost = (URI_HOST_S*)pstStruct;
-    pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstHost->upucAddrStr);
+    pucString = pstHost->pucAddrStr;
     SIP_ADD_STRING(pstBuffer, pucString);
 
     return SUCCESS;
@@ -562,8 +537,7 @@ ULONG SIP_CodeHost(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 port           =  1*DIGIT
 *******************************************************************************/
-ULONG SIP_CodePort(UBUF_HEADER_S *pstUbufMsg,
-                   void *pstStruct,
+ULONG SIP_CodePort(void *pstStruct,
                    SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     USHORT usPort;
@@ -582,8 +556,7 @@ Status-Code     =  Informational
                /   Global-Failure
                /   extension-code
 *******************************************************************************/
-ULONG SIP_CodeStatusCode(UBUF_HEADER_S *pstUbufMsg,
-                         void *pstStruct,
+ULONG SIP_CodeStatusCode(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_STATUS_CODE_E eStatusCode;
@@ -598,8 +571,7 @@ ULONG SIP_CodeStatusCode(UBUF_HEADER_S *pstUbufMsg,
 Reason-Phrase   =  *(reserved / unreserved / escaped
                    / UTF8-NONASCII / UTF8-CONT / SP / HTAB)
 *******************************************************************************/
-ULONG SIP_CodeReasonPhrase(UBUF_HEADER_S *pstUbufMsg,
-                           void *pstStruct,
+ULONG SIP_CodeReasonPhrase(void *pstStruct,
                            SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_STATUS_CODE_E eStatusCode;
@@ -819,8 +791,7 @@ ULONG SIP_CodeReasonPhrase(UBUF_HEADER_S *pstUbufMsg,
 from-spec   =  ( name-addr / addr-spec )
                *( SEMI from-param )
 *******************************************************************************/
-ULONG SIP_CodeFromSpec(UBUF_HEADER_S *pstUbufMsg,
-                       void *pstStruct,
+ULONG SIP_CodeFromSpec(void *pstStruct,
                        SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
@@ -830,12 +801,12 @@ ULONG SIP_CodeFromSpec(UBUF_HEADER_S *pstUbufMsg,
     pstFrom = (SIP_HEADER_FROM_S *)pstStruct;
     if (pstFrom->stNameAddr.bName == TRUE)
     {
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(pstUbufMsg, &pstFrom->stNameAddr, pstBuffer);
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(&pstFrom->stNameAddr, pstBuffer);
     }
     else
     {
-        pstUri = UBUF_UBufPtr2Ptr(pstUbufMsg, pstFrom->stNameAddr.upstUri);
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUbufMsg, pstUri, pstBuffer);
+        pstUri = pstFrom->stNameAddr.pstUri;
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUri, pstBuffer);
     }
 
     if (ulRet!= SUCCESS)
@@ -843,7 +814,7 @@ ULONG SIP_CodeFromSpec(UBUF_HEADER_S *pstUbufMsg,
         return ulRet;
     }
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_FROM_PARAM)(pstUbufMsg, pstFrom, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_FROM_PARAM)(pstFrom, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -855,19 +826,18 @@ ULONG SIP_CodeFromSpec(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 from-param  =  tag-param / generic-param
 *******************************************************************************/
-ULONG SIP_CodeFromParam(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
+ULONG SIP_CodeFromParam(void *pstStruct,
                         SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucString = NULL_PTR;
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
 
     pstFrom = (SIP_HEADER_FROM_S *)pstStruct;
-    if (pstFrom->upucTag != UBUF_NULL_PTR)
+    if (pstFrom->pucTag != NULL_PTR)
     {
         SIP_ADD_STRING(pstBuffer, ";");
         SIP_ADD_STRING(pstBuffer, "tag=");
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstFrom->upucTag);
+        pucString = pstFrom->pucTag;
         SIP_ADD_STRING(pstBuffer, pucString);
     }
 
@@ -877,19 +847,18 @@ ULONG SIP_CodeFromParam(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 to-param  =  tag-param / generic-param
 *******************************************************************************/
-ULONG SIP_CodeToParam(UBUF_HEADER_S *pstUbufMsg,
-                      void *pstStruct,
+ULONG SIP_CodeToParam(void *pstStruct,
                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucString = NULL_PTR;
     SIP_HEADER_TO_S *pstTo = NULL_PTR;
 
     pstTo = (SIP_HEADER_TO_S *)pstStruct;
-    if (pstTo->upucTag != UBUF_NULL_PTR)
+    if (pstTo->pucTag != NULL_PTR)
     {
         SIP_ADD_STRING(pstBuffer, ";");
         SIP_ADD_STRING(pstBuffer, "tag=");
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstTo->upucTag);
+        pucString = pstTo->pucTag;
         SIP_ADD_STRING(pstBuffer, pucString);
     }
 
@@ -899,15 +868,14 @@ ULONG SIP_CodeToParam(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 via-parm          =  sent-protocol LWS sent-by *( SEMI via-params )
 *******************************************************************************/
-ULONG SIP_CodeViaParm(UBUF_HEADER_S *pstUbufMsg,
-                      void *pstStruct,
+ULONG SIP_CodeViaParm(void *pstStruct,
                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_VIA_PARM_S *pstViaParm = NULL_PTR;
 
     pstViaParm = (SIP_VIA_PARM_S *)pstStruct;
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SENT_PROTOCOL)(pstUbufMsg, &pstViaParm->eProtocolType, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SENT_PROTOCOL)(&pstViaParm->eProtocolType, pstBuffer);
     if (ulRet != SUCCESS)
     {
         return ulRet;
@@ -915,13 +883,13 @@ ULONG SIP_CodeViaParm(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, " ");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SENT_BY)(pstUbufMsg, &pstViaParm->stSendBy, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SENT_BY)(&pstViaParm->stSendBy, pstBuffer);
     if (ulRet != SUCCESS)
     {
         return ulRet;
     }
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_PARMS)(pstUbufMsg, pstViaParm, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_PARMS)(pstViaParm, pstBuffer);
     if (ulRet != SUCCESS)
     {
         return ulRet;
@@ -934,8 +902,7 @@ ULONG SIP_CodeViaParm(UBUF_HEADER_S *pstUbufMsg,
 sent-protocol     =  protocol-name SLASH protocol-version
                      SLASH transport
 *******************************************************************************/
-ULONG SIP_CodeSentProtocol(UBUF_HEADER_S *pstUbufMsg,
-                           void *pstStruct,
+ULONG SIP_CodeSentProtocol(void *pstStruct,
                            SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_TRANSPORT_PROTOCOL_E  eProtocolType;
@@ -944,15 +911,14 @@ ULONG SIP_CodeSentProtocol(UBUF_HEADER_S *pstUbufMsg,
 
     SIP_ADD_STRING(pstBuffer, "SIP/2.0/");
 
-    return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_TRANSPORT)(pstUbufMsg, &eProtocolType, pstBuffer);
+    return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_TRANSPORT)(&eProtocolType, pstBuffer);
 }
 
 /*******************************************************************************
 transport         =  "UDP" / "TCP" / "TLS" / "SCTP"
                      / other-transport
 *******************************************************************************/
-ULONG SIP_CodeTransport(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
+ULONG SIP_CodeTransport(void *pstStruct,
                         SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_TRANSPORT_PROTOCOL_E  eProtocolType;
@@ -986,15 +952,14 @@ ULONG SIP_CodeTransport(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 sent-by           =  host [ COLON port ]
 *******************************************************************************/
-ULONG SIP_CodeSentBy(UBUF_HEADER_S *pstUbufMsg,
-                     void *pstStruct,
+ULONG SIP_CodeSentBy(void *pstStruct,
                      SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_HOST_PORT_S *pstSendBy = NULL_PTR;
 
     pstSendBy = (URI_HOST_PORT_S *)pstStruct;
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(pstUbufMsg, &pstSendBy->stHost, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(&pstSendBy->stHost, pstBuffer);
     if (ulRet != SUCCESS)
     {
         return ulRet;
@@ -1003,7 +968,7 @@ ULONG SIP_CodeSentBy(UBUF_HEADER_S *pstUbufMsg,
     if (pstSendBy->usPort != NULL_USHORT)
     {
         SIP_ADD_STRING(pstBuffer, ":");
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_PORT)(pstUbufMsg, &pstSendBy->usPort, pstBuffer);
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_PORT)(&pstSendBy->usPort, pstBuffer);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1018,8 +983,7 @@ via-params        =  via-ttl / via-maddr
                      / via-received / via-branch
                      / via-extension
 *******************************************************************************/
-ULONG SIP_CodeViaParams(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
+ULONG SIP_CodeViaParams(void *pstStruct,
                         SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
@@ -1032,40 +996,40 @@ ULONG SIP_CodeViaParams(UBUF_HEADER_S *pstUbufMsg,
     if (pstViaParm->ulTtl != NULL_ULONG)
     {
         SIP_ADD_STRING(pstBuffer, ";");
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_TTL)(pstUbufMsg, &pstViaParm->ulTtl, pstBuffer);
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_TTL)(&pstViaParm->ulTtl, pstBuffer);
         if (ulRet!= SUCCESS)
         {
             return FAIL;
         }
     }
 
-    if (pstViaParm->upucBranch != UBUF_NULL_PTR)
+    if (pstViaParm->pucBranch != NULL_PTR)
     {
         SIP_ADD_STRING(pstBuffer, ";");
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstViaParm->upucBranch);
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_BRANCH)(pstUbufMsg, pucString, pstBuffer);
+        pucString = pstViaParm->pucBranch;
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_BRANCH)(pucString, pstBuffer);
         if (ulRet!= SUCCESS)
         {
             return FAIL;
         }
     }
 
-    if (pstViaParm->upstMaddr != UBUF_NULL_PTR)
+    if (pstViaParm->pstMaddr != NULL_PTR)
     {
         SIP_ADD_STRING(pstBuffer, ";");
-        pstMaddr = UBUF_UBufPtr2Ptr(pstUbufMsg, pstViaParm->upstMaddr);
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_MADDR)(pstUbufMsg, pstMaddr, pstBuffer);
+        pstMaddr = pstViaParm->pstMaddr;
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_MADDR)(pstMaddr, pstBuffer);
         if (ulRet!= SUCCESS)
         {
             return FAIL;
         }
     }
 
-    if (pstViaParm->upstReceived != UBUF_NULL_PTR)
+    if (pstViaParm->pstReceived != NULL_PTR)
     {
         SIP_ADD_STRING(pstBuffer, ";");
-        pstReceived = UBUF_UBufPtr2Ptr(pstUbufMsg, pstViaParm->upstReceived);
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_RECEIVED)(pstUbufMsg, pstReceived, pstBuffer);
+        pstReceived = pstViaParm->pstReceived;
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_RECEIVED)(pstReceived, pstBuffer);
         if (ulRet!= SUCCESS)
         {
             return FAIL;
@@ -1078,8 +1042,7 @@ ULONG SIP_CodeViaParams(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 via-ttl           =  "ttl" EQUAL ttl
 *******************************************************************************/
-ULONG SIP_CodeViaTtl(UBUF_HEADER_S *pstUbufMsg,
-                     void *pstStruct,
+ULONG SIP_CodeViaTtl(void *pstStruct,
                      SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulTtl;
@@ -1093,22 +1056,20 @@ ULONG SIP_CodeViaTtl(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 via-maddr         =  "maddr" EQUAL host
 *******************************************************************************/
-ULONG SIP_CodeViaMaddr(UBUF_HEADER_S *pstUbufMsg,
-                       void *pstStruct,
+ULONG SIP_CodeViaMaddr(void *pstStruct,
                        SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     URI_HOST_S *pstMaddr = NULL_PTR;
 
     pstMaddr= (URI_HOST_S *)pstStruct;
     SIP_ADD_STRING(pstBuffer,"maddr=");
-    return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(pstUbufMsg, pstMaddr, pstBuffer);
+    return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(pstMaddr, pstBuffer);
 }
 
 /*******************************************************************************
 via-received      =  "received" EQUAL (IPv4address / IPv6address)
 *******************************************************************************/
-ULONG SIP_CodeViaReceived(UBUF_HEADER_S *pstUbufMsg,
-                          void *pstStruct,
+ULONG SIP_CodeViaReceived(void *pstStruct,
                           SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucString = NULL_PTR;
@@ -1118,12 +1079,12 @@ ULONG SIP_CodeViaReceived(UBUF_HEADER_S *pstUbufMsg,
     SIP_ADD_STRING(pstBuffer, "received=");
     if (pstReceived->eIpType == SIP_IP_TYPE_IPV4)
     {
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstReceived->u.upucIPV4);
+        pucString = pstReceived->u.pucIPV4;
         SIP_ADD_STRING(pstBuffer, pucString);
     }
     else
     {
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstReceived->u.upucIPV6);
+        pucString = pstReceived->u.pucIPV6;
         SIP_ADD_STRING(pstBuffer, pucString);
     }
 
@@ -1133,8 +1094,7 @@ ULONG SIP_CodeViaReceived(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 via-branch        =  "branch" EQUAL token
 *******************************************************************************/
-ULONG SIP_CodeViaBranch(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
+ULONG SIP_CodeViaBranch(void *pstStruct,
                         SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucBranch = NULL_PTR;
@@ -1148,9 +1108,8 @@ ULONG SIP_CodeViaBranch(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 name-addr      =  [ display-name ] LAQUOT addr-spec RAQUOT
 *******************************************************************************/
-ULONG SIP_CodeNameAddr(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeNameAddr(void *pstStruct,
+                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     UCHAR *pucString = NULL_PTR;
@@ -1158,16 +1117,16 @@ ULONG SIP_CodeNameAddr(UBUF_HEADER_S *pstUbufMsg,
     URI_S           *pstUri = NULL_PTR;
 
     pstNameAddr = (SIP_NAME_ADDR_S *)pstStruct;
-    if (pstNameAddr->upucName != UBUF_NULL_PTR)
+    if (pstNameAddr->pucName != NULL_PTR)
     {
-        pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstNameAddr->upucName);
+        pucString = pstNameAddr->pucName;
         SIP_ADD_STRING(pstBuffer, pucString);
     }
 
     SIP_ADD_STRING(pstBuffer, "<");
 
-    pstUri = UBUF_UBufPtr2Ptr(pstUbufMsg, pstNameAddr->upstUri);
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUbufMsg, pstUri, pstBuffer);
+    pstUri = pstNameAddr->pstUri;
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUri, pstBuffer);
     if (ulRet != SUCCESS)
     {
         return ulRet;
@@ -1181,9 +1140,8 @@ ULONG SIP_CodeNameAddr(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 addr-spec      =  SIP-URI / SIPS-URI / absoluteURI
 *******************************************************************************/
-ULONG SIP_CodeAddrSpec(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeAddrSpec(void *pstStruct,
+                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_S *pstAddrSpec = NULL_PTR;
@@ -1192,11 +1150,11 @@ ULONG SIP_CodeAddrSpec(UBUF_HEADER_S *pstUbufMsg,
     switch (pstAddrSpec->eUriType)
     {
         case URI_TYPE_SIP:
-            ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_URI)(pstUbufMsg, &pstAddrSpec->u.stSipUri, pstBuffer);
+            ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_URI)(&pstAddrSpec->u.stSipUri, pstBuffer);
             break;
 
         case URI_TYPE_SIPS:
-            ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIPS_URI)(pstUbufMsg, &pstAddrSpec->u.stSipUri, pstBuffer);
+            ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIPS_URI)(&pstAddrSpec->u.stSipUri, pstBuffer);
             break;
 
         default:
@@ -1211,9 +1169,8 @@ ULONG SIP_CodeAddrSpec(UBUF_HEADER_S *pstUbufMsg,
 Accept         =  "Accept" HCOLON
                    [ accept-range *(COMMA accept-range) ]
 *******************************************************************************/
-ULONG SIP_CodeHeaderAccept(UBUF_HEADER_S *pstUbufMsg,
-                        void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderAccept(void *pstStruct,
+                           SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_ACCEPT_S *pstAccept = NULL_PTR;
 
@@ -1228,9 +1185,8 @@ ULONG SIP_CodeHeaderAccept(UBUF_HEADER_S *pstUbufMsg,
 Accept-Encoding  =  "Accept-Encoding" HCOLON
                      [ encoding *(COMMA encoding) ]
 *******************************************************************************/
-ULONG SIP_CodeHeaderAcceptEncoding(UBUF_HEADER_S *pstUbufMsg,
-                                    void *pstStruct,
-                                    SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderAcceptEncoding(void *pstStruct,
+                                   SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_ACCEPT_ENCODING_S *pstAcceptEncoding = NULL_PTR;
 
@@ -1243,9 +1199,8 @@ ULONG SIP_CodeHeaderAcceptEncoding(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 Call-ID  =  ( "Call-ID" / "i" ) HCOLON callid
 *******************************************************************************/
-ULONG SIP_CodeHeaderCallID(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderCallID(void *pstStruct,
+                           SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_CALL_ID_S *pstCallID= NULL_PTR;
     UCHAR *pucString = NULL_PTR;
@@ -1253,7 +1208,7 @@ ULONG SIP_CodeHeaderCallID(UBUF_HEADER_S *pstUbufMsg,
     pstCallID = (SIP_HEADER_CALL_ID_S *)pstStruct;
 
     SIP_ADD_STRING(pstBuffer, "Call-ID: ");
-    pucString = UBUF_UBufPtr2Ptr(pstUbufMsg, pstCallID->upucCallID);
+    pucString = pstCallID->pucCallID;
     SIP_ADD_STRING(pstBuffer, pucString);
     return SUCCESS;
 }
@@ -1261,9 +1216,8 @@ ULONG SIP_CodeHeaderCallID(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 CSeq  =  "CSeq" HCOLON 1*DIGIT LWS Method
 *******************************************************************************/
-ULONG SIP_CodeHeaderCseq(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderCseq(void *pstStruct,
+                         SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_CSEQ_S *pstCseq = NULL_PTR;
@@ -1274,7 +1228,7 @@ ULONG SIP_CodeHeaderCseq(UBUF_HEADER_S *pstUbufMsg,
     SIP_ADD_DEC_NUM(pstBuffer, pstCseq->ulSeq);
     SIP_ADD_STRING(pstBuffer, " ");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_METHOD)(pstUbufMsg, &pstCseq->eMethod, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_METHOD)(&pstCseq->eMethod, pstBuffer);
 
     return ulRet;
 }
@@ -1282,9 +1236,8 @@ ULONG SIP_CodeHeaderCseq(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 From        =  ( "From" / "f" ) HCOLON from-spec
 *******************************************************************************/
-ULONG SIP_CodeHeaderFrom(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderFrom(void *pstStruct,
+                         SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
@@ -1292,7 +1245,7 @@ ULONG SIP_CodeHeaderFrom(UBUF_HEADER_S *pstUbufMsg,
     pstFrom = (SIP_HEADER_FROM_S *)pstStruct;
     SIP_ADD_STRING(pstBuffer, "From: ");
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstUbufMsg, pstFrom, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstFrom, pstBuffer);
     return ulRet;
 }
 
@@ -1300,9 +1253,8 @@ ULONG SIP_CodeHeaderFrom(UBUF_HEADER_S *pstUbufMsg,
 To        =  ( "To" / "t" ) HCOLON ( name-addr
              / addr-spec ) *( SEMI to-param )
 *******************************************************************************/
-ULONG SIP_CodeHeaderTo(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderTo(void *pstStruct,
+                       SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_TO_S *pstTo = NULL_PTR;
@@ -1314,12 +1266,12 @@ ULONG SIP_CodeHeaderTo(UBUF_HEADER_S *pstUbufMsg,
 
     if (pstTo->stNameAddr.bName == TRUE)
     {
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(pstUbufMsg, &pstTo->stNameAddr, pstBuffer);
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(&pstTo->stNameAddr, pstBuffer);
     }
     else
     {
-        pstUri = UBUF_UBufPtr2Ptr(pstUbufMsg, pstTo->stNameAddr.upstUri);
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUbufMsg, pstUri, pstBuffer);
+        pstUri = pstTo->stNameAddr.pstUri;
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUri, pstBuffer);
     }
 
     if (ulRet!= SUCCESS)
@@ -1327,7 +1279,7 @@ ULONG SIP_CodeHeaderTo(UBUF_HEADER_S *pstUbufMsg,
         return ulRet;
     }
 
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_TO_PARAM)(pstUbufMsg, pstTo, pstBuffer);
+    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_TO_PARAM)(pstTo, pstBuffer);
     if (ulRet!= SUCCESS)
     {
         return ulRet;
@@ -1339,35 +1291,33 @@ ULONG SIP_CodeHeaderTo(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 Via               =  ( "Via" / "v" ) HCOLON via-parm *(COMMA via-parm)
 *******************************************************************************/
-ULONG SIP_CodeHeaderVia(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderVia(void *pstStruct,
+                        SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
-    UBUF_PTR       *pupstViaParm = NULL_PTR;
-    SIP_VIA_PARM_S *pstViaParm = NULL_PTR;
+    SIP_VIA_PARM_S   *pstViaParm = NULL_PTR;
     SIP_HEADER_VIA_S *pstVia = NULL_PTR;
     BOOL  bFirst = TRUE;
 
     pstVia = (SIP_HEADER_VIA_S *)pstStruct;
     SIP_ADD_STRING(pstBuffer, "Via: ");
 
-    pupstViaParm = &pstVia->upstViaParm;
-    while(*pupstViaParm != UBUF_NULL_PTR)
+    pstViaParm = pstVia->pstViaParm;
+    while(pstViaParm != NULL_PTR)
     {
         if (bFirst != TRUE)
         {
             SIP_ADD_STRING(pstBuffer, ",");
         }
-        pstViaParm = UBUF_UBufPtr2Ptr(pstUbufMsg, *pupstViaParm);
-        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_PARM)(pstUbufMsg, pstViaParm, pstBuffer);
+
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_PARM)(pstViaParm, pstBuffer);
         if (ulRet != NULL_PTR)
         {
             return ulRet;
         }
 
         bFirst = FALSE;
-        pupstViaParm = &pstViaParm->upstNext;
+        pstViaParm = pstViaParm->pstNext;
     }
 
     return SUCCESS;
@@ -1376,9 +1326,8 @@ ULONG SIP_CodeHeaderVia(UBUF_HEADER_S *pstUbufMsg,
 /*******************************************************************************
 Max-Forwards  =  "Max-Forwards" HCOLON 1*DIGIT
 *******************************************************************************/
-ULONG SIP_CodeHeaderMaxForwards(UBUF_HEADER_S *pstUbufMsg,
-                            void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+ULONG SIP_CodeHeaderMaxForwards(void *pstStruct,
+                                SIP_SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_MAX_FORWARDS_S *pstMaxForwards = NULL_PTR;
 

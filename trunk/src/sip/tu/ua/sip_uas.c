@@ -167,8 +167,6 @@ ULONG SIP_UAS_GenerateResponse(ULONG ulUasID, UBUF_HEADER_S * pstUbufSipMsg)
     pstUbufRequestMsg = g_pstSipUasCB[ulUasID].pstSipMsgUbuf;
 
     /* 克隆From头域 */
-    SIP_CloneAddrSpec(UBUF_HEADER_S * pstSrcUbufMsg, UBUF_PTR upSrcUPtr, UBUF_HEADER_S * pstDstUbufMsg, UBUF_PTR * pupDstUPtr)
-
     /* 克隆Call-ID头域 */
     /* 克隆CSeq头域 */
     /* 克隆Via头域 */

@@ -46,7 +46,7 @@ ULONG SIP_UA_RecvUpMsg(ULONG ulTxnID,
     SIP_MSG_S *pstSipMsg = NULL_PTR;
     ULONG ulRet;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     switch (pstSipMsg->eMsgType)
     {
         case SIP_MSG_TYPE_REQUEST:

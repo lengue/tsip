@@ -48,7 +48,7 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
         eEvent = SIP_TXN_EVENT_SEND_REQUEST;
@@ -102,7 +102,7 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID, UBUF_HEADER_S *pstUbufSipMsg)
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
         if (pstSipMsg->uStartLine.stRequstLine.eMethod == SIP_METHOD_ACK)

@@ -4,7 +4,6 @@
 创建日期: 200.01.10
 修改记录:
 *******************************************************************************/
-
 ULONG ABNF_Init();
 ULONG ABNF_BuildRuleList(UCHAR *pucText,
                          ULONG  ulLen,

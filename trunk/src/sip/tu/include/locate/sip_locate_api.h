@@ -1,6 +1,5 @@
-extern ULONG SIP_Locate_Server(UBUF_HEADER_S *pstUbuf,
-                               UBUF_PTR       upUri,
+extern ULONG SIP_Locate_Server(URI_S *pstUri,
                                SIP_LOCATION_RESULT_S   *pstResult,
                                SIP_LOCATION_RESULT_PROC pfnProc,
                                ULONG ulPara);
-extern ULONG SIP_Locate_FindNextHop(UBUF_HEADER_S *pstUbufSipMsg, UBUF_PTR *pupUri);
+extern ULONG SIP_Locate_FindNextHop(UBUF_HEADER_S *pstUbufSipMsg, URI_S **ppstUri);

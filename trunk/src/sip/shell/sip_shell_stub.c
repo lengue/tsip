@@ -41,7 +41,7 @@ ULONG SIP_SendUpRequestMsg(ULONG ulDlgID,
     }
 
     return g_stSiphellCfg.pfnSendUpRequestMsg(ulDlgID,
-                                              ulTxnID,
+                                              ulUasID,
                                               pstUbufSipMsg);
 }
 

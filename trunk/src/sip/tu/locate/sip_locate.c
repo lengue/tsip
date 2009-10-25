@@ -24,21 +24,17 @@
 
 
 /* 用于定位请求的目的位置 */
-ULONG SIP_Locate_Server(UBUF_HEADER_S *pstUbuf,
-                        UBUF_PTR       upUri,
+ULONG SIP_Locate_Server(URI_S *pstUri,
                         SIP_LOCATION_RESULT_S   *pstResult,
                         SIP_LOCATION_RESULT_PROC pfnProc,
                         ULONG ulPara)
 {
 //    ULONG ulRet;
-    URI_S *pstUri = NULL_PTR;
     SIP_TRANSPORT_PROTOCOL_E eProtocol = SIP_TRANSPORT_PROTOCOL_BUTT;
     UCHAR *pucAddr = NULL_PTR;
     USHORT usPort;
-    UBUF_PTR upPara;
     URI_PARAMETER_S *pstUriPara = NULL_PTR;
 
-    pstUri = UBUF_UBufPtr2Ptr(pstUbuf, upUri);
     if ((pstUri->eUriType != URI_TYPE_SIP)||(pstUri->eUriType != URI_TYPE_SIP))
     {
         return FAIL;
@@ -46,16 +42,16 @@ ULONG SIP_Locate_Server(UBUF_HEADER_S *pstUbuf,
 
     /* 选择传输协议 */
     /* 查找protocol参数 */
-    upPara = pstUri->u.stSipUri.upstParameters;
-    while (upPara != UBUF_NULL_PTR)
+    pstUriPara = pstUri->u.stSipUri.pstParameters;
+    while (pstUriPara != NULL_PTR)
     {
-        pstUriPara = UBUF_UBufPtr2Ptr(pstUbuf, upPara);
         if (pstUriPara->eParaName == URI_PARAMETER_TRANSPORT)
         {
             eProtocol = pstUriPara->ucParaValue;
             break;
         }
-        upPara = pstUriPara->upstNext;
+
+        pstUriPara = pstUriPara->pstNext;
     }
 
     if (eProtocol == SIP_TRANSPORT_PROTOCOL_BUTT)
@@ -104,7 +100,7 @@ ULONG SIP_Locate_Server(UBUF_HEADER_S *pstUbuf,
     /* 选择IP地址和端口号 */
     if (pstUri->u.stSipUri.stHostPort.stHost.eHostType != URI_HOST_DOMAIN)
     {
-        pucAddr = UBUF_UBufPtr2Ptr(pstUbuf, pstUri->u.stSipUri.stHostPort.stHost.upucAddrStr);
+        pucAddr = pstUri->u.stSipUri.stHostPort.stHost.pucAddrStr;
         if(pstUri->u.stSipUri.stHostPort.usPort != NULL_USHORT)
         {
             usPort = pstUri->u.stSipUri.stHostPort.usPort;
@@ -169,11 +165,10 @@ ULONG SIP_Locate_Server(UBUF_HEADER_S *pstUbuf,
 }
 
 /* 用于定位响应的目的位置 */
-ULONG SIP_Locate_Client(UBUF_HEADER_S *pstUbuf,
-                                UBUF_PTR       upSendBy,
-                                SIP_LOCATION_RESULT_S   *pstResult,
-                                SIP_LOCATION_RESULT_PROC pfnProc,
-                                ULONG ulPara)
+ULONG SIP_Locate_Client(URI_HOST_PORT_S  *pstSendBy,
+                        SIP_LOCATION_RESULT_S   *pstResult,
+                        SIP_LOCATION_RESULT_PROC pfnProc,
+                        ULONG ulPara)
 {
     #if 0
     if(/*send-by字段是一个可靠传输协议*/)
@@ -196,8 +191,7 @@ ULONG SIP_Locate_Client(UBUF_HEADER_S *pstUbuf,
 }
 
 /* 用于定位响应的备份目的位置 */
-ULONG SIP_Locate_RedundancyClient(UBUF_HEADER_S *pstUbuf,
-                                  UBUF_PTR       upSendBy,
+ULONG SIP_Locate_RedundancyClient(URI_HOST_PORT_S  *pstSendBy,
                                   SIP_LOCATION_RESULT_S   *pstResult,
                                   SIP_LOCATION_RESULT_PROC pfnProc,
                                   ULONG ulPara)
@@ -238,51 +232,46 @@ ULONG SIP_Locate_RedundancyClient(UBUF_HEADER_S *pstUbuf,
 }
 
 /* 发现下一跳，同时会整理RequestURI和路由集 */
-ULONG SIP_Locate_FindNextHop(UBUF_HEADER_S *pstUbufSipMsg, UBUF_PTR *pupUri)
+ULONG SIP_Locate_FindNextHop(UBUF_HEADER_S *pstUbufSipMsg, URI_S **ppstUri)
 {
     SIP_MSG_S          *pstSipMsg = NULL_PTR;
-    SIP_HEADER_S       *pstHeader = NULL_PTR;
     SIP_HEADER_ROUTE_S *pstRoute  = NULL_PTR;
     SIP_ROUTE_PARAM_S  *pstRouteParam = NULL_PTR;
-    UBUF_PTR            upRequestUri;
-    UBUF_PTR           *pupTemp;
+    URI_S              *pstRequestURI = NULL_PTR;
+    SIP_ROUTE_PARAM_S **ppstTemp = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
-    if (pstSipMsg->aupstHeaders[SIP_HEADER_ROUTE] == UBUF_NULL_PTR)
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    if (pstSipMsg->apstHeaders[SIP_HEADER_ROUTE] == NULL_PTR)
     {
         /* 如果路由集为空，下一跳URI为RequestURI */
-        *pupUri = pstSipMsg->uStartLine.stRequstLine.upRequestURI;
+        *ppstUri = pstSipMsg->uStartLine.stRequstLine.pstRequestURI;
         return SUCCESS;
     }
 
     /* 如果路由集为空，下一跳URI为路由集的第一个路由地址 */
-    pstHeader = UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstSipMsg->aupstHeaders[SIP_HEADER_ROUTE]);
-    pstRoute = (SIP_HEADER_ROUTE_S *)pstHeader->pstSpec;
-    pstRouteParam = UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstRoute->upstRouteParam);
+    pstRoute      = (SIP_HEADER_ROUTE_S *)pstSipMsg->apstHeaders[SIP_HEADER_ROUTE];
+    pstRouteParam = pstRoute->pstRouteParam;
 
-    *pupUri = pstRouteParam->stNameAddr.upstUri;
+    *ppstUri = pstRouteParam->stNameAddr.pstUri;
 
     /* 如果路由集最顶端的URI为严格路由器，则将最顶端URI迁移到RequestURI中。原来
     的RequestURI放在Route最后 */
     if (pstRouteParam->ucLr == FALSE)
     {
-        upRequestUri = pstSipMsg->uStartLine.stRequstLine.upRequestURI;
-        pstSipMsg->uStartLine.stRequstLine.upRequestURI
-                                         = pstRouteParam->stNameAddr.upstUri;
-        pstRoute->upstRouteParam = pstRouteParam->upstNext;
-        pupTemp = &pstRoute->upstRouteParam;
-        while (*pupTemp != UBUF_NULL_PTR)
+        pstRequestURI = pstSipMsg->uStartLine.stRequstLine.pstRequestURI;
+        pstSipMsg->uStartLine.stRequstLine.pstRequestURI
+                                         = pstRouteParam->stNameAddr.pstUri;
+        pstRoute->pstRouteParam = pstRouteParam->pstNext;
+        ppstTemp = &pstRoute->pstRouteParam;
+        while (*ppstTemp != NULL_PTR)
         {
-            pstRouteParam = UBUF_UBufPtr2Ptr(pstUbufSipMsg, *pupTemp);
-            pupTemp = &pstRouteParam->upstNext;
+            ppstTemp = &(*ppstTemp)->pstNext;
         }
 
-        pstRouteParam = UBUF_AddComponent(pstUbufSipMsg,
-                                          sizeof(SIP_ROUTE_PARAM_S),
-                                          pupTemp);
-        memset(pstRouteParam, 0xff, sizeof(SIP_ROUTE_PARAM_S));
+        *ppstTemp = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_ROUTE_PARAM_S));
+        memset(pstRouteParam, 0x0, sizeof(SIP_ROUTE_PARAM_S));
         pstRouteParam->stNameAddr.bName   = FALSE;
-        pstRouteParam->stNameAddr.upstUri = upRequestUri;
+        pstRouteParam->stNameAddr.pstUri = pstRequestURI;
         pstRouteParam->ucLr = FALSE;
     }
 
