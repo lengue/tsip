@@ -4,167 +4,126 @@
 创建日期: 2009.07.19
 修改记录:
 *******************************************************************************/
-ULONG SIP_CloneSIPmessage(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneSIPmessage(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneRequest(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneRequest(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneResponse(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneResponse(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneRequestLine(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneRequestLine(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneStatusLine(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneStatusLine(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneMessageHeader(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneMessageHeader(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneMessageBody(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneMessageBody(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneMethod(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneMethod(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneRequestURI(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneRequestURI(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneSIPVersion(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneSIPVersion(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneSipURI(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneSipURI(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneSipsURI(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneSipsURI(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneUserinfo(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneUserinfo(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneUser(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneUser(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHostport(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHostport(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHost(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHost(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_ClonePort(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_ClonePort(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneStatusCode(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneStatusCode(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneReasonPhrase(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneReasonPhrase(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneFromSpec(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneFromSpec(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneFromParam(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneFromParam(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneToParam(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneToParam(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneViaParm(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneViaParm(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneSentProtocol(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneSentProtocol(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneTransport(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneTransport(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneSentBy(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneSentBy(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneViaParams(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneViaParams(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneViaTtl(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneViaTtl(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneViaMaddr(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneViaMaddr(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneViaReceived(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneViaReceived(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneViaBranch(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneViaBranch(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneNameAddr(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneNameAddr(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneAddrSpec(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneAddrSpec(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderAccept(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderAccept(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderAcceptEncoding(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderAcceptEncoding(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderCallID(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderCallID(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderCseq(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderCseq(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderFrom(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderFrom(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderTo(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderTo(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderVia(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderVia(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
-ULONG SIP_CloneHeaderMaxForwards(UBUF_HEADER_S *pstSrcUbufMsg,
-                                 UBUF_PTR       upSrcUPtr,
+                          void         **ppDstStruct);
+ULONG SIP_CloneHeaderMaxForwards(void          *pSrcStruct,
                                  UBUF_HEADER_S *pstDstUbufMsg,
-                                 UBUF_PTR      *pupDstUPtr);
+                                 void         **ppDstStruct);

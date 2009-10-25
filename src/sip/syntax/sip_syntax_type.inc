@@ -4,17 +4,15 @@
 创建日期: 200.01.10
 修改记录:
 *******************************************************************************/
-typedef ULONG (* FUNC_SIP_SYNTAX_CODE) (UBUF_HEADER_S *pstUbufMsg,
-                                        void *pstStruct,
+typedef ULONG (* FUNC_SIP_SYNTAX_CODE) (void *pstStruct,
                                         SIP_SYNTAX_BUFFER_S *pstBuffer);
 typedef ULONG (* FUNC_SIP_SYNTAX_PARSE)(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                         UCHAR               *pucString,
                                         UBUF_HEADER_S       *pstUbuf,
-                                        UBUF_PTR            *pupStruct);
-typedef ULONG (* FUNC_SIP_SYNTAX_CLONE)(UBUF_HEADER_S *pstSrcUbufMsg,
-                                        UBUF_PTR       upSrcUPtr,
+                                        void               **ppStruct);
+typedef ULONG (* FUNC_SIP_SYNTAX_CLONE)(void          *pSrcStruct,
                                         UBUF_HEADER_S *pstDstUbufMsg,
-                                        UBUF_PTR      *pupDstUPtr);
+                                        void         **ppDstStruct);
 /* SIP ABNF应用规则结构 */
 typedef struct tagSIP_APP_RULE_S
 {

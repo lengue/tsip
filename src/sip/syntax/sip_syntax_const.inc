@@ -83,26 +83,26 @@ typedef enum tagSIP_ABNF_RULE_E
 #define SIP_GET_OFFSET_POINT(pucString, ulOffset) pucString + (ulOffset)
 
 /* 获取字符串值宏 */
-#define SIP_GET_STRING(pucDest, pstNode, pucString, pstUbuf, UbufPtr) \
+#define SIP_GET_STRING(pucDest, pstNode, pucString, pstUbuf, ppStruct) \
 { \
-    (pucDest) = UBUF_AddComponent(pstUbuf, (pstNode)->ulSize + 1, UbufPtr);\
+    *(ppStruct) = UBUF_AddComponent(pstUbuf, (pstNode)->ulSize + 1);\
+    (pucDest) = *(ppStruct);\
     strncpy((pucDest), pucString + (pstNode)->ulOffset, (pstNode)->ulSize); \
     (pucDest)[(pstNode)->ulSize] = '\0'; \
 }
 
 /* 判断获取组件空间 */
-#define SIP_GET_COMPONET_PTR(pstComponet, Type, pstUbuf, pupStruct)\
+#define SIP_GET_COMPONET_PTR(pstComponet, Type, pstUbuf, ppStruct)\
 {\
-    if (*pupStruct == UBUF_NULL_PTR)\
+    if (*ppStruct == NULL_PTR)\
     {\
-        pstComponet = UBUF_AddComponent(pstUbuf,\
-                                        sizeof(Type),\
-                                        pupStruct);\
+        *ppStruct = UBUF_AddComponent(pstUbuf, sizeof(Type));\
+        pstComponet = *ppStruct;\
         memset(pstComponet, 0xff, sizeof(Type));\
     }\
     else\
     {\
-        pstComponet = UBUF_UBufPtr2Ptr(pstUbuf, *pupStruct);\
+        pstComponet = *ppStruct;\
     }\
 }
 

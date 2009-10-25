@@ -85,149 +85,6 @@ ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg)
     return SUCCESS;
 }
 
-/* SIP消息编码 */
-ULONG SIP_Syntax_SipCode(UBUF_HEADER_S *pstUBuf,
-                         UBUF_PTR upstSipMsg,
-                         UCHAR *pucBuffer,
-                         ULONG  ulBufferLen,
-                         ULONG *pulMsgLen)
-{
-    ULONG ulRet;
-    SIP_SYNTAX_BUFFER_S stBuffer;
-    SIP_MSG_S *pstSipMsg = NULL_PTR;
-
-    stBuffer.pucBuffer = pucBuffer;
-    stBuffer.ulBufferLen = ulBufferLen;
-    stBuffer.ulCurrentLen = 0;
-
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUBuf, upstSipMsg);
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_MESSAGE)(pstUBuf,
-                                                         pstSipMsg,
-                                                        &stBuffer);
-    if (ulRet == SUCCESS)
-    {
-        *pulMsgLen = stBuffer.ulCurrentLen;
-    }
-
-    return ulRet;
-}
-
-/* URI编码 */
-ULONG SIP_Syntax_UriCode(UBUF_HEADER_S *pstUBuf,
-                         UBUF_PTR upstUri,
-                         UCHAR *pucBuffer,
-                         ULONG  ulBufferLen,
-                         ULONG *pulMsgLen)
-{
-    ULONG ulRet;
-    SIP_SYNTAX_BUFFER_S stBuffer;
-    URI_S *pstAddrSpec = NULL_PTR;
-
-    stBuffer.pucBuffer    = pucBuffer;
-    stBuffer.ulBufferLen  = ulBufferLen;
-    stBuffer.ulCurrentLen = 0;
-
-    pstAddrSpec = UBUF_UBufPtr2Ptr(pstUBuf, upstUri);
-    ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUBuf,
-                                                       pstAddrSpec,
-                                                      &stBuffer);
-    if (ulRet == SUCCESS)
-    {
-        *pulMsgLen = stBuffer.ulCurrentLen;
-    }
-
-    return ulRet;
-}
-
-/* SIP消息解码 */
-ULONG SIP_Syntax_SipDecode(UCHAR *pucMsgString,
-                           ULONG ulMsgLen,
-                           UBUF_HEADER_S *pstUBuf,
-                           UBUF_PTR *pupstSipMsg)
-{
-    ULONG ulRet;
-    ABNF_GRAMMAR_NODE_S *pstNode   = NULL_PTR;
-
-    if (NULL_PTR == pstUBuf)
-    {
-        return FAIL;
-    }
-
-    ulRet = ABNF_GrammarParse(pucMsgString,
-                              ulMsgLen,
-                              g_pstSipRuleList,
-                              SIP_GET_RULE_INDEX(SIP_ABNF_RULE_SIP_MESSAGE),
-                             &pstNode);
-    if (ulRet != SUCCESS)
-    {
-        return FAIL;
-    }
-
-    ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_MESSAGE)(pstNode,
-                                                          pucMsgString,
-                                                          pstUBuf,
-                                                          pupstSipMsg);
-    if (ulRet != SUCCESS)
-    {
-        ABNF_FreeNodeTree(pstNode);
-        return FAIL;
-    }
-
-    ABNF_FreeNodeTree(pstNode);
-    return SUCCESS;
-}
-
-/* URI解码 */
-ULONG SIP_Syntax_UriDecode(UCHAR *pucMsgString,
-                           ULONG ulMsgLen,
-                           UBUF_HEADER_S *pstUBuf,
-                           UBUF_PTR *pupstUri)
-{
-    ULONG ulRet;
-    ABNF_GRAMMAR_NODE_S *pstNode   = NULL_PTR;
-
-    if (NULL_PTR == pstUBuf)
-    {
-        return FAIL;
-    }
-
-    ulRet = ABNF_GrammarParse(pucMsgString,
-                              ulMsgLen,
-                              g_pstSipRuleList,
-                              SIP_GET_RULE_INDEX(SIP_ABNF_RULE_ADDR_SPEC),
-                             &pstNode);
-    if (ulRet != SUCCESS)
-    {
-        return FAIL;
-    }
-
-    ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
-                                                        pucMsgString,
-                                                        pstUBuf,
-                                                        pupstUri);
-    if (ulRet != SUCCESS)
-    {
-        ABNF_FreeNodeTree(pstNode);
-        return FAIL;
-    }
-
-    ABNF_FreeNodeTree(pstNode);
-    return SUCCESS;
-}
-
-/* URI克隆 */
-ULONG SIP_Syntax_UriClone(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
-{
-
-    return SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstSrcUbufMsg,
-                                                       upSrcUPtr,
-                                                       pstDstUbufMsg,
-                                                       pupDstUPtr);
-}
-
 ULONG SIP_Syntax_GetRuleIndex(UCHAR *pucRuleName, ULONG *pulRuleIndex)
 {
     ULONG ulLoop;
@@ -246,14 +103,70 @@ ULONG SIP_Syntax_GetRuleIndex(UCHAR *pucRuleName, ULONG *pulRuleIndex)
     return FAIL;
 }
 
-ULONG SIP_Syntax_Code()
+ULONG SIP_Syntax_Code(ULONG  ulRuleIndex,
+                      void  *pstStruct,
+                      UCHAR *pucBuffer,
+                      ULONG  ulBufferLen,
+                      ULONG *pulMsgLen)
 {
+    ULONG ulRet;
+    SIP_SYNTAX_BUFFER_S stBuffer;
+
+    stBuffer.pucBuffer    = pucBuffer;
+    stBuffer.ulBufferLen  = ulBufferLen;
+    stBuffer.ulCurrentLen = 0;
+
+    ulRet = SIP_GET_CODE_FUNC(ulRuleIndex)(pstStruct, &stBuffer);
+    if (ulRet == SUCCESS)
+    {
+        *pulMsgLen = stBuffer.ulCurrentLen;
+    }
+
+    return ulRet;
 }
 
-ULONG SIP_Syntax_Decode()
+ULONG SIP_Syntax_Decode(ULONG  ulRuleIndex,
+                        UCHAR *pucMsgString,
+                        ULONG  ulMsgLen,
+                        UBUF_HEADER_S *pstUBuf,
+                        void **ppstStruct)
 {
+    ULONG ulRet;
+    ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
+
+    if (NULL_PTR == pstUBuf)
+    {
+        return FAIL;
+    }
+
+    ulRet = ABNF_GrammarParse(pucMsgString,
+                              ulMsgLen,
+                              g_pstSipRuleList,
+                              SIP_GET_RULE_INDEX(ulRuleIndex),
+                             &pstNode);
+    if (ulRet != SUCCESS)
+    {
+        return FAIL;
+    }
+
+    ulRet = SIP_GET_PARSE_FUNC(ulRuleIndex)(pstNode,
+                                            pucMsgString,
+                                            pstUBuf,
+                                            ppstStruct);
+    if (ulRet != SUCCESS)
+    {
+        ABNF_FreeNodeTree(pstNode);
+        return FAIL;
+    }
+
+    ABNF_FreeNodeTree(pstNode);
+    return SUCCESS;
 }
 
-ULONG SIP_Syntax_Clone()
+ULONG SIP_Syntax_Clone(ULONG          ulRuleIndex,
+                       void          *pSrcStruct,
+                       UBUF_HEADER_S *pstDstUbuf,
+                       void         **ppDstStruct)
 {
+    return SIP_GET_CLONE_FUNC(ulRuleIndex)(pSrcStruct, pstDstUbuf, ppDstStruct);
 }

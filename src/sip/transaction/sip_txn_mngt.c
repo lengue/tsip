@@ -98,16 +98,14 @@ ULONG SIP_Txn_MakeKey(void *pCompared)
     ULONG  ulKey = 0;
     UBUF_HEADER_S    *pstUbufSipMsg = NULL_PTR;
     SIP_MSG_S        *pstSipMsg     = NULL_PTR;
-    SIP_HEADER_S     *pstHeader     = NULL_PTR;
     SIP_HEADER_VIA_S *pstHeaderVia  = NULL_PTR;
     SIP_VIA_PARM_S   *pstViaPara    = NULL_PTR;
 
     pstUbufSipMsg = (UBUF_HEADER_S *)pCompared;
-    pstSipMsg    = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
-    pstHeader    = UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstHeaderVia = pstHeader->pstSpec;
-    pstViaPara   = UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstHeaderVia->upstViaParm);
-    pucChar      = UBUF_UBufPtr2Ptr(pstUbufSipMsg, pstViaPara->upucBranch);
+    pstSipMsg    = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    pstHeaderVia = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara   = pstHeaderVia->pstViaParm;
+    pucChar      = pstViaPara->pucBranch;
     while(*pucChar != 0)
     {
         ulKey += *pucChar;
@@ -126,7 +124,7 @@ ULONG SIP_Txn_Compare(void *pCompared, ULONG ulPara)
     SIP_TXN_CB_S     *pstSipTxnCB = NULL_PTR;
 
     pstUbufSipMsg = (UBUF_HEADER_S *)pCompared;
-    pstSipMsg     = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg     = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     pstSipTxnCB = &g_pstSipTxnCB[ulPara];
 
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
@@ -154,18 +152,18 @@ ULONG SIP_Txn_CompareResponse(UBUF_HEADER_S *pstUbufResponse,
     SIP_METHOD_E eMethod1;
     SIP_METHOD_E eMethod2;
 
-    pstSipMsg     = UBUF_UBufPtr2Ptr(pstUbufResponse, 0);
-    pstHeaderVia  = UBUF_UBufPtr2Ptr(pstUbufResponse, pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstViaPara    = UBUF_UBufPtr2Ptr(pstUbufResponse, pstHeaderVia->upstViaParm);
-    pucBranch1    = UBUF_UBufPtr2Ptr(pstUbufResponse, pstViaPara->upucBranch);
-    pstHeaderCseq = UBUF_UBufPtr2Ptr(pstUbufResponse, pstSipMsg->aupstHeaders[SIP_HEADER_CSEQ]);
+    pstSipMsg     = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufResponse);
+    pstHeaderVia  = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara    = pstHeaderVia->pstViaParm;
+    pucBranch1    = pstViaPara->pucBranch;
+    pstHeaderCseq = (SIP_HEADER_CSEQ_S *)pstSipMsg->apstHeaders[SIP_HEADER_CSEQ];
     eMethod1      = pstHeaderCseq->eMethod;
 
-    pstSipMsg     = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, 0);
-    pstHeaderVia  = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstViaPara    = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstHeaderVia->upstViaParm);
-    pucBranch2    = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstViaPara->upucBranch);
-    pstHeaderCseq = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstSipMsg->aupstHeaders[SIP_HEADER_CSEQ]);
+    pstSipMsg     = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufTxnInitMsg);
+    pstHeaderVia  = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara    = pstHeaderVia->pstViaParm;
+    pucBranch2    = pstViaPara->pucBranch;
+    pstHeaderCseq = (SIP_HEADER_CSEQ_S *)pstSipMsg->apstHeaders[SIP_HEADER_CSEQ];
     eMethod2      = pstHeaderCseq->eMethod;
 
     if (eMethod1 != eMethod2)
@@ -187,26 +185,25 @@ ULONG SIP_Txn_CompareRequest(UBUF_HEADER_S *pstUbufRequest,
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
     SIP_HEADER_VIA_S *pstHeaderVia;
-    SIP_VIA_PARM_S *pstViaPara1 = NULL_PTR;
-    SIP_VIA_PARM_S *pstViaPara2 = NULL_PTR;
+    SIP_VIA_PARM_S *pstViaPara = NULL_PTR;
     SIP_HEADER_CSEQ_S *pstHeaderCseq;
     UCHAR *pucBranch1  = NULL_PTR;
     UCHAR *pucBranch2 = NULL_PTR;
     SIP_METHOD_E eMethod1;
     SIP_METHOD_E eMethod2;
 
-    pstSipMsg     = UBUF_UBufPtr2Ptr(pstUbufRequest, 0);
-    pstHeaderVia  = UBUF_UBufPtr2Ptr(pstUbufRequest, pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstViaPara1   = UBUF_UBufPtr2Ptr(pstUbufRequest, pstHeaderVia->upstViaParm);
-    pucBranch1    = UBUF_UBufPtr2Ptr(pstUbufRequest, pstViaPara1->upucBranch);
-    pstHeaderCseq = UBUF_UBufPtr2Ptr(pstUbufRequest, pstSipMsg->aupstHeaders[SIP_HEADER_CSEQ]);
+    pstSipMsg     = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufRequest);
+    pstHeaderVia  = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara    = pstHeaderVia->pstViaParm;
+    pucBranch1    = pstViaPara->pucBranch;
+    pstHeaderCseq = (SIP_HEADER_CSEQ_S *)pstSipMsg->apstHeaders[SIP_HEADER_CSEQ];
     eMethod1      = pstHeaderCseq->eMethod;
 
-    pstSipMsg     = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, 0);
-    pstHeaderVia  = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstViaPara2   = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstHeaderVia->upstViaParm);
-    pucBranch2    = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstViaPara1->upucBranch);
-    pstHeaderCseq = UBUF_UBufPtr2Ptr(pstUbufTxnInitMsg, pstSipMsg->aupstHeaders[SIP_HEADER_CSEQ]);
+    pstSipMsg     = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufTxnInitMsg);
+    pstHeaderVia  = (SIP_HEADER_VIA_S *)pstSipMsg->apstHeaders[SIP_HEADER_VIA];
+    pstViaPara    = pstHeaderVia->pstViaParm;
+    pucBranch2    = pstViaPara->pucBranch;
+    pstHeaderCseq = (SIP_HEADER_CSEQ_S *)pstSipMsg->apstHeaders[SIP_HEADER_CSEQ];
     eMethod2      = pstHeaderCseq->eMethod;
 
     /* 使用魔法字符串来判断是否顺从3261 */

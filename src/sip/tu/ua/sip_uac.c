@@ -70,10 +70,10 @@ ULONG SIP_UAC_SendRequest(ULONG ulAppID,
     SIP_URI_S * pstSipUri = NULL_PTR;
     ULONG       ulUacID;
     SIP_LOCATION_RESULT_S stResult;
-    UBUF_PTR    upUri = 0;
+    URI_S       *pstUri = NULL_PTR;
     SIP_MSG_S   *pstSipMsg = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     if (ulDlgID == NULL_ULONG)
     {
@@ -91,10 +91,9 @@ ULONG SIP_UAC_SendRequest(ULONG ulAppID,
     g_pstSipUacCB[ulUacID].ulDlgID = ulDlgID;
     g_pstSipUacCB[ulUacID].pstSipMsgUbuf = pstUbufSipMsg;
 
-    SIP_Locate_FindNextHop(pstUbufSipMsg, &upUri);
+    SIP_Locate_FindNextHop(pstUbufSipMsg, &pstUri);
 
-    ulRet = SIP_Locate_Server(pstUbufSipMsg,
-                              upUri,
+    ulRet = SIP_Locate_Server(pstUri,
                              &stResult,
                               SIP_UAC_LocateResult,
                               ulUacID);
@@ -143,7 +142,7 @@ ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
     SIP_UAC_AddViaHeader(pstUacCB->pstSipMsgUbuf);
 
     /* 一个一个轮着发 */
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUacCB->pstSipMsgUbuf, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUacCB->pstSipMsgUbuf);
     if (pstSipMsg->uStartLine.stRequstLine.eMethod != SIP_METHOD_ACK)
     {
         /* 不是ACK通过事务发送 */
@@ -169,7 +168,6 @@ ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
 ULONG SIP_UAC_GenerateRequest(UBUF_HEADER_S * pstUbufSipMsg)
 {
     SIP_MSG_S       *pstSipMsg = NULL_PTR;
-    SIP_HEADER_S    *pstHeader = NULL_PTR;
     SIP_HEADER_TO_S *pstTo     = NULL_PTR;
     SIP_HEADER_CALL_ID_S *pstCallID = NULL_PTR;
     SIP_HEADER_CSEQ_S    *pstCseq   = NULL_PTR;
@@ -177,73 +175,63 @@ ULONG SIP_UAC_GenerateRequest(UBUF_HEADER_S * pstUbufSipMsg)
     SIP_HEADER_VIA_S          *pstVia   = NULL_PTR;
     CHAR            acString[100];
     UCHAR           *pucString = NULL_PTR;
+    ULONG            ulRuleIndex;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     /* From 头域不能为空 */
-    if (pstSipMsg->aupstHeaders[SIP_HEADER_FROM] == UBUF_NULL_PTR)
+    if (pstSipMsg->apstHeaders[SIP_HEADER_FROM] == NULL_PTR)
     {
         return FAIL;
     }
 
     /* To 头域不能为空 */
-    if (pstSipMsg->aupstHeaders[SIP_HEADER_TO] == UBUF_NULL_PTR)
+    if (pstSipMsg->apstHeaders[SIP_HEADER_TO] == NULL_PTR)
     {
         return FAIL;
     }
 
     /* 生成 Request URI，从To头域中赋值一份就可以了 */
-    if (pstSipMsg->uStartLine.stRequstLine.upRequestURI == UBUF_NULL_PTR)
+    if (pstSipMsg->uStartLine.stRequstLine.pstRequestURI == NULL_PTR)
     {
-        pstHeader = (SIP_HEADER_S *)UBUF_UBufPtr2Ptr(pstUbufSipMsg,
-                                                     pstSipMsg->aupstHeaders[SIP_HEADER_TO]);
-        pstTo = (SIP_HEADER_TO_S *)pstHeader->pstSpec;
-        SIP_Syntax_UriClone(pstUbufSipMsg,
-                            pstTo->stNameAddr.upstUri,
-                            pstUbufSipMsg,
-                           &pstSipMsg->uStartLine.stRequstLine.upRequestURI);
+        pstTo = (SIP_HEADER_TO_S *)pstSipMsg->apstHeaders[SIP_HEADER_TO];
+        SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
+        SIP_Syntax_Clone(ulRuleIndex,
+                         pstTo->stNameAddr.pstUri,
+                         pstUbufSipMsg,
+                         &pstSipMsg->uStartLine.stRequstLine.pstRequestURI);
     }
 
     /* 生成Call-ID头域 */
-    if (pstSipMsg->aupstHeaders[SIP_HEADER_CALL_ID] == UBUF_NULL_PTR)
+    if (pstSipMsg->apstHeaders[SIP_HEADER_CALL_ID] == NULL_PTR)
     {
-        pstHeader = UBUF_AddComponent(pstUbufSipMsg,
-                                      sizeof(SIP_HEADER_S) + sizeof(SIP_HEADER_CALL_ID_S),
-                                     &pstSipMsg->aupstHeaders[SIP_HEADER_CALL_ID]);
-        pstHeader->upstNext = UBUF_NULL_PTR;
-        pstCallID = (SIP_HEADER_CALL_ID_S *)pstHeader->pstSpec;
-        memset(pstCallID, 0xff, sizeof(SIP_HEADER_CALL_ID_S));
+        pstCallID = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CALL_ID_S));
+        pstSipMsg->apstHeaders[SIP_HEADER_CALL_ID] = (SIP_HEADER_S *)pstCallID;
+        pstCallID->stHeader.pstNext = NULL_PTR;
 
         SIP_GenerateRandomString(acString, 100);
-
         pucString = UBUF_AddComponent(pstUbufSipMsg,
-                                      (ULONG)strlen(acString)+1,
-                                     &pstCallID->upucCallID);
+                                     (ULONG)strlen(acString)+1);
+        pstCallID->pucCallID = pucString;
         memcpy(pucString, acString, strlen(acString)+1);
     }
 
     /* 生成Cseq头域 */
-    if (pstSipMsg->aupstHeaders[SIP_HEADER_CSEQ] == UBUF_NULL_PTR)
+    if (pstSipMsg->apstHeaders[SIP_HEADER_CSEQ] == NULL_PTR)
     {
-        pstHeader = UBUF_AddComponent(pstUbufSipMsg,
-                                      sizeof(SIP_HEADER_S) + sizeof(SIP_HEADER_CSEQ_S),
-                                     &pstSipMsg->aupstHeaders[SIP_HEADER_CSEQ]);
-        pstHeader->upstNext = UBUF_NULL_PTR;
-        pstCseq = (SIP_HEADER_CSEQ_S *)pstHeader->pstSpec;
-        memset(pstCseq, 0xff, sizeof(SIP_HEADER_CSEQ_S));
+        pstCseq = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CSEQ_S));
+        pstSipMsg->apstHeaders[SIP_HEADER_CSEQ] = (SIP_HEADER_S *)pstCseq;
+        pstCseq->stHeader.pstNext = NULL_PTR;
         pstCseq->eMethod = pstSipMsg->uStartLine.stRequstLine.eMethod;
         pstCseq->ulSeq = 0;
     }
 
     /* 生成Max-Forwards头域 */
-    if (pstSipMsg->aupstHeaders[SIP_HEADER_MAX_FORWARDS] == UBUF_NULL_PTR)
+    if (pstSipMsg->apstHeaders[SIP_HEADER_MAX_FORWARDS] == NULL_PTR)
     {
-        pstHeader = UBUF_AddComponent(pstUbufSipMsg,
-                                      sizeof(SIP_HEADER_S) + sizeof(SIP_HEADER_MAX_FORWARDS_S),
-                                     &pstSipMsg->aupstHeaders[SIP_HEADER_MAX_FORWARDS]);
-        pstHeader->upstNext = UBUF_NULL_PTR;
-        pstMaxForwards = (SIP_HEADER_MAX_FORWARDS_S *)pstHeader->pstSpec;
-        memset(pstMaxForwards, 0xff, sizeof(SIP_HEADER_MAX_FORWARDS_S));
+        pstMaxForwards = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_MAX_FORWARDS_S));
+        pstSipMsg->apstHeaders[SIP_HEADER_MAX_FORWARDS] = (SIP_HEADER_S *)pstMaxForwards;
+        pstMaxForwards->stHeader.pstNext = NULL_PTR;
         pstMaxForwards->ulMaxForwards = 70;
     }
 
@@ -253,31 +241,27 @@ ULONG SIP_UAC_GenerateRequest(UBUF_HEADER_S * pstUbufSipMsg)
 ULONG SIP_UAC_AddViaHeader(UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_MSG_S        *pstSipMsg = NULL_PTR;
-    SIP_HEADER_S     *pstHeader = NULL_PTR;
     SIP_HEADER_VIA_S *pstVia    = NULL_PTR;
     SIP_VIA_PARM_S   *pstViaPara =  NULL_PTR;
     CHAR              acBranch[100];
     CHAR             *pcMagic = "z9hG4bK";
     UCHAR            *pucString = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     /* 生成Via头域 */
-    pstHeader = UBUF_AddComponent(pstUbufSipMsg,
-                                  sizeof(SIP_HEADER_S) + sizeof(SIP_HEADER_VIA_S),
-                                 &pstSipMsg->aupstHeaders[SIP_HEADER_VIA]);
-    pstHeader->upstNext = UBUF_NULL_PTR;
-    pstVia = (SIP_HEADER_VIA_S *)pstHeader->pstSpec;
-    pstViaPara = UBUF_AddComponent(pstUbufSipMsg,
-                                   sizeof(SIP_VIA_PARM_S),
-                                  &pstVia->upstViaParm);
-    memset(pstViaPara, 0xff, sizeof(SIP_VIA_PARM_S));
+    pstVia = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_VIA_S));
+    pstSipMsg->apstHeaders[SIP_HEADER_VIA] = (SIP_HEADER_S *)pstVia;
+    pstVia->stHeader.pstNext = NULL_PTR;
+    pstViaPara = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_VIA_PARM_S));
+    pstVia->pstViaParm = pstViaPara;
+    memset(pstViaPara, 0, sizeof(SIP_VIA_PARM_S));
     strcpy(acBranch, pcMagic);
     SIP_GenerateRandomString(acBranch + strlen(pcMagic),
-                             100 - strlen(pcMagic));
+                             100 - (ULONG)strlen(pcMagic));
     pucString = UBUF_AddComponent(pstUbufSipMsg,
-                                  strlen(acBranch) + 1,
-                                 &pstViaPara->upucBranch);
+                                  (ULONG)strlen(acBranch) + 1);
+    pstViaPara->pucBranch = pucString;
     memcpy(pucString, acBranch, strlen(acBranch)+1);
     return SUCCESS;
 }

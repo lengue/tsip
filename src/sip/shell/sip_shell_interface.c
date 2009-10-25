@@ -42,18 +42,3 @@ ULONG SIP_GetRuleIndex(UCHAR *pucRuleName, ULONG *pulRuleIndex)
 {
     return SIP_Syntax_GetRuleIndex(pucRuleName, pulRuleIndex);
 }
-
-ULONG SIP_Parse(ULONG ulRuleIndex, )
-{
-
-}
-
-ULONG SIP_Code(ULONG ulRuleIndex)
-{
-
-}
-
-ULONG SIP_Clone(ULONG ulRuleIndex)
-{
-
-}

@@ -5,25 +5,18 @@
 ÐÞ¸Ä¼ÇÂ¼:
 *******************************************************************************/
 extern ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg);
-extern ULONG SIP_Syntax_SipCode(UBUF_HEADER_S *pstUBuf,
-                         UBUF_PTR upstSipMsg,
-                         UCHAR *pucBuffer,
-                         ULONG  ulBufferLen,
-                         ULONG *pulMsgLen);
-extern ULONG SIP_Syntax_SipDecode(UCHAR *pucMsgString,
-                           ULONG ulMsgLen,
-                           UBUF_HEADER_S *pstUBuf,
-                           UBUF_PTR *pupstSipMsg);
-extern ULONG SIP_Syntax_UriCode(UBUF_HEADER_S *pstUBuf,
-                                 UBUF_PTR upstUri,
-                                 UCHAR *pucBuffer,
-                                 ULONG  ulBufferLen,
-                                 ULONG *pulMsgLen);
-extern ULONG SIP_Syntax_UriDecode(UCHAR *pucMsgString,
-                           ULONG ulMsgLen,
-                           UBUF_HEADER_S *pstUBuf,
-                           UBUF_PTR *pupstUri);
-extern ULONG SIP_Syntax_UriClone(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr);
+extern ULONG SIP_Syntax_GetRuleIndex(UCHAR *pucRuleName, ULONG *pulRuleIndex);
+extern ULONG SIP_Syntax_Code(ULONG  ulRuleIndex,
+                      void  *pstStruct,
+                      UCHAR *pucBuffer,
+                      ULONG  ulBufferLen,
+                      ULONG *pulMsgLen);
+extern ULONG SIP_Syntax_Decode(ULONG  ulRuleIndex,
+                        UCHAR *pucMsgString,
+                        ULONG  ulMsgLen,
+                        UBUF_HEADER_S *pstUBuf,
+                        void **ppstStruct);
+extern ULONG SIP_Syntax_Clone(ULONG          ulRuleIndex,
+                       void          *pSrcStruct,
+                       UBUF_HEADER_S *pstDstUbuf,
+                       void         **ppDstStruct);

@@ -30,10 +30,9 @@
 /*******************************************************************************
 SIP-message    =  Request / Response
 *******************************************************************************/
-ULONG SIP_CloneSIPmessage(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneSIPmessage(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -44,10 +43,9 @@ Request        =  Request-Line
                   CRLF
                   [ message-body ]
 *******************************************************************************/
-ULONG SIP_CloneRequest(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+ULONG SIP_CloneRequest(void          *pSrcStruct,
+                       UBUF_HEADER_S *pstDstUbufMsg,
+                       void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -58,10 +56,9 @@ Response          =  Status-Line
                      CRLF
                      [ message-body ]
 *******************************************************************************/
-ULONG SIP_CloneResponse(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneResponse(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -69,10 +66,9 @@ ULONG SIP_CloneResponse(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 Request-Line   =  Method SP Request-URI SP SIP-Version CRLF
 *******************************************************************************/
-ULONG SIP_CloneRequestLine(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneRequestLine(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -80,10 +76,9 @@ ULONG SIP_CloneRequestLine(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 Status-Line     =  SIP-Version SP Status-Code SP Reason-Phrase CRLF
 *******************************************************************************/
-ULONG SIP_CloneStatusLine(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneStatusLine(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -135,10 +130,9 @@ message-header  =  (Accept
                 /  WWW-Authenticate
                 /  extension-header) CRLF
 *******************************************************************************/
-ULONG SIP_CloneMessageHeader(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneMessageHeader(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -146,10 +140,9 @@ ULONG SIP_CloneMessageHeader(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 message-body  =  *OCTET
 *******************************************************************************/
-ULONG SIP_CloneMessageBody(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneMessageBody(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -159,10 +152,9 @@ Method            =  INVITEm / ACKm / OPTIONSm / BYEm
                      / CANCELm / REGISTERm
                      / extension-method
 *******************************************************************************/
-ULONG SIP_CloneMethod(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneMethod(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -170,10 +162,9 @@ ULONG SIP_CloneMethod(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 Request-URI    =  SIP-URI / SIPS-URI / absoluteURI
 *******************************************************************************/
-ULONG SIP_CloneRequestURI(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneRequestURI(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -181,10 +172,9 @@ ULONG SIP_CloneRequestURI(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 SIP-Version    =  "SIP" "/" 1*DIGIT "." 1*DIGIT
 *******************************************************************************/
-ULONG SIP_CloneSIPVersion(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneSIPVersion(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -193,10 +183,9 @@ ULONG SIP_CloneSIPVersion(UBUF_HEADER_S *pstSrcUbufMsg,
 SIP-URI          =  "sip:" [ userinfo ] hostport
                     uri-parameters [ headers ]
 *******************************************************************************/
-ULONG SIP_CloneSipURI(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneSipURI(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -205,10 +194,9 @@ ULONG SIP_CloneSipURI(UBUF_HEADER_S *pstSrcUbufMsg,
 SIPS-URI         =  "sips:" [ userinfo ] hostport
                     uri-parameters [ headers ]
 *******************************************************************************/
-ULONG SIP_CloneSipsURI(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneSipsURI(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -216,10 +204,9 @@ ULONG SIP_CloneSipsURI(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 *******************************************************************************/
-ULONG SIP_CloneUserinfo(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneUserinfo(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -227,10 +214,9 @@ ULONG SIP_CloneUserinfo(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 *******************************************************************************/
-ULONG SIP_CloneUser(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneUser(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -238,10 +224,9 @@ ULONG SIP_CloneUser(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 hostport         =  host [ ":" port ]
 *******************************************************************************/
-ULONG SIP_CloneHostport(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHostport(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -249,10 +234,9 @@ ULONG SIP_CloneHostport(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 host             =  hostname / IPv4address / IPv6reference
 *******************************************************************************/
-ULONG SIP_CloneHost(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHost(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -260,10 +244,9 @@ ULONG SIP_CloneHost(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 port           =  1*DIGIT
 *******************************************************************************/
-ULONG SIP_ClonePort(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_ClonePort(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -277,10 +260,9 @@ Status-Code     =  Informational
                /   Global-Failure
                /   extension-code
 *******************************************************************************/
-ULONG SIP_CloneStatusCode(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneStatusCode(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -289,10 +271,9 @@ ULONG SIP_CloneStatusCode(UBUF_HEADER_S *pstSrcUbufMsg,
 Reason-Phrase   =  *(reserved / unreserved / escaped
                    / UTF8-NONASCII / UTF8-CONT / SP / HTAB)
 *******************************************************************************/
-ULONG SIP_CloneReasonPhrase(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneReasonPhrase(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -301,10 +282,9 @@ ULONG SIP_CloneReasonPhrase(UBUF_HEADER_S *pstSrcUbufMsg,
 from-spec   =  ( name-addr / addr-spec )
                *( SEMI from-param )
 *******************************************************************************/
-ULONG SIP_CloneFromSpec(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneFromSpec(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -312,10 +292,9 @@ ULONG SIP_CloneFromSpec(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 from-param  =  tag-param / generic-param
 *******************************************************************************/
-ULONG SIP_CloneFromParam(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneFromParam(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -323,10 +302,9 @@ ULONG SIP_CloneFromParam(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 to-param  =  tag-param / generic-param
 *******************************************************************************/
-ULONG SIP_CloneToParam(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneToParam(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -334,10 +312,9 @@ ULONG SIP_CloneToParam(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 via-parm          =  sent-protocol LWS sent-by *( SEMI via-params )
 *******************************************************************************/
-ULONG SIP_CloneViaParm(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneViaParm(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -346,10 +323,9 @@ ULONG SIP_CloneViaParm(UBUF_HEADER_S *pstSrcUbufMsg,
 sent-protocol     =  protocol-name SLASH protocol-version
                      SLASH transport
 *******************************************************************************/
-ULONG SIP_CloneSentProtocol(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneSentProtocol(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -358,10 +334,9 @@ ULONG SIP_CloneSentProtocol(UBUF_HEADER_S *pstSrcUbufMsg,
 transport         =  "UDP" / "TCP" / "TLS" / "SCTP"
                      / other-transport
 *******************************************************************************/
-ULONG SIP_CloneTransport(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneTransport(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -370,9 +345,9 @@ ULONG SIP_CloneTransport(UBUF_HEADER_S *pstSrcUbufMsg,
 sent-by           =  host [ COLON port ]
 *******************************************************************************/
 ULONG SIP_CloneSentBy(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+                          void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -382,10 +357,9 @@ via-params        =  via-ttl / via-maddr
                      / via-received / via-branch
                      / via-extension
 *******************************************************************************/
-ULONG SIP_CloneViaParams(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneViaParams(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -393,10 +367,9 @@ ULONG SIP_CloneViaParams(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 via-ttl           =  "ttl" EQUAL ttl
 *******************************************************************************/
-ULONG SIP_CloneViaTtl(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneViaTtl(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -404,10 +377,9 @@ ULONG SIP_CloneViaTtl(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 via-maddr         =  "maddr" EQUAL host
 *******************************************************************************/
-ULONG SIP_CloneViaMaddr(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneViaMaddr(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -415,10 +387,9 @@ ULONG SIP_CloneViaMaddr(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 via-received      =  "received" EQUAL (IPv4address / IPv6address)
 *******************************************************************************/
-ULONG SIP_CloneViaReceived(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneViaReceived(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -426,10 +397,9 @@ ULONG SIP_CloneViaReceived(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 via-branch        =  "branch" EQUAL token
 *******************************************************************************/
-ULONG SIP_CloneViaBranch(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneViaBranch(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -437,10 +407,9 @@ ULONG SIP_CloneViaBranch(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 name-addr      =  [ display-name ] LAQUOT addr-spec RAQUOT
 *******************************************************************************/
-ULONG SIP_CloneNameAddr(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneNameAddr(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -448,10 +417,9 @@ ULONG SIP_CloneNameAddr(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 addr-spec      =  SIP-URI / SIPS-URI / absoluteURI
 *******************************************************************************/
-ULONG SIP_CloneAddrSpec(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+ULONG SIP_CloneAddrSpec(void          *pSrcStruct,
+                        UBUF_HEADER_S *pstDstUbufMsg,
+                        void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -461,10 +429,9 @@ ULONG SIP_CloneAddrSpec(UBUF_HEADER_S *pstSrcUbufMsg,
 Accept         =  "Accept" HCOLON
                    [ accept-range *(COMMA accept-range) ]
 *******************************************************************************/
-ULONG SIP_CloneHeaderAccept(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderAccept(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -473,10 +440,9 @@ ULONG SIP_CloneHeaderAccept(UBUF_HEADER_S *pstSrcUbufMsg,
 Accept-Encoding  =  "Accept-Encoding" HCOLON
                      [ encoding *(COMMA encoding) ]
 *******************************************************************************/
-ULONG SIP_CloneHeaderAcceptEncoding(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderAcceptEncoding(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -484,10 +450,9 @@ ULONG SIP_CloneHeaderAcceptEncoding(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 Call-ID  =  ( "Call-ID" / "i" ) HCOLON callid
 *******************************************************************************/
-ULONG SIP_CloneHeaderCallID(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderCallID(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -495,10 +460,9 @@ ULONG SIP_CloneHeaderCallID(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 CSeq  =  "CSeq" HCOLON 1*DIGIT LWS Method
 *******************************************************************************/
-ULONG SIP_CloneHeaderCseq(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderCseq(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -506,10 +470,9 @@ ULONG SIP_CloneHeaderCseq(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 From        =  ( "From" / "f" ) HCOLON from-spec
 *******************************************************************************/
-ULONG SIP_CloneHeaderFrom(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderFrom(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -518,10 +481,9 @@ ULONG SIP_CloneHeaderFrom(UBUF_HEADER_S *pstSrcUbufMsg,
 To        =  ( "To" / "t" ) HCOLON ( name-addr
              / addr-spec ) *( SEMI to-param )
 *******************************************************************************/
-ULONG SIP_CloneHeaderTo(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderTo(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -529,10 +491,9 @@ ULONG SIP_CloneHeaderTo(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 Via               =  ( "Via" / "v" ) HCOLON via-parm *(COMMA via-parm)
 *******************************************************************************/
-ULONG SIP_CloneHeaderVia(UBUF_HEADER_S *pstSrcUbufMsg,
-                          UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderVia(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
-                          UBUF_PTR      *pupDstUPtr)
+                          void         **ppDstStruct)
 {
     return SUCCESS;
 }
@@ -540,10 +501,9 @@ ULONG SIP_CloneHeaderVia(UBUF_HEADER_S *pstSrcUbufMsg,
 /*******************************************************************************
 Max-Forwards  =  "Max-Forwards" HCOLON 1*DIGIT
 *******************************************************************************/
-ULONG SIP_CloneHeaderMaxForwards(UBUF_HEADER_S *pstSrcUbufMsg,
-                                 UBUF_PTR       upSrcUPtr,
+ULONG SIP_CloneHeaderMaxForwards(void          *pSrcStruct,
                                  UBUF_HEADER_S *pstDstUbufMsg,
-                                 UBUF_PTR      *pupDstUPtr)
+                                 void         **ppDstStruct)
 {
     return SUCCESS;
 }
