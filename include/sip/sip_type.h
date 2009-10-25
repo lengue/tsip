@@ -8,8 +8,8 @@
 typedef struct tagSIP_REQUEST_LINE_S
 {
     SIP_METHOD_E eMethod;
-    UBUF_PTR     upRequestURI; /* URI_S */
-    UCHAR ucVersion;
+    URI_S       *pstRequestURI;
+    UCHAR        ucVersion;
 }SIP_REQUEST_LINE_S;
 
 /*SIP响应消息的状态行*/
@@ -19,20 +19,20 @@ typedef struct tagSIP_STATUS_LINE_S
     SIP_STATUS_CODE_E eStatusCode;
 }SIP_STATUS_LINE_S;
 
+/* 头域的公共结构 */
 typedef struct tagSIP_HEADER_S
 {
-    UBUF_PTR upstNext;     /* 下一个头域值 */
-    UCHAR    pstSpec[0];  /* 根据具体结构变化，长度也是 */
+    struct tagSIP_HEADER_S *pstNext;    /* 下一个头域值 */
 }SIP_HEADER_S;
 
 /* 消息体结构，适用于多BODY */
 typedef struct tagSIP_BODY_S
 {
-    UBUF_PTR upstNext;           /* 下一个消息体SIP_BODY_S*/
-    UBUF_PTR upstContentType;    /* 这些头域可以没有 */
-    UBUF_PTR upstContentLanguage;
-    UBUF_PTR upstContentDisposite;
-    UBUF_PTR upstContentLength;
+    struct tagSIP_BODY_S *pstNext;     /* 下一个消息体SIP_BODY_S*/
+    VOID *pstContentType;    /* 这些头域可以没有 */
+    VOID *pstContentLanguage;
+    VOID *pstContentDisposite;
+    VOID *pstContentLength;
     UCHAR    pstBody[0];        /* 消息体结构 */
 }SIP_BODY_S;
 
@@ -48,9 +48,9 @@ typedef struct tagSIP_MSG_S
     }uStartLine;
 
     /* 消息体指针在Conent-Type头域的指针中指定，不单独列出 */
-    UBUF_PTR aupstHeaders[SIP_HEADER_BUTT]; /* SIP_HEADER_S */
+    SIP_HEADER_S *apstHeaders[SIP_HEADER_BUTT];
 
-    UBUF_PTR upstBodys; /* SIP_BODY_S */
+    SIP_BODY_S   *pstBodys;
 }SIP_MSG_S;
 
 
@@ -59,8 +59,8 @@ typedef struct tagSIP_MSG_S
 typedef struct tagSIP_NAME_ADDR_S
 {
     BOOL     bName;     /* 是否带<>符号 */
-    UBUF_PTR upucName;  /* char */
-    UBUF_PTR upstUri;   /* URI_S */
+    UCHAR   *pucName;
+    URI_S   *pstUri;
 }SIP_NAME_ADDR_S;
 
 typedef struct tagSIP_VIA_RECEIVED_S
@@ -68,8 +68,8 @@ typedef struct tagSIP_VIA_RECEIVED_S
     SIP_IP_TYPE_E eIpType;
     union
     {
-        UBUF_PTR upucIPV4; /* char */
-        UBUF_PTR upucIPV6; /* char */
+        UCHAR *pucIPV4; /* char */
+        UCHAR *pucIPV6; /* char */
     }u;
 }SIP_VIA_RECEIVED_S;
 
@@ -80,250 +80,294 @@ typedef struct tagSIP_VIA_PARM_S
 
     /* 参数 */
     ULONG                     ulTtl;
-    UBUF_PTR                  upucBranch;   /* UCHAR */
-    UBUF_PTR                  upstMaddr;    /* URI_HOST_S */
-    UBUF_PTR                  upstReceived; /* SIP_VIA_RECEIVED_S */
-
-    UBUF_PTR                  upstNext;     /* SIP_VIA_PARM_S */
+    UCHAR                    *pucBranch;
+    URI_HOST_S               *pstMaddr;
+    SIP_VIA_RECEIVED_S       *pstReceived;
+    struct tagSIP_VIA_PARM_S *pstNext;
 }SIP_VIA_PARM_S;
-
-typedef struct tagSIP_ROUTE_PARAM_S
-{
-    SIP_NAME_ADDR_S stNameAddr;
-    UCHAR           ucLr;
-    UBUF_PTR        upPara;  /* SIP_GENERIC_PARA_S */
-    UBUF_PTR        upstNext;/* SIP_ROUTE_PARAM_S */
-}SIP_ROUTE_PARAM_S;
 
 typedef struct tagSIP_GENERIC_PARA_S
 {
-    UBUF_PTR upucToken;
-    UBUF_PTR upucValue;
-    UBUF_PTR upstNext; /* SIP_GENERIC_PARA_S */
+    UCHAR *pucToken;
+    UCHAR *pucValue;
+    struct tagSIP_GENERIC_PARA_S *pstNext;
 }SIP_GENERIC_PARA_S;
+
+typedef struct tagSIP_ROUTE_PARAM_S
+{
+    SIP_NAME_ADDR_S     stNameAddr;
+    UCHAR               ucLr;
+    SIP_GENERIC_PARA_S *pstPara;
+    struct tagSIP_ROUTE_PARAM_S  *pstNext;
+}SIP_ROUTE_PARAM_S;
+
 
 /* 所有头域的结构 */
 typedef struct tagSIP_HEADER_ACCEPT_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ACCEPT_S;
 
 typedef struct tagSIP_HEADER_ACCEPT_ENCODING_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ACCEPT_ENCODING_S;
 
 typedef struct tagSIP_HEADER_ACCEPT_LANGUAGE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ACCEPT_LANGUAGE_S;
 
 typedef struct tagSIP_HEADER_ALERT_INFO_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ALERT_INFO_S;
 
 typedef struct tagSIP_HEADER_ALLOW_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ALLOW_S;
 
 typedef struct tagSIP_HEADER_AUTHENTICATICATION_INFO_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_AUTHENTICATICATION_INFO_S;
 
 typedef struct tagSIP_HEADER_AUTHORIZATION_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_AUTHORIZATION_S;
 
 typedef struct tagSIP_HEADER_CALL_ID_S
 {
-    UBUF_PTR upucCallID;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucCallID;
 }SIP_HEADER_CALL_ID_S;
 
 typedef struct tagSIP_HEADER_CALL_INFO_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CALL_INFO_S;
 
 typedef struct tagSIP_HEADER_CONTACT_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CONTACT_S;
 
 typedef struct tagSIP_HEADER_CONTENT_DISPOSITION_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CONTENT_DISPOSITION_S;
 
 typedef struct tagSIP_HEADER_CONTENT_ENCODING_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CONTENT_ENCODING_S;
 
 typedef struct tagSIP_HEADER_CONTENT_LANGUAGE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CONTENT_LANGUAGE_S;
 
 typedef struct tagSIP_HEADER_CONTENT_LENTH_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CONTENT_LENTH_S;
 
 typedef struct tagSIP_HEADER_CONTENT_TYPE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_CONTENT_TYPE_S;
 
 typedef struct tagSIP_HEADER_CSEQ_S
 {
+    SIP_HEADER_S stHeader;
     ULONG        ulSeq;
     SIP_METHOD_E eMethod;
 }SIP_HEADER_CSEQ_S;
 
 typedef struct tagSIP_HEADER_DATA_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_DATA_S;
 
 typedef struct tagSIP_HEADER_ERROR_INFO_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ERROR_INFO_S;
 
 typedef struct tagSIP_HEADER_EXPIRES_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_EXPIRES_S;
 
 typedef struct tagSIP_HEADER_FROM_S
 {
+    SIP_HEADER_S stHeader;
     SIP_NAME_ADDR_S stNameAddr;
-    UBUF_PTR        upucTag;/*UCHAR*/
+    UCHAR          *pucTag;/*UCHAR*/
 }SIP_HEADER_FROM_S;
 
 typedef struct tagSIP_HEADER_IN_REPLY_TO_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_IN_REPLY_TO_S;
 
 typedef struct tagSIP_HEADER_MAX_FORWARDS_S
 {
+    SIP_HEADER_S stHeader;
     ULONG ulMaxForwards;
 }SIP_HEADER_MAX_FORWARDS_S;
 
 typedef struct tagSIP_HEADER_MIN_EXPIRES_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_MIN_EXPIRES_S;
 
 typedef struct tagSIP_HEADER_MIME_VERSION_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_MIME_VERSION_S;
 
 typedef struct tagSIP_HEADER_ORGANIZATION_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_ORGANIZATION_S;
 
 typedef struct tagSIP_HEADER_PRIORITY_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_PRIORITY_S;
 
 typedef struct tagSIP_HEADER_PROXY_AUTHENTICATE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_PROXY_AUTHENTICATE_S;
 
 typedef struct tagSIP_HEADER_PROXY_AUTHORIZATION_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_PROXY_AUTHORIZATION_S;
 
 typedef struct tagSIP_HEADER_PROXY_REQUIRE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_PROXY_REQUIRE_S;
 
 typedef struct tagSIP_HEADER_RECORD_ROUTE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_RECORD_ROUTE_S;
 
 typedef struct tagSIP_HEADER_REPLY_TO_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_REPLY_TO_S;
 
 typedef struct tagSIP_HEADER_REQUIRE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_REQUIRE_S;
 
 typedef struct tagSIP_HEADER_RETRY_AFTER_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_RETRY_AFTER_S;
 
 typedef struct tagSIP_HEADER_ROUTE_S
 {
-    UBUF_PTR          upstRouteParam; /* SIP_ROUTE_PARAM_S */
+    SIP_HEADER_S stHeader;
+    SIP_ROUTE_PARAM_S *pstRouteParam;
 }SIP_HEADER_ROUTE_S;
 
 typedef struct tagSIP_HEADER_SERVER_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_SERVER_S;
 
 typedef struct tagSIP_HEADER_SUBJECT_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_SUBJECT_S;
 
 typedef struct tagSIP_HEADER_SUPPORTED_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_SUPPORTED_S;
 
 typedef struct tagSIP_HEADER_TIMESTAMP_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_TIMESTAMP_S;
 
 typedef struct tagSIP_HEADER_TO_S
 {
+    SIP_HEADER_S stHeader;
     SIP_NAME_ADDR_S stNameAddr;
-    UBUF_PTR        upucTag;/*UCHAR*/
+    UCHAR          *pucTag;
 }SIP_HEADER_TO_S;
 
 typedef struct tagSIP_HEADER_UNSUPPORTED_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_UNSUPPORTED_S;
 
 typedef struct tagSIP_HEADER_USER_AGENT_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_USER_AGENT_S;
 
 typedef struct tagSIP_HEADER_VIA_S
 {
-    UBUF_PTR upstViaParm;/*SIP_VIA_PARM_S*/
+    SIP_HEADER_S stHeader;
+    SIP_VIA_PARM_S *pstViaParm;
 }SIP_HEADER_VIA_S;
 
 typedef struct tagSIP_HEADER_WARNING_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_WARNING_S;
 
 typedef struct tagSIP_HEADER_WWW_AUTHENTICATE_S
 {
-    UBUF_PTR upucTemp;/*UCHAR*/
+    SIP_HEADER_S stHeader;
+    UCHAR *pucTemp;
 }SIP_HEADER_WWW_AUTHENTICATE_S;
 
 typedef struct tagSIP_LOCATION_S

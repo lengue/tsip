@@ -28,5 +28,4 @@ typedef struct tagUBUF_HEADER_S
     struct tagUBUF_HEADER_S *pNext;
 }UBUF_HEADER_S;
 
-/* 在UBUF中的指针实际上是个偏移 */
-typedef unsigned int UBUF_PTR;
+#define UBUF_GET_MSG_PTR(pstUbuf) ((UCHAR *)(pstUbuf) + sizeof(UBUF_HEADER_S))

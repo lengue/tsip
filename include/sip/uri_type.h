@@ -7,23 +7,21 @@
 
 typedef struct tagURI_PARAMETER_S
 {
-    URI_PARAMETER_E eParaName;
-    UCHAR           ucParaValue;
-    UBUF_PTR        upstNext;     /* URI_PARAMETER_S */
+    URI_PARAMETER_E  eParaName;
+    UCHAR            ucParaValue;
+    struct tagURI_PARAMETER_S *pstNext;
 }URI_PARAMETER_S;
 
 typedef struct tagURI_USER_INFO_S
 {
-    UBUF_PTR upucUserInfo;/*UCHAR*/
-    UBUF_PTR upucPassword;/*UCHAR*/
+    UCHAR *pucUserInfo;
+    UCHAR *pucPassword;
 }URI_USER_INFO_S;
 
 typedef struct tagURI_HOST_S
 {
     URI_HOST_E eHostType;
-
-    /* 地址字符串，类型UCHAR */
-    UBUF_PTR   upucAddrStr;
+    UCHAR     *pucAddrStr;
 }URI_HOST_S;
 
 typedef struct tagURI_HOST_PORT_S
@@ -35,15 +33,15 @@ typedef struct tagURI_HOST_PORT_S
 /*SIPS和SIP URI*/
 typedef struct tagSIP_URI_S
 {
-    UBUF_PTR         upstUserInfo;/*URI_USER_INFO_S*/
+    URI_USER_INFO_S *pstUserInfo;
     URI_HOST_PORT_S  stHostPort;
-    UBUF_PTR         upstParameters;/*URI_PARAMETER_S*/
+    URI_PARAMETER_S *pstParameters;
     UCHAR            ucHeaders;
 }SIP_URI_S;
 
 typedef struct tagTEL_URI_S
 {
-    UBUF_PTR         upucTelNo;/*UCHAR*/
+    UCHAR         *pucTelNo;
 }TEL_URI_S;
 
 typedef struct tagURI_S
