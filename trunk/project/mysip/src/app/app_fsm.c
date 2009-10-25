@@ -61,6 +61,8 @@ ULONG APP_Fsm_Idle_OffhookProc()
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
     SIP_HEADER_TO_S   *pstTo   = NULL_PTR;
     ULONG ulRuleIndex;
+    ULONG ulStackRef1 = NULL_ULONG;
+    ULONG ulStackRef2 = NULL_ULONG;
 
     /* 输入请求URI */
     printf("\r\nTarget URI:");
@@ -74,7 +76,7 @@ ULONG APP_Fsm_Idle_OffhookProc()
     }
 
     pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
-    memset(pstSipMsg, 0xff, sizeof(SIP_MSG_S));
+    memset(pstSipMsg, 0, sizeof(SIP_MSG_S));
 
     /* 添加方法 */
     pstSipMsg->eMsgType                          = SIP_MSG_TYPE_REQUEST;
@@ -82,8 +84,8 @@ ULONG APP_Fsm_Idle_OffhookProc()
     pstSipMsg->uStartLine.stRequstLine.ucVersion = 2;
 
     /* 添加Request URI */
-    SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
-    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+    SIP_GetRuleIndex("addr-spec", &ulRuleIndex);
+    ulRet = SIP_Decode(ulRuleIndex,
                       aucURI,
                      (ULONG)strlen(aucURI),
                       pstSipMsgUBuf,
@@ -95,10 +97,11 @@ ULONG APP_Fsm_Idle_OffhookProc()
 
     /* 添加To头域 */
     pstTo = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_HEADER_TO_S));
+    memset(pstTo, 0, sizeof(SIP_HEADER_TO_S));
     pstSipMsg->apstHeaders[SIP_HEADER_TO] = (SIP_HEADER_S *)pstTo;
     pstTo->stHeader.pstNext = NULL_PTR;
     pstTo->stNameAddr.bName = FALSE;
-    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+    ulRet = SIP_Decode(ulRuleIndex,
                               aucURI,
                              (ULONG)strlen(aucURI),
                               pstSipMsgUBuf,
@@ -110,10 +113,11 @@ ULONG APP_Fsm_Idle_OffhookProc()
 
     /* 添加From头域 */
     pstFrom = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_HEADER_FROM_S));
+    memset(pstFrom, 0, sizeof(SIP_HEADER_FROM_S));
     pstSipMsg->apstHeaders[SIP_HEADER_FROM] = (SIP_HEADER_S *)pstFrom;
     pstFrom->stHeader.pstNext = NULL_PTR;
     pstFrom->stNameAddr.bName = FALSE;
-    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+    ulRet = SIP_Decode(ulRuleIndex,
                               g_pucAppPublicID,
                              (ULONG)strlen(g_pucAppPublicID),
                               pstSipMsgUBuf,
@@ -123,7 +127,11 @@ ULONG APP_Fsm_Idle_OffhookProc()
         return FAIL;
     }
 
-    SIP_UAC_SendRequest(0, NULL_ULONG, pstSipMsgUBuf);
+    SIP_RecvDownMsg(NULL_ULONG,
+                    0,
+                   &ulStackRef1,
+                   &ulStackRef2,
+                    pstSipMsgUBuf);
 
     /* 状态迁为APP_STATE_WAIT_REMOTE_ANSWER */
     g_eAppState = APP_STATE_WAIT_REMOTE_ANSWER;
@@ -161,7 +169,7 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
 {
     UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
     SIP_MSG_S     *pstSipMsg     = NULL_PTR;
-    ULONG          ulDlgID;
+    ULONG ulStackRef1 = NULL_ULONG;
 
     printf("\r\nAlert........................");
 
@@ -173,16 +181,18 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
     }
 
     pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
-    memset(pstSipMsg, 0xff, sizeof(SIP_MSG_S));
+    memset(pstSipMsg, 0, sizeof(SIP_MSG_S));
 
     /* 添加方法 */
     pstSipMsg->eMsgType                            = SIP_MSG_TYPE_RESPONSE;
     pstSipMsg->uStartLine.stStatusLine.ucVersion   = 2;
     pstSipMsg->uStartLine.stStatusLine.eStatusCode = SIP_STATUS_CODE_180;
 
-    SIP_UAS_SendResponse(g_ulAppTxnID,
-                        &ulDlgID,
-                         pstSipMsgUBuf);
+    SIP_RecvDownMsg(NULL_ULONG,
+                    NULL_ULONG,
+                   &ulStackRef1,
+                   &g_ulAppTxnID,
+                    pstSipMsgUBuf);
 
     /* 状态迁为APP_STATE_WAIT_LOCAL_ANSWER */
     g_eAppState = APP_STATE_WAIT_LOCAL_ANSWER;

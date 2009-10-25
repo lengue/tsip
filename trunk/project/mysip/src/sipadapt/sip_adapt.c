@@ -12,6 +12,7 @@
 #include "system\system.h"
 #include "connect\connect.h"
 #include "timer\timer.h"
+#include "app\app.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 
@@ -58,8 +59,7 @@ ULONG SIP_APDT_MsgProc(ULONG ulModuleID, void* pMsg)
     {
         case SYS_MODULE_SIP:
             pstConnMsg =(SIP_ADPT_CONN_MSG_S *)pMsg;
-            SIP_Txp_RecvUpMsg(&pstConnMsg->stLocation,
-                           pstConnMsg->pstMsgUbuf);
+            SIP_RecvUpMsg(&pstConnMsg->stLocation, pstConnMsg->pstMsgUbuf);
             break;
 
         case SYS_MODULE_TIMER:
@@ -166,12 +166,11 @@ ULONG SIP_ADPT_BuildConfigStruct(SIP_ADAPT_CFG_S *g_pstCfg)
     }
 
     /* 挂函数钩子 */
-    g_pstCfg->stSipCfg.stShellCfg.pfnStartTimer        = SIP_ADPT_StartTimer;
-    g_pstCfg->stSipCfg.stShellCfg.pfnStopTimer         = SIP_ADPT_StopTimer;
-    g_pstCfg->stSipCfg.stShellCfg.pfnSendUpRequestMsg  = SIP_ADPT_SendUserRequestMsg;
-    g_pstCfg->stSipCfg.stShellCfg.pfnSendUpResponseMsg = SIP_ADPT_SendUserResponseMsg;
-    g_pstCfg->stSipCfg.stShellCfg.pfnSendDownMsg       = SIP_ADPT_SendNetMsg;
-    g_pstCfg->stSipCfg.stShellCfg.pfnGenerateRandom    = SYS_GeneralRandomString;
+    g_pstCfg->stSipCfg.stShellCfg.pfnStartTimer     = SIP_ADPT_StartTimer;
+    g_pstCfg->stSipCfg.stShellCfg.pfnStopTimer      = SIP_ADPT_StopTimer;
+    g_pstCfg->stSipCfg.stShellCfg.pfnSendUpMsg      = APP_RecvUpMsg;
+    g_pstCfg->stSipCfg.stShellCfg.pfnSendDownMsg    = SIP_ADPT_SendMsg;
+    g_pstCfg->stSipCfg.stShellCfg.pfnGenerateRandom = SYS_GeneralRandomString;
     return SUCCESS;
 }
 
@@ -405,7 +404,7 @@ ULONG SIP_ADPT_BuildConnConfig(SIP_ADAPT_CFG_S *g_pstCfg,
     }
 
     g_pstCfg->stConnCfg.ucListenNum = ucListenNum;
-    g_pstCfg->stConnCfg.pfnMsgProc = SIP_ADPT_RecvNetMsg;
+    g_pstCfg->stConnCfg.pfnMsgProc = SIP_ADPT_RecvMsg;
     return SUCCESS;
 }
 
@@ -414,9 +413,10 @@ ULONG SIP_ADPT_FreeConnConfig(SIP_ADAPT_CFG_S *g_pstCfg)
     return SUCCESS;
 }
 
-ULONG SIP_ADPT_RecvNetMsg(SIP_LOCATION_S *pstLocation,
-                          UCHAR *pucMsg,
-                          ULONG ulMsgLen)
+/* 接受网络消息 */
+ULONG SIP_ADPT_RecvMsg(SIP_LOCATION_S *pstLocation,
+                       UCHAR *pucMsg,
+                       ULONG ulMsgLen)
 {
     ULONG ulRet;
     SIP_ADPT_CONN_MSG_S stConnMsg;
@@ -426,12 +426,12 @@ ULONG SIP_ADPT_RecvNetMsg(SIP_LOCATION_S *pstLocation,
 
     printf("\r\nRecv Sip Msg:\r\n%s",pucMsg);
     pstUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
-    SIP_Syntax_GetRuleIndex("SIP-message", &ulRuleIndex);
-    ulRet = SIP_Syntax_Decode(ulRuleIndex,
-                              pucMsg,
-                              ulMsgLen,
-                              pstUBuf,
-                             &pstSipMsg);
+    SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+    ulRet = SIP_Decode(ulRuleIndex,
+                          pucMsg,
+                          ulMsgLen,
+                          pstUBuf,
+                         &pstSipMsg);
     if (ulRet != SUCCESS)
     {
         UBUF_FreeBuffer(pstUBuf);
@@ -447,41 +447,17 @@ ULONG SIP_ADPT_RecvNetMsg(SIP_LOCATION_S *pstLocation,
                        sizeof(SIP_ADPT_CONN_MSG_S));
 }
 
-/*
-用户发送消息
-ULONG  ulAppID 用户ID，对于响应无意义
-ULONG *pulDlgID 对话ID, 为空表示对话外请求，否则标识对话内请求，如果输入为空但是
-输出不为空表示创建了一个对话
-ULONG *pulTxnID 事务ID，标识消息的相关请求，对于请求消息无意义。
-*/
-ULONG SIP_ADPT_RecvUserRequestMsg(ULONG  ulAppID,
-                                  ULONG  ulDlgID,
-                                  UBUF_HEADER_S *pstUbufSipMsg)
-{
-    return SIP_UAC_SendRequest(ulAppID,
-                               ulDlgID,
-                               pstUbufSipMsg);
-}
-
-ULONG SIP_ADPT_RecvUserResponseMsg(ULONG  ulTxnID,
-                                   ULONG *pulDlgID,
-                                   UBUF_HEADER_S *pstUbufSipMsg)
-{
-    return SIP_UAS_SendResponse(ulTxnID,
-                                pulDlgID,
-                                pstUbufSipMsg);
-}
-
-ULONG SIP_ADPT_SendNetMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
-                          SIP_LOCATION_S *pstPeerLocation)
+/* 发送网络消息 */
+ULONG SIP_ADPT_SendMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
+                       SIP_LOCATION_S *pstPeerLocation)
 {
     ULONG ulMsgLen;
     ULONG ulRuleIndex;
     SIP_MSG_S *pstSipMsg = NULL_PTR;
 
-    pstSipMsg = UBUF_GET_MSG_PTR(pstSipMsgUbuf);
-    SIP_Syntax_GetRuleIndex("SIP-message", &ulRuleIndex);
-    SIP_Syntax_Code(ulRuleIndex,
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstSipMsgUbuf);
+    SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+    SIP_Code(ulRuleIndex,
                     pstSipMsg,
                     g_pucSipAdptBuffer,
                     SIP_MAX_TEXT_MSG_LEN,
@@ -489,28 +465,6 @@ ULONG SIP_ADPT_SendNetMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
     g_pucSipAdptBuffer[ulMsgLen] = '\0';
     printf("\r\nSend Sip Msg:\r\n%s",g_pucSipAdptBuffer);
     return CONN_SendMsg(g_pucSipAdptBuffer, ulMsgLen, pstPeerLocation);
-}
-
-/*
-向用户上报消息
-ULONG ulDlgID  消息所属的对话，为空标识对话外消息，否则表示对话内消息
-ULONG ulTxnID  消息所属的事务
-ULONG *ulAppID 消息的应用关联ID，对于请求消息该参数无意义
-*/
-
-ULONG SIP_ADPT_SendUserRequestMsg(ULONG ulDlgID,
-                                  ULONG ulUasID,
-                                  UBUF_HEADER_S * pstUbufSipMsg)
-{
-    APP_SipMsgProc(ulDlgID, ulUasID, pstUbufSipMsg);
-    return SUCCESS;
-}
-
-ULONG SIP_ADPT_SendUserResponseMsg(ULONG ulAppID,
-                                   ULONG ulDlgID,
-                                   UBUF_HEADER_S * pstUbufSipMsg)
-{
-    return SUCCESS;
 }
 
 ULONG SIP_ADPT_StartTimer(ULONG ulName,
