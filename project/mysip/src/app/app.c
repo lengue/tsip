@@ -88,7 +88,7 @@ ULONG APP_SipMsgProc(ULONG ulDlgID,
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     switch (pstSipMsg->eMsgType)
     {
         case SIP_MSG_TYPE_REQUEST:
@@ -113,7 +113,7 @@ ULONG APP_SipRequestProc(ULONG ulDlgID,
     SIP_MSG_S *pstSipMsg = NULL_PTR;
     APP_EVENT_E eEvent;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     switch(pstSipMsg->uStartLine.stRequstLine.eMethod)
     {
         case SIP_METHOD_INVITE:
@@ -143,7 +143,7 @@ ULONG APP_SipResponseProc(ULONG ulDlgID,
     SIP_MSG_S *pstSipMsg = NULL_PTR;
     APP_EVENT_E eEvent;
 
-    pstSipMsg = UBUF_UBufPtr2Ptr(pstUbufSipMsg, 0);
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     switch(pstSipMsg->eMsgType)
     {
         case SIP_METHOD_INVITE:

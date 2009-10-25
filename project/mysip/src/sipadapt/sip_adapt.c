@@ -421,14 +421,17 @@ ULONG SIP_ADPT_RecvNetMsg(SIP_LOCATION_S *pstLocation,
     ULONG ulRet;
     SIP_ADPT_CONN_MSG_S stConnMsg;
     UBUF_HEADER_S      *pstUBuf = NULL_PTR;
-    UBUF_PTR            upMsg = UBUF_NULL_PTR;
+    ULONG ulRuleIndex;
+    SIP_MSG_S *pstSipMsg = NULL_PTR;
 
     printf("\r\nRecv Sip Msg:\r\n%s",pucMsg);
     pstUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
-    ulRet = SIP_Syntax_SipDecode(pucMsg,
-                                 ulMsgLen,
-                                 pstUBuf,
-                                &upMsg);
+    SIP_Syntax_GetRuleIndex("SIP-message", &ulRuleIndex);
+    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+                              pucMsg,
+                              ulMsgLen,
+                              pstUBuf,
+                             &pstSipMsg);
     if (ulRet != SUCCESS)
     {
         UBUF_FreeBuffer(pstUBuf);
@@ -473,12 +476,16 @@ ULONG SIP_ADPT_SendNetMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
                           SIP_LOCATION_S *pstPeerLocation)
 {
     ULONG ulMsgLen;
+    ULONG ulRuleIndex;
+    SIP_MSG_S *pstSipMsg = NULL_PTR;
 
-    SIP_Syntax_SipCode(pstSipMsgUbuf,
-                       0,
-                       g_pucSipAdptBuffer,
-                       SIP_MAX_TEXT_MSG_LEN,
-                      &ulMsgLen);
+    pstSipMsg = UBUF_GET_MSG_PTR(pstSipMsgUbuf);
+    SIP_Syntax_GetRuleIndex("SIP-message", &ulRuleIndex);
+    SIP_Syntax_Code(ulRuleIndex,
+                    pstSipMsg,
+                    g_pucSipAdptBuffer,
+                    SIP_MAX_TEXT_MSG_LEN,
+                    &ulMsgLen);
     g_pucSipAdptBuffer[ulMsgLen] = '\0';
     printf("\r\nSend Sip Msg:\r\n%s",g_pucSipAdptBuffer);
     return CONN_SendMsg(g_pucSipAdptBuffer, ulMsgLen, pstPeerLocation);
