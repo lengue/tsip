@@ -29,38 +29,27 @@
 /* 本模块全局变量声明头文件 */
 #include "sip_shell_var.inc"
 
-/* SIP协议栈接收到来自传输层的上行消息 */
-ULONG SIP_SendUpRequestMsg(ULONG ulDlgID,
-                           ULONG ulUasID,
-                           UBUF_HEADER_S * pstUbufSipMsg)
+/* SIP协议栈向业务层发送消息 */
+ULONG SIP_SendUpMsg(ULONG  ulStackRef1,
+                    ULONG  ulStackRef2,
+                    ULONG *pulAppRef1,
+                    ULONG *pulAppRef2,
+                    UBUF_HEADER_S *pstUbufSipMsg)
 {
     /* 调用注册的钩子函数 */
-    if (g_stSiphellCfg.pfnSendUpRequestMsg == NULL_PTR)
+    if (g_stSiphellCfg.pfnSendUpMsg == NULL_PTR)
     {
         return FAIL;
     }
 
-    return g_stSiphellCfg.pfnSendUpRequestMsg(ulDlgID,
-                                              ulUasID,
-                                              pstUbufSipMsg);
+    return g_stSiphellCfg.pfnSendUpMsg(ulStackRef1,
+                                       ulStackRef2,
+                                       pulAppRef1,
+                                       pulAppRef2,
+                                       pstUbufSipMsg);
 }
 
-ULONG SIP_SendUpResponseMsg(ULONG ulAppID,
-                            ULONG ulDlgID,
-                            UBUF_HEADER_S * pstUbufSipMsg)
-{
-    /* 调用注册的钩子函数 */
-    if (g_stSiphellCfg.pfnSendUpResponseMsg == NULL_PTR)
-    {
-        return FAIL;
-    }
-
-    return g_stSiphellCfg.pfnSendUpResponseMsg(ulAppID,
-                                               ulDlgID,
-                                               pstUbufSipMsg);
-}
-
-/* 调用协议栈发送SIP消息接口 */
+/* SIP协议栈向网络层发送消息 */
 ULONG SIP_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
                       SIP_LOCATION_S *pstPeerLocation)
 {

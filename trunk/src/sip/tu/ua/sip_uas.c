@@ -15,6 +15,7 @@
 #include "..\..\include\transaction\sip_transaction.h"
 #include "..\..\include\transport\sip_transport.h"
 #include "..\..\include\syntax\sip_syntax.h"
+#include "..\..\include\shell\sip_shell.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "sip_ua_const.inc"
@@ -54,30 +55,35 @@ VOID SIP_UAS_FreeCB(ULONG ulUasID)
     return;
 }
 
-/* 底层使用该函数上报错误 rfc3261 8.2.5
-*/
-ULONG SIP_UAS_ProcessingRequest(ULONG ulTxnID,
+/* 底层使用该函数上报错误 rfc3261 8.2.5 */
+ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
                                 SIP_LOCATION_S *pstPeerAddr,
                                 UBUF_HEADER_S  *pstUbufSipMsg)
 {
     ULONG ulDlgID = NULL_ULONG;
     ULONG ulRet;
     ULONG ulUasID;
+    ULONG ulTxnID;
+    ULONG ulAppRef1;
+    ULONG ulAppRef2;
+
+    ulUasID = ulCoreID;
 
     /* 处理事务 */
-    if (ulTxnID == NULL_ULONG)
+    if (ulUasID == NULL_ULONG)
     {
-        SIP_Txn_AllocTxn(pstPeerAddr, &ulTxnID);
-        SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg);
+        /* 初始化环境 */
+        SIP_UAS_AllocCB(&ulUasID);
+        SIP_Txn_AllocTxn(ulUasID, &ulTxnID);
+        g_pstSipUasCB[ulUasID].ulTxnID = ulTxnID;
+        g_pstSipUasCB[ulUasID].pstSipMsgUbuf = pstUbufSipMsg;
+
+        /* 将消息下发给TXN层 */
+        SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg, pstPeerAddr);
         return SUCCESS;
     }
 
-
     /* 匹配对话 */
-
-    SIP_UAS_AllocCB(&ulUasID);
-    g_pstSipUasCB[ulUasID].ulTxnID       = ulTxnID;
-    g_pstSipUasCB[ulUasID].pstSipMsgUbuf = pstUbufSipMsg;
     if(ulDlgID == NULL_ULONG)
     {
         /* 对话外请求 */
@@ -113,7 +119,7 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulTxnID,
     }
 
     /* 上报用户 */
-    SIP_SendUpRequestMsg(ulDlgID, ulUasID, pstUbufSipMsg);
+    SIP_SendUpMsg(0, ulUasID, &ulAppRef1, &ulAppRef2, pstUbufSipMsg);
     return SUCCESS;
 }
 
@@ -130,8 +136,10 @@ ULONG SIP_UAS_SendResponse(IN  ULONG ulUasID,
     /* 填充相关头域 */
     SIP_UAS_GenerateResponse(ulUasID, pstUbufSipMsg);
 
-    /* 想TXN发送消息 */
-    SIP_Txn_RecvUpMsg(g_pstSipUasCB[ulUasID].ulTxnID, pstUbufSipMsg);
+    /* 向TXN发送消息 */
+    SIP_Txn_RecvDownMsg(g_pstSipUasCB[ulUasID].ulTxnID,
+                        pstUbufSipMsg,
+                        NULL_PTR);
 
     return SUCCESS;
 }
@@ -173,4 +181,5 @@ ULONG SIP_UAS_GenerateResponse(ULONG ulUasID, UBUF_HEADER_S * pstUbufSipMsg)
     /* 克隆To头域 */
     /* 如果To头域没有tag，添加一个tag */
 
+    return SUCCESS;
 }

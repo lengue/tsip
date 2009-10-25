@@ -28,7 +28,6 @@
 /* 所有的事务控制块 */
 SIP_TXN_CB_S *g_pstSipTxnCB = NULL_PTR;
 COMM_QUEUE_S   g_stSipTxnCBQueue;
-
 void         *g_pstSipTxnCBHash     = NULL_PTR;
 void         *g_pstSipTxnBranchHash = NULL_PTR;
 

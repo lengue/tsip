@@ -7,9 +7,8 @@ extern ULONG SIP_StartTimer(ULONG ulName,
                      ULONG *pulHandle);
 extern ULONG SIP_StopTimer(ULONG ulHandle);
 extern ULONG SIP_GenerateRandomString(CHAR *pcBuffer, ULONG ulBufferLen);
-extern ULONG SIP_SendUpRequestMsg(ULONG ulDlgID,
-                           ULONG ulTxnID,
-                           UBUF_HEADER_S * pstUbufSipMsg);
-extern ULONG SIP_SendUpResponseMsg(ULONG ulAppID,
-                            ULONG ulDlgID,
-                            UBUF_HEADER_S * pstUbufSipMsg);
+extern ULONG SIP_SendUpMsg(ULONG  ulStackRef1,
+                            ULONG  ulStackRef2,
+                            ULONG *pulAppRef1,
+                            ULONG *pulAppRef2,
+                            UBUF_HEADER_S *pstUbufSipMsg);

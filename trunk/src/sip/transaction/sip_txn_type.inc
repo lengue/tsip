@@ -8,6 +8,7 @@ typedef struct tagSIP_TXN_TIMER_S
 typedef struct tagSIP_TXN_CB_S
 {
     COMM_CB_HEADER
+    ULONG             ulCoreID;
     SIP_TXN_TYPE_E    eType;
     SIP_TXN_STATE_E   eState;
     SIP_LOCATION_S    stPeer;

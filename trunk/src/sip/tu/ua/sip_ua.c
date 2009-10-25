@@ -39,7 +39,7 @@ ULONG SIP_UA_Init()
 }
 
 /* 本模块全局变量声明头文件 */
-ULONG SIP_UA_RecvUpMsg(ULONG ulTxnID,
+ULONG SIP_UA_RecvUpMsg(ULONG ulCoreID,
                        SIP_LOCATION_S *pstPeerAddr,
                        UBUF_HEADER_S *pstUbufSipMsg)
 {
@@ -50,11 +50,11 @@ ULONG SIP_UA_RecvUpMsg(ULONG ulTxnID,
     switch (pstSipMsg->eMsgType)
     {
         case SIP_MSG_TYPE_REQUEST:
-            ulRet = SIP_UAS_ProcessingRequest(ulTxnID, pstPeerAddr, pstUbufSipMsg);
+            ulRet = SIP_UAS_ProcessingRequest(ulCoreID, pstPeerAddr, pstUbufSipMsg);
             break;
 
         case SIP_MSG_TYPE_RESPONSE:
-            //ulRet = SIP_UAC_ProcessingResponse(ulTxnID, pstUbufSipMsg);
+            ulRet = SIP_UAC_ProcessingResponse(ulCoreID, pstUbufSipMsg);
             break;
 
         default:
@@ -65,3 +65,31 @@ ULONG SIP_UA_RecvUpMsg(ULONG ulTxnID,
     return ulRet;
 }
 
+/* 本模块全局变量声明头文件 */
+ULONG SIP_UA_RecvDownMsg(ULONG ulAppRef1,
+                         ULONG ulAppRef2,
+                         ULONG *pulStackRef1,
+                         ULONG *pulStackRef2,
+                         UBUF_HEADER_S *pstUbufSipMsg)
+{
+    SIP_MSG_S *pstSipMsg = NULL_PTR;
+    ULONG ulRet;
+
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    switch (pstSipMsg->eMsgType)
+    {
+        case SIP_MSG_TYPE_REQUEST:
+            ulRet = SIP_UAC_SendRequest(ulAppRef2, *pulStackRef1, pstUbufSipMsg);
+            break;
+
+        case SIP_MSG_TYPE_RESPONSE:
+            ulRet = SIP_UAS_SendResponse(*pulStackRef2, pulStackRef1, pstUbufSipMsg);
+            break;
+
+        default:
+            ulRet = FAIL;
+            break;
+    }
+
+    return ulRet;
+}
