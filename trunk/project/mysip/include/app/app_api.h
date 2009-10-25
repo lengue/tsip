@@ -7,6 +7,8 @@
 extern ULONG APP_MsgProc(ULONG ulModuleID, void* pMsg);
 extern ULONG APP_InitProc();
 extern ULONG APP_StartUserInterface();
-extern ULONG APP_SipMsgProc(ULONG ulDlgID,
-                     ULONG ulTxnID,
-                     UBUF_HEADER_S *pstUbufSipMsg);
+extern ULONG APP_RecvUpMsg(ULONG  ulStackRef1,
+                            ULONG  ulStackRef2,
+                            ULONG *pulAppRef1,
+                            ULONG *pulAppRef2,
+                            UBUF_HEADER_S * pstUbufSipMsg);
