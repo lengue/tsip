@@ -42,16 +42,16 @@ ULONG SIP_TU_Init(SIP_TU_CFG_S *pstCfg)
     return SUCCESS;
 }
 
-ULONG SIP_TU_RecvUpMsg(ULONG ulTxnID,
+ULONG SIP_TU_RecvUpMsg(ULONG ulCoreID,
                        SIP_LOCATION_S *pstPeerAddr,
-                       UBUF_HEADER_S *pstUbufSipMsg)
+                       UBUF_HEADER_S  *pstUbufSipMsg)
 {
     ULONG ulRet;
 
     switch (g_eSipTuCore)
     {
     	case SIP_CORE_UA:
-            ulRet = SIP_UA_RecvUpMsg(ulTxnID, pstPeerAddr, pstUbufSipMsg);
+            ulRet = SIP_UA_RecvUpMsg(ulCoreID, pstPeerAddr, pstUbufSipMsg);
             break;
 
         default:
@@ -60,3 +60,29 @@ ULONG SIP_TU_RecvUpMsg(ULONG ulTxnID,
 
     return SUCCESS;
 }
+
+ULONG SIP_TU_RecvDownMsg(ULONG ulAppRef1,
+                         ULONG ulAppRef2,
+                         ULONG *pulStackRef1,
+                         ULONG *pulStackRef2,
+                         UBUF_HEADER_S  *pstUbufSipMsg)
+{
+    ULONG ulRet;
+
+    switch (g_eSipTuCore)
+    {
+    	case SIP_CORE_UA:
+            ulRet = SIP_UA_RecvDownMsg(ulAppRef1,
+                                       ulAppRef2,
+                                       pulStackRef1,
+                                       pulStackRef2,
+                                       pstUbufSipMsg);
+            break;
+
+        default:
+            break;
+    }
+
+    return SUCCESS;
+}
+

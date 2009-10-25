@@ -17,3 +17,7 @@ ULONG SIP_UAS_MethodInspection(UBUF_HEADER_S *pstSipMsgUbuf);
 ULONG SIP_UAS_HeaderInspection(UBUF_HEADER_S *pstSipMsgUbuf);
 ULONG SIP_UAS_ContentProcessing(UBUF_HEADER_S *pstSipMsgUbuf);
 ULONG SIP_UAS_ApplyingExtensions(UBUF_HEADER_S *pstSipMsgUbuf);
+ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
+                                SIP_LOCATION_S *pstPeerAddr,
+                                UBUF_HEADER_S  *pstUbufSipMsg);
+ULONG SIP_UAS_GenerateResponse(ULONG ulUasID, UBUF_HEADER_S * pstUbufSipMsg);

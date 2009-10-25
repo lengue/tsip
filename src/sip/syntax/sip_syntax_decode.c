@@ -370,7 +370,7 @@ ULONG SIP_ParseMessageHeader(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         }
 
         *ppstHeader = UBUF_AddComponent(pstUbuf, SIP_GET_HEADER_SPEC_SIZE(ulHeader));
-        memset(*ppstHeader, 0xff, SIP_GET_HEADER_SPEC_SIZE(ulHeader));
+        memset(*ppstHeader, 0, SIP_GET_HEADER_SPEC_SIZE(ulHeader));
         return SIP_GET_PARSE_FUNC(ulAppIndex)(pstNode,
                                               pucString,
                                               pstUbuf,
@@ -536,8 +536,8 @@ ULONG SIP_ParseSipURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode     = NULL_PTR;
     URI_USER_INFO_S     *pstUserInfo = NULL_PTR;
-    URI_S *pstUri = NULL_PTR;
-    void                *pStruct   = NULL_PTR;
+    URI_S               *pstUri      = NULL_PTR;
+    void                *pStruct     = NULL_PTR;
 
     SIP_GET_COMPONET_PTR(pstUri, URI_S, pstUbuf, ppStruct);
 

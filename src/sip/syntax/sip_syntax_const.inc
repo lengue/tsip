@@ -97,13 +97,10 @@ typedef enum tagSIP_ABNF_RULE_E
     if (*ppStruct == NULL_PTR)\
     {\
         *ppStruct = UBUF_AddComponent(pstUbuf, sizeof(Type));\
-        pstComponet = *ppStruct;\
-        memset(pstComponet, 0xff, sizeof(Type));\
+        memset(*ppStruct, 0, sizeof(Type));\
     }\
-    else\
-    {\
-        pstComponet = *ppStruct;\
-    }\
+\
+    pstComponet = *ppStruct;\
 }
 
 /* 获取十进制数字宏 */

@@ -28,8 +28,7 @@
 #include "sip_txn_var.inc"
 
 /* 分配一个事务 */
-ULONG SIP_Txn_AllocTxn(SIP_LOCATION_S *pstPeerAddr,
-                       ULONG          *pulTxnID)
+ULONG SIP_Txn_AllocTxn(ULONG ulCoreID, ULONG *pulTxnID)
 {
     ULONG ulTxnID;
     SIP_TXN_CB_S  *pstSipTxnCB = NULL_PTR;
@@ -43,16 +42,15 @@ ULONG SIP_Txn_AllocTxn(SIP_LOCATION_S *pstPeerAddr,
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
 
     /* 连接控制块初始化 */
-    pstSipTxnCB->eType         = SIP_TXN_TYPE_BUTT;
-    pstSipTxnCB->eState        = SIP_TXN_STATE_INIT;
+    pstSipTxnCB->ulCoreID       = ulCoreID;
+    pstSipTxnCB->eType          = SIP_TXN_TYPE_BUTT;
+    pstSipTxnCB->eState         = SIP_TXN_STATE_INIT;
     pstSipTxnCB->pstUbufInitMsg = NULL_PTR;
     pstSipTxnCB->pstUbufSendMsg = NULL_PTR;
     pstSipTxnCB->pstUbufRecvMsg = NULL_PTR;
     memset(pstSipTxnCB->astTimers,
            0xff,
            SIP_TXN_MAX_FSM_TIMER*sizeof(SIP_TXN_TIMER_S));
-
-    memcpy(&pstSipTxnCB->stPeer, pstPeerAddr, sizeof(SIP_LOCATION_S));
 
     *pulTxnID = ulTxnID;
     return SUCCESS;

@@ -115,7 +115,7 @@ ULONG SIP_Txp_ReceiveRequest(SIP_LOCATION_S *pstPeerLocation,
     }
     else
     {
-        SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg);
+        SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg, pstPeerLocation);
     }
 
     return SUCCESS;
@@ -150,7 +150,7 @@ ULONG SIP_Txp_ReceiveReponse(SIP_LOCATION_S *pstPeerLocation,
     }
     else
     {
-        SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg);
+        SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg, pstPeerLocation);
     }
 
     return SUCCESS;

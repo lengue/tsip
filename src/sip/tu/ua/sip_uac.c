@@ -111,9 +111,8 @@ ULONG SIP_UAC_SendRequest(ULONG ulAppID,
 }
 
 /* 底层使用该函数上报错误 rfc3261 8.1.3 */
-ULONG SIP_UAC_ProcessingResponse(ULONG ulAppRef1,
-                                 ULONG ulAppRef2,
-                                 SIP_MSG_S *pstSipMsg)
+ULONG SIP_UAC_ProcessingResponse(ULONG ulCoreID,
+                                 UBUF_HEADER_S *pstUbufSipMsg)
 {
     /* 查看是否创建对话 */
     /* 如果创建了对话携带对话参数 */
@@ -148,11 +147,12 @@ ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
         /* 不是ACK通过事务发送 */
 
         /*申请一个事务*/
-        SIP_Txn_AllocTxn(&pstResult->astLocations[0], &ulTxnID);
+        SIP_Txn_AllocTxn(ulUacID, &ulTxnID);
 
         /*在事务上发送请求*/
         SIP_Txn_RecvDownMsg(ulTxnID,
-                            pstUacCB->pstSipMsgUbuf);
+                            pstUacCB->pstSipMsgUbuf,
+                           &pstResult->astLocations[0]);
     }
     else
     {

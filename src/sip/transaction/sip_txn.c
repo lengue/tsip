@@ -40,7 +40,8 @@ ULONG SIP_Txn_Init(SIP_TXN_CFG_S *pstCfg)
 }
 
 ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
-                          UBUF_HEADER_S  *pstUbufSipMsg)
+                          UBUF_HEADER_S  *pstUbufSipMsg,
+                          SIP_LOCATION_S *pstPeerLocation)
 {
     SIP_TXN_EVENT_E eEvent;
     SIP_MSG_S      *pstSipMsg = NULL_PTR;
@@ -51,6 +52,9 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
+        /* 记录发送地址 */
+        memcpy(&pstSipTxnCB->stPeer, pstPeerLocation, sizeof(SIP_LOCATION_S));
+
         eEvent = SIP_TXN_EVENT_SEND_REQUEST;
         pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
         pstSipTxnCB->pstUbufSendMsg = pstUbufSipMsg;
@@ -95,16 +99,21 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
     return SUCCESS;
 }
 
-ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID, UBUF_HEADER_S *pstUbufSipMsg)
+ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
+                        UBUF_HEADER_S *pstUbufSipMsg,
+                        SIP_LOCATION_S *pstPeerLocation)
 {
     SIP_TXN_EVENT_E eEvent;
-    SIP_MSG_S      *pstSipMsg = NULL_PTR;
+    SIP_MSG_S      *pstSipMsg   = NULL_PTR;
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
+        /* 记录发送地址 */
+        memcpy(&pstSipTxnCB->stPeer, pstPeerLocation, sizeof(SIP_LOCATION_S));
+
         if (pstSipMsg->uStartLine.stRequstLine.eMethod == SIP_METHOD_ACK)
         {
             eEvent = SIP_TXN_EVENT_RECV_ACK;
