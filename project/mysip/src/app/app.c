@@ -82,9 +82,11 @@ ULONG APP_MsgProc(ULONG ulModuleID, void* pMsg)
     return ulRet;
 }
 
-ULONG APP_SipMsgProc(ULONG ulDlgID,
-                     ULONG ulUasID,
-                     UBUF_HEADER_S *pstUbufSipMsg)
+ULONG APP_RecvUpMsg(ULONG  ulStackRef1,
+                    ULONG  ulStackRef2,
+                    ULONG *pulAppRef1,
+                    ULONG *pulAppRef2,
+                    UBUF_HEADER_S * pstUbufSipMsg)
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
 
@@ -92,11 +94,11 @@ ULONG APP_SipMsgProc(ULONG ulDlgID,
     switch (pstSipMsg->eMsgType)
     {
         case SIP_MSG_TYPE_REQUEST:
-            APP_SipRequestProc(ulDlgID, ulUasID, pstUbufSipMsg);
+            APP_SipRequestProc(ulStackRef1, ulStackRef2, pstUbufSipMsg);
             break;
 
         case SIP_MSG_TYPE_RESPONSE:
-            APP_SipRequestProc(ulDlgID, ulUasID, pstUbufSipMsg);
+            APP_SipResponseProc(ulStackRef1, ulStackRef2, pstUbufSipMsg);
             break;
 
         default:

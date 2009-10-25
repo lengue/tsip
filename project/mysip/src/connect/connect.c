@@ -29,7 +29,7 @@ ULONG CONN_ModuleInitProc()
     ULONG ulRet;
     SIP_TXP_CFG_S stSipCfg;
 
-    memset(&stSipCfg, 0,sizeof(SIP_TXP_CFG_S));
+    memset(&stSipCfg, 0, sizeof(SIP_TXP_CFG_S));
     ulRet = SIP_ParseConfig(&stSipCfg);
     if (ulRet != SUCCESS)
     {

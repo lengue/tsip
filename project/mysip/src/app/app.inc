@@ -8,9 +8,6 @@ ULONG APP_StartUserInterface();
 ULONG APP_InitProc();
 ULONG APP_TimerProc(TIMER_MSG_S *pstTimerMsg);
 ULONG APP_MsgProc(ULONG ulModuleID, void* pMsg);
-ULONG APP_SipMsgProc(ULONG ulDlgID,
-                     ULONG ulTxnID,
-                     UBUF_HEADER_S *pstUbufSipMsg);
 ULONG APP_SipRequestProc(ULONG ulDlgID,
                          ULONG ulTxnID,
                          UBUF_HEADER_S *pstUbufSipMsg);
