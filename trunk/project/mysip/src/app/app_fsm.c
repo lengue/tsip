@@ -56,12 +56,11 @@ ULONG APP_Fsm_Idle_OffhookProc()
 {
     UCHAR aucURI[200];
     UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
-    UBUF_PTR       upComponent   = UBUF_NULL_PTR;
     SIP_MSG_S     *pstSipMsg     = NULL_PTR;
     ULONG          ulRet;
-    SIP_HEADER_S  *pstHeader = NULL_PTR;
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
     SIP_HEADER_TO_S   *pstTo   = NULL_PTR;
+    ULONG ulRuleIndex;
 
     /* 输入请求URI */
     printf("\r\nTarget URI:");
@@ -74,7 +73,7 @@ ULONG APP_Fsm_Idle_OffhookProc()
         return FAIL;
     }
 
-    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S), &upComponent);
+    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
     memset(pstSipMsg, 0xff, sizeof(SIP_MSG_S));
 
     /* 添加方法 */
@@ -83,48 +82,42 @@ ULONG APP_Fsm_Idle_OffhookProc()
     pstSipMsg->uStartLine.stRequstLine.ucVersion = 2;
 
     /* 添加Request URI */
-    ulRet = SIP_Syntax_UriDecode(aucURI,
-                                 (ULONG)strlen(aucURI),
-                                 pstSipMsgUBuf,
-                                &pstSipMsg->uStartLine.stRequstLine.upRequestURI);
+    SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
+    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+                      aucURI,
+                     (ULONG)strlen(aucURI),
+                      pstSipMsgUBuf,
+                     &pstSipMsg->uStartLine.stRequstLine.pstRequestURI);
     if (ulRet != SUCCESS)
     {
         return FAIL;
     }
 
     /* 添加To头域 */
-    pstHeader = UBUF_AddComponent(pstSipMsgUBuf,
-                                  sizeof(SIP_HEADER_S)+sizeof(SIP_HEADER_TO_S),
-                                 &pstSipMsg->aupstHeaders[SIP_HEADER_TO]);
-    pstHeader->upstNext = UBUF_NULL_PTR;
-
-    pstTo =  (SIP_HEADER_TO_S *)pstHeader->pstSpec;
-    memset(pstTo, 0xff, sizeof(SIP_HEADER_TO_S));
-
+    pstTo = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_HEADER_TO_S));
+    pstSipMsg->apstHeaders[SIP_HEADER_TO] = (SIP_HEADER_S *)pstTo;
+    pstTo->stHeader.pstNext = NULL_PTR;
     pstTo->stNameAddr.bName = FALSE;
-    ulRet = SIP_Syntax_UriDecode(aucURI,
-                                 (ULONG)strlen(aucURI),
-                                 pstSipMsgUBuf,
-                                &pstTo->stNameAddr.upstUri);
+    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+                              aucURI,
+                             (ULONG)strlen(aucURI),
+                              pstSipMsgUBuf,
+                             &pstTo->stNameAddr.pstUri);
     if (ulRet != SUCCESS)
     {
         return FAIL;
     }
 
     /* 添加From头域 */
-    pstHeader = UBUF_AddComponent(pstSipMsgUBuf,
-                                  sizeof(SIP_HEADER_S)+sizeof(SIP_HEADER_FROM_S),
-                                 &pstSipMsg->aupstHeaders[SIP_HEADER_FROM]);
-    pstHeader->upstNext = UBUF_NULL_PTR;
-
-    pstFrom =  (SIP_HEADER_FROM_S *)pstHeader->pstSpec;
-    memset(pstFrom, 0xff, sizeof(SIP_HEADER_FROM_S));
-
+    pstFrom = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_HEADER_FROM_S));
+    pstSipMsg->apstHeaders[SIP_HEADER_FROM] = (SIP_HEADER_S *)pstFrom;
+    pstFrom->stHeader.pstNext = NULL_PTR;
     pstFrom->stNameAddr.bName = FALSE;
-    ulRet = SIP_Syntax_UriDecode(g_pucAppPublicID,
-                                 (ULONG)strlen(g_pucAppPublicID),
-                                 pstSipMsgUBuf,
-                                &pstFrom->stNameAddr.upstUri);
+    ulRet = SIP_Syntax_Decode(ulRuleIndex,
+                              g_pucAppPublicID,
+                             (ULONG)strlen(g_pucAppPublicID),
+                              pstSipMsgUBuf,
+                             &pstFrom->stNameAddr.pstUri);
     if (ulRet != SUCCESS)
     {
         return FAIL;
@@ -167,9 +160,7 @@ ULONG APP_Fsm_WaitClear_OnhookProc()
 ULONG APP_Fsm_Idle_IncommingCallProc()
 {
     UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
-    UBUF_PTR       upComponent   = UBUF_NULL_PTR;
     SIP_MSG_S     *pstSipMsg     = NULL_PTR;
-    ULONG          ulRet;
     ULONG          ulDlgID;
 
     printf("\r\nAlert........................");
@@ -181,7 +172,7 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
         return FAIL;
     }
 
-    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S), &upComponent);
+    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
     memset(pstSipMsg, 0xff, sizeof(SIP_MSG_S));
 
     /* 添加方法 */
