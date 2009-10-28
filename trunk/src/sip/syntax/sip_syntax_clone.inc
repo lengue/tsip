@@ -43,9 +43,6 @@ ULONG SIP_CloneSipsURI(void          *pSrcStruct,
 ULONG SIP_CloneUserinfo(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
                           void         **ppDstStruct);
-ULONG SIP_CloneUser(void          *pSrcStruct,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          void         **ppDstStruct);
 ULONG SIP_CloneHostport(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
                           void         **ppDstStruct);
@@ -56,9 +53,6 @@ ULONG SIP_ClonePort(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
                           void         **ppDstStruct);
 ULONG SIP_CloneStatusCode(void          *pSrcStruct,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          void         **ppDstStruct);
-ULONG SIP_CloneReasonPhrase(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
                           void         **ppDstStruct);
 ULONG SIP_CloneFromSpec(void          *pSrcStruct,
