@@ -11,7 +11,7 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulTxnID,
                                 SIP_LOCATION_S *pstPeerAddr,
                                 UBUF_HEADER_S  *pstUbufSipMsg);
 ULONG SIP_UAS_SendResponse(IN  ULONG ulTxnID,
-                           OUT ULONG *pulDlgID,
+                           OUT ULONG ulDlgID,
                            UBUF_HEADER_S * pstUbufSipMsg);
 ULONG SIP_UAS_MethodInspection(UBUF_HEADER_S *pstSipMsgUbuf);
 ULONG SIP_UAS_HeaderInspection(UBUF_HEADER_S *pstSipMsgUbuf);
