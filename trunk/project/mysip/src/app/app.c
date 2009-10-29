@@ -68,11 +68,21 @@ ULONG APP_InitProc()
 ULONG APP_MsgProc(ULONG ulModuleID, void* pMsg)
 {
     ULONG ulRet = SUCCESS;
+    APP_MSG_S  *pstAppMsg = NULL_PTR;
 
     switch(ulModuleID)
     {
         case SYS_MODULE_TIMER:
             ulRet = APP_TimerProc(pMsg);
+            break;
+
+        case SYS_MODULE_SIP:
+            pstAppMsg = (APP_MSG_S *)pMsg;
+            ulRet = APP_RecvUpMsg(pstAppMsg->ulStackRef1,
+                                  pstAppMsg->ulStackRef2,
+                                  pstAppMsg->ulAppRef1,
+                                  pstAppMsg->ulAppRef2,
+                                  pstAppMsg->pstUbufSipMsg);
             break;
 
         default:
@@ -82,10 +92,10 @@ ULONG APP_MsgProc(ULONG ulModuleID, void* pMsg)
     return ulRet;
 }
 
-ULONG APP_RecvUpMsg(ULONG  ulStackRef1,
-                    ULONG  ulStackRef2,
-                    ULONG *pulAppRef1,
-                    ULONG *pulAppRef2,
+ULONG APP_RecvUpMsg(ULONG ulStackRef1,
+                    ULONG ulStackRef2,
+                    ULONG ulAppRef1,
+                    ULONG ulAppRef2,
                     UBUF_HEADER_S * pstUbufSipMsg)
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
@@ -171,4 +181,24 @@ ULONG APP_TimerProc(TIMER_MSG_S *pstTimerMsg)
             pstTimerMsg->ulName,
             pstTimerMsg->ulPara);
     return SUCCESS;
+}
+
+ULONG APP_SendDownMsg(ULONG ulAppRef1,
+                      ULONG ulAppRef2,
+                      ULONG ulStackRef1,
+                      ULONG ulStackRef2,
+                      UBUF_HEADER_S *pstUbufSipMsg)
+{
+    APP_MSG_S stAppMsg;
+
+    stAppMsg.ulAppRef1 = ulAppRef1;
+    stAppMsg.ulAppRef2 = ulAppRef2;
+    stAppMsg.ulStackRef1 = ulStackRef1;
+    stAppMsg.ulStackRef2 = ulStackRef2;
+    stAppMsg.pstUbufSipMsg = pstUbufSipMsg;
+
+    return SYS_SendMsg(SYS_MODULE_APP,
+                       SYS_MODULE_SIP,
+                      &stAppMsg,
+                       sizeof(APP_MSG_S));
 }

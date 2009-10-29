@@ -14,3 +14,13 @@ ULONG APP_SipRequestProc(ULONG ulDlgID,
 ULONG APP_SipResponseProc(ULONG ulDlgID,
                           ULONG ulReqID,
                           UBUF_HEADER_S *pstUbufSipMsg);
+ULONG APP_SendDownMsg(ULONG ulAppRef1,
+                       ULONG ulAppRef2,
+                       ULONG ulStackRef1,
+                       ULONG ulStackRef2,
+                       UBUF_HEADER_S *pstUbufSipMsg);
+ULONG APP_RecvUpMsg(ULONG ulStackRef1,
+                    ULONG ulStackRef2,
+                    ULONG ulAppRef1,
+                    ULONG ulAppRef2,
+                    UBUF_HEADER_S * pstUbufSipMsg);
