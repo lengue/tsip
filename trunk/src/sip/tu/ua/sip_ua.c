@@ -68,8 +68,8 @@ ULONG SIP_UA_RecvUpMsg(ULONG ulCoreID,
 /* 本模块全局变量声明头文件 */
 ULONG SIP_UA_RecvDownMsg(ULONG ulAppRef1,
                          ULONG ulAppRef2,
-                         ULONG *pulStackRef1,
-                         ULONG *pulStackRef2,
+                         ULONG ulStackRef1,
+                         ULONG ulStackRef2,
                          UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
@@ -79,11 +79,11 @@ ULONG SIP_UA_RecvDownMsg(ULONG ulAppRef1,
     switch (pstSipMsg->eMsgType)
     {
         case SIP_MSG_TYPE_REQUEST:
-            ulRet = SIP_UAC_SendRequest(ulAppRef2, *pulStackRef1, pstUbufSipMsg);
+            ulRet = SIP_UAC_SendRequest(ulAppRef2, ulStackRef1, pstUbufSipMsg);
             break;
 
         case SIP_MSG_TYPE_RESPONSE:
-            ulRet = SIP_UAS_SendResponse(*pulStackRef2, pulStackRef1, pstUbufSipMsg);
+            ulRet = SIP_UAS_SendResponse(ulStackRef2, ulStackRef1, pstUbufSipMsg);
             break;
 
         default:

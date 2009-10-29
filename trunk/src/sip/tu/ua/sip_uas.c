@@ -64,8 +64,8 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
     ULONG ulRet;
     ULONG ulUasID;
     ULONG ulTxnID;
-    ULONG ulAppRef1;
-    ULONG ulAppRef2;
+    ULONG ulAppRef1 = NULL_ULONG;
+    ULONG ulAppRef2 = NULL_ULONG;
 
     ulUasID = ulCoreID;
 
@@ -119,7 +119,7 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
     }
 
     /* 上报用户 */
-    SIP_SendUpMsg(0, ulUasID, &ulAppRef1, &ulAppRef2, pstUbufSipMsg);
+    SIP_SendUpMsg(0, ulUasID, ulAppRef1, ulAppRef2, pstUbufSipMsg);
     return SUCCESS;
 }
 
@@ -130,7 +130,7 @@ ULONG *pulDlgID  如果不为空，标识创建或者存在一个对话中
 UBUF_HEADER_S * pstUbufSipMsg 待发送的消息
 */
 ULONG SIP_UAS_SendResponse(IN  ULONG ulUasID,
-                           OUT ULONG *pulDlgID,
+                           OUT ULONG ulDlgID,
                            UBUF_HEADER_S * pstUbufSipMsg)
 {
     /* 填充相关头域 */

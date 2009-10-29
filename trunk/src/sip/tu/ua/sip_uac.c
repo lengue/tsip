@@ -64,7 +64,7 @@ UBUF_HEADER_S * pstUbufSipMsg 待发送的消息
 */
 ULONG SIP_UAC_SendRequest(ULONG ulAppID,
                           ULONG ulDlgID,
-                          UBUF_HEADER_S * pstUbufSipMsg)
+                          UBUF_HEADER_S *pstUbufSipMsg)
 {
     ULONG       ulRet;
     SIP_URI_S * pstSipUri = NULL_PTR;

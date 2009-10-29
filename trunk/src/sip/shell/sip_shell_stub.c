@@ -30,10 +30,10 @@
 #include "sip_shell_var.inc"
 
 /* SIP协议栈向业务层发送消息 */
-ULONG SIP_SendUpMsg(ULONG  ulStackRef1,
-                    ULONG  ulStackRef2,
-                    ULONG *pulAppRef1,
-                    ULONG *pulAppRef2,
+ULONG SIP_SendUpMsg(ULONG ulStackRef1,
+                    ULONG ulStackRef2,
+                    ULONG ulAppRef1,
+                    ULONG ulAppRef2,
                     UBUF_HEADER_S *pstUbufSipMsg)
 {
     /* 调用注册的钩子函数 */
@@ -44,8 +44,8 @@ ULONG SIP_SendUpMsg(ULONG  ulStackRef1,
 
     return g_stSiphellCfg.pfnSendUpMsg(ulStackRef1,
                                        ulStackRef2,
-                                       pulAppRef1,
-                                       pulAppRef2,
+                                       ulAppRef1,
+                                       ulAppRef2,
                                        pstUbufSipMsg);
 }
 
