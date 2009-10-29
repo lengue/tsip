@@ -24,6 +24,6 @@ extern ULONG SIP_Clone(ULONG          ulRuleIndex,
 extern ULONG SIP_RecvUpMsg(SIP_LOCATION_S *pstPeerLocation, UBUF_HEADER_S *pstUbufSipMsg);
 extern ULONG SIP_RecvDownMsg(ULONG ulAppRef1,
                              ULONG ulAppRef2,
-                             ULONG *pulStackRef1,
-                             ULONG *pulStackRef2,
+                             ULONG ulStackRef1,
+                             ULONG ulStackRef2,
                              UBUF_HEADER_S *pstUbufSipMsg);
