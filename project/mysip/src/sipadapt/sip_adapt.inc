@@ -33,9 +33,14 @@ ULONG SIP_ADPT_StartTimer(ULONG ulName,
                           ULONG ulPara,
                           SIP_TIMER_TYPE_E eType,
                           ULONG *pulHandle);
-ULONG SIP_ADPT_RecvMsg(SIP_LOCATION_S *pstLocation,
-                       UCHAR *pucMsg,
-                       ULONG ulMsgLen);
-ULONG SIP_ADPT_SendMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
-                       SIP_LOCATION_S *pstPeerLocation);
+ULONG SIP_ADPT_RecvUpMsg(SIP_LOCATION_S *pstLocation,
+                         UCHAR *pucMsg,
+                         ULONG ulMsgLen);
+ULONG SIP_ADPT_SendUpMsg(ULONG ulStackRef1,
+                         ULONG ulStackRef2,
+                         ULONG AppRef1,
+                         ULONG AppRef2,
+                         UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_ADPT_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
+                           SIP_LOCATION_S *pstPeerLocation);
 VOID SIP_ADPT_StopTimer(ULONG ulHandle);

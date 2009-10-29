@@ -9,6 +9,7 @@
 #include "ubuf\ubuf.h"
 #include "sip\uri.h"
 #include "sip\sip.h"
+#include "timer\timer.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "app\app.h"
@@ -18,6 +19,7 @@
 #include "app_type.inc"
 
 /* 本模块内部函数声明头文件 */
+#include "app.inc"
 #include "app_fsm.inc"
 
 /* 本模块全局变量声明头文件 */
@@ -127,10 +129,10 @@ ULONG APP_Fsm_Idle_OffhookProc()
         return FAIL;
     }
 
-    SIP_RecvDownMsg(NULL_ULONG,
+    APP_SendDownMsg(NULL_ULONG,
                     0,
-                   &ulStackRef1,
-                   &ulStackRef2,
+                    NULL_ULONG,
+                    NULL_ULONG,
                     pstSipMsgUBuf);
 
     /* 状态迁为APP_STATE_WAIT_REMOTE_ANSWER */
@@ -169,7 +171,6 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
 {
     UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
     SIP_MSG_S     *pstSipMsg     = NULL_PTR;
-    ULONG ulStackRef1 = NULL_ULONG;
 
     printf("\r\nAlert........................");
 
@@ -188,10 +189,10 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
     pstSipMsg->uStartLine.stStatusLine.ucVersion   = 2;
     pstSipMsg->uStartLine.stStatusLine.eStatusCode = SIP_STATUS_CODE_180;
 
-    SIP_RecvDownMsg(NULL_ULONG,
+    APP_SendDownMsg(NULL_ULONG,
                     NULL_ULONG,
-                   &ulStackRef1,
-                   &g_ulAppTxnID,
+                    NULL_ULONG,
+                    g_ulAppTxnID,
                     pstSipMsgUBuf);
 
     /* 状态迁为APP_STATE_WAIT_LOCAL_ANSWER */

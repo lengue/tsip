@@ -52,19 +52,29 @@ ULONG SIP_ADPT_Init()
 
 ULONG SIP_APDT_MsgProc(ULONG ulModuleID, void* pMsg)
 {
-    SIP_ADPT_CONN_MSG_S *pstConnMsg = NULL_PTR;
-    SIP_ADPT_TIMER_MSG_S *pstTimerMsg = NULL_PTR;
+    SIP_ADPT_CONN_MSG_S  *pstConnMsg  = NULL_PTR;
+    TIMER_MSG_S *pstTimerMsg = NULL_PTR;
+    APP_MSG_S   *pstAppMsg   = NULL_PTR;
 
     switch(ulModuleID)
     {
-        case SYS_MODULE_SIP:
+        case SYS_MODULE_CONN:
             pstConnMsg =(SIP_ADPT_CONN_MSG_S *)pMsg;
             SIP_RecvUpMsg(&pstConnMsg->stLocation, pstConnMsg->pstMsgUbuf);
             break;
 
         case SYS_MODULE_TIMER:
-            pstTimerMsg = (SIP_ADPT_TIMER_MSG_S *)pMsg;
+            pstTimerMsg = (TIMER_MSG_S *)pMsg;
             SIP_TimeoutProc(pstTimerMsg->ulName, pstTimerMsg->ulPara);
+            break;
+
+        case SYS_MODULE_APP:
+            pstAppMsg = (APP_MSG_S *)pMsg;
+            SIP_RecvDownMsg(pstAppMsg->ulAppRef1,
+                            pstAppMsg->ulAppRef2,
+                            pstAppMsg->ulStackRef1,
+                            pstAppMsg->ulStackRef2,
+                            pstAppMsg->pstUbufSipMsg);
             break;
 
         default:
@@ -168,8 +178,8 @@ ULONG SIP_ADPT_BuildConfigStruct(SIP_ADAPT_CFG_S *g_pstCfg)
     /* 挂函数钩子 */
     g_pstCfg->stSipCfg.stShellCfg.pfnStartTimer     = SIP_ADPT_StartTimer;
     g_pstCfg->stSipCfg.stShellCfg.pfnStopTimer      = SIP_ADPT_StopTimer;
-    g_pstCfg->stSipCfg.stShellCfg.pfnSendUpMsg      = APP_RecvUpMsg;
-    g_pstCfg->stSipCfg.stShellCfg.pfnSendDownMsg    = SIP_ADPT_SendMsg;
+    g_pstCfg->stSipCfg.stShellCfg.pfnSendUpMsg      = SIP_ADPT_SendUpMsg;
+    g_pstCfg->stSipCfg.stShellCfg.pfnSendDownMsg    = SIP_ADPT_SendDownMsg;
     g_pstCfg->stSipCfg.stShellCfg.pfnGenerateRandom = SYS_GeneralRandomString;
     return SUCCESS;
 }
@@ -404,7 +414,7 @@ ULONG SIP_ADPT_BuildConnConfig(SIP_ADAPT_CFG_S *g_pstCfg,
     }
 
     g_pstCfg->stConnCfg.ucListenNum = ucListenNum;
-    g_pstCfg->stConnCfg.pfnMsgProc = SIP_ADPT_RecvMsg;
+    g_pstCfg->stConnCfg.pfnMsgProc = SIP_ADPT_RecvUpMsg;
     return SUCCESS;
 }
 
@@ -414,9 +424,9 @@ ULONG SIP_ADPT_FreeConnConfig(SIP_ADAPT_CFG_S *g_pstCfg)
 }
 
 /* 接受网络消息 */
-ULONG SIP_ADPT_RecvMsg(SIP_LOCATION_S *pstLocation,
-                       UCHAR *pucMsg,
-                       ULONG ulMsgLen)
+ULONG SIP_ADPT_RecvUpMsg(SIP_LOCATION_S *pstLocation,
+                         UCHAR *pucMsg,
+                         ULONG ulMsgLen)
 {
     ULONG ulRet;
     SIP_ADPT_CONN_MSG_S stConnMsg;
@@ -428,10 +438,10 @@ ULONG SIP_ADPT_RecvMsg(SIP_LOCATION_S *pstLocation,
     pstUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
     SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
     ulRet = SIP_Decode(ulRuleIndex,
-                          pucMsg,
-                          ulMsgLen,
-                          pstUBuf,
-                         &pstSipMsg);
+                       pucMsg,
+                       ulMsgLen,
+                       pstUBuf,
+                      &pstSipMsg);
     if (ulRet != SUCCESS)
     {
         UBUF_FreeBuffer(pstUBuf);
@@ -441,15 +451,36 @@ ULONG SIP_ADPT_RecvMsg(SIP_LOCATION_S *pstLocation,
     memcpy(&stConnMsg.stLocation, pstLocation, sizeof(SIP_LOCATION_S));
     stConnMsg.pstMsgUbuf = pstUBuf;
 
-    return SYS_SendMsg(SYS_MODULE_SIP,
+    return SYS_SendMsg(SYS_MODULE_CONN,
                        SYS_MODULE_SIP,
                       &stConnMsg,
                        sizeof(SIP_ADPT_CONN_MSG_S));
 }
 
+/* 发送用户消息 */
+ULONG SIP_ADPT_SendUpMsg(ULONG ulStackRef1,
+                         ULONG ulStackRef2,
+                         ULONG AppRef1,
+                         ULONG AppRef2,
+                         UBUF_HEADER_S *pstUbufSipMsg)
+{
+    APP_MSG_S stAppMsg;
+
+    stAppMsg.ulAppRef1 = AppRef1;
+    stAppMsg.ulAppRef2 = AppRef1;
+    stAppMsg.ulStackRef1 = ulStackRef1;
+    stAppMsg.ulStackRef2 = ulStackRef2;
+    stAppMsg.pstUbufSipMsg = pstUbufSipMsg;
+
+    return SYS_SendMsg(SYS_MODULE_SIP,
+                       SYS_MODULE_APP,
+                      &stAppMsg,
+                       sizeof(APP_MSG_S));
+}
+
 /* 发送网络消息 */
-ULONG SIP_ADPT_SendMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
-                       SIP_LOCATION_S *pstPeerLocation)
+ULONG SIP_ADPT_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
+                           SIP_LOCATION_S *pstPeerLocation)
 {
     ULONG ulMsgLen;
     ULONG ulRuleIndex;
