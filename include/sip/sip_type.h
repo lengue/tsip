@@ -383,10 +383,10 @@ typedef ULONG (*SIP_START_TIMER_PROC)(ULONG ulName,
                                       SIP_TIMER_TYPE_E eType,
                                       ULONG *pulHandle);
 typedef VOID (*SIP_STOP_TIMER_PROC)(ULONG ulHandle);
-typedef ULONG (*SIP_SEND_UP_MSG_PROC)(ULONG  ulStackRef1,
-                                      ULONG  ulStackRef2,
-                                      ULONG *pulAppRef1,
-                                      ULONG *pulAppRef2,
+typedef ULONG (*SIP_SEND_UP_MSG_PROC)(ULONG ulStackRef1,
+                                      ULONG ulStackRef2,
+                                      ULONG ulAppRef1,
+                                      ULONG ulAppRef2,
                                       UBUF_HEADER_S * pstUbufSipMsg);
 typedef ULONG (*SIP_SEND_DOWN_MSG_PROC)(UBUF_HEADER_S  *pstSipMsgUbuf,
                                         SIP_LOCATION_S *pstPeerLocation);
