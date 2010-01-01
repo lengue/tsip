@@ -8,7 +8,7 @@
 //UCHAR *g_pucSipTxpHost;
 
 /* 传输层管理，按照传输协议排列，记录该协议下连接队列 */
-extern ULONG           g_aulConnTransport[SIP_TRANSPORT_PROTOCOL_BUTT];
+extern ULONG           g_aulConnTransport[CONN_TRANSPORT_PROTOCOL_BUTT];
 
 /* 监控连接队列 */
 extern CONN_LISTEN_S  *g_pstConnListen;

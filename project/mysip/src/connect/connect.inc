@@ -31,4 +31,4 @@ extern ULONG CONN_SendBuffMsg(ULONG ulConnID);
 extern ULONG CONN_BuffSendMsg(UCHAR *pucMsg,ULONG ulMsgLen, ULONG ulConnID);
 extern ULONG CONN_SendMsg(UCHAR *pucTextMsg,
                    ULONG ulMsgLen,
-                   SIP_LOCATION_S *pstLocation);
+                   CONN_LOCATION_S *pstLocation);
