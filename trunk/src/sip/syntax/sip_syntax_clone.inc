@@ -88,9 +88,6 @@ ULONG SIP_CloneViaMaddr(void          *pSrcStruct,
 ULONG SIP_CloneViaReceived(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
                           void         **ppDstStruct);
-ULONG SIP_CloneViaBranch(void          *pSrcStruct,
-                          UBUF_HEADER_S *pstDstUbufMsg,
-                          void         **ppDstStruct);
 ULONG SIP_CloneNameAddr(void          *pSrcStruct,
                           UBUF_HEADER_S *pstDstUbufMsg,
                           void         **ppDstStruct);

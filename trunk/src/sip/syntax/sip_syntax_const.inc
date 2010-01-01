@@ -82,13 +82,25 @@ typedef enum tagSIP_ABNF_RULE_E
 /* 获取偏移后的地址指针 */
 #define SIP_GET_OFFSET_POINT(pucString, ulOffset) pucString + (ulOffset)
 
-/* 获取字符串值宏 */
+/* 解码专用宏*/
+/* 从获取字符串值宏 */
 #define SIP_GET_STRING(pucDest, pstNode, pucString, pstUbuf, ppStruct) \
 { \
     *(ppStruct) = UBUF_AddComponent(pstUbuf, (pstNode)->ulSize + 1);\
     (pucDest) = *(ppStruct);\
     strncpy((pucDest), pucString + (pstNode)->ulOffset, (pstNode)->ulSize); \
     (pucDest)[(pstNode)->ulSize] = '\0'; \
+}
+
+/* 获取十进制数字宏 */
+#define SIP_GET_DEC_NUM(Number, pucChar) \
+{\
+    Number = 0;\
+    while ((*pucChar >= '0') && (*pucChar <= '9'))\
+    {\
+        Number = Number*10 + *pucChar - '0';\
+        pucChar++;\
+    }\
 }
 
 /* 判断获取组件空间 */
@@ -103,17 +115,16 @@ typedef enum tagSIP_ABNF_RULE_E
     pstComponet = *ppStruct;\
 }
 
-/* 获取十进制数字宏 */
-#define SIP_GET_DEC_NUM(Number, pucChar) \
-{\
-    Number = 0;\
-    while ((*pucChar >= '0') && (*pucChar <= '9'))\
-    {\
-        Number = Number*10 + *pucChar - '0';\
-        pucChar++;\
-    }\
+/* 克隆专用宏*/
+#define SIP_CLONE_STRING(pstDstUbuf, pucDstStr, pucSrcStr) \
+{ \
+    ULONG ulLen = (ULONG)strlen(pucSrcStr);\
+    (pucDstStr) = UBUF_AddComponent(pstDstUbuf, ulLen + 1); \
+    strncpy((pucDstStr), (pucSrcStr), ulLen); \
+    (pucDstStr)[ulLen] = '\0'; \
 }
 
+/* 编码专用宏 */
 /* 向消息缓存中添加一个普通字符串值 */
 #define SIP_ADD_STRING(pstBuffer, pucString) \
 {\

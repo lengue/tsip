@@ -66,9 +66,11 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
     ULONG ulTxnID;
     ULONG ulAppRef1 = NULL_ULONG;
     ULONG ulAppRef2 = NULL_ULONG;
+    SIP_MSG_S *pstSipMsg = NULL_PTR;
+    SIP_HEADER_TO_S *pstHeaderTo = NULL_PTR;
 
     ulUasID = ulCoreID;
-
+    
     /* 处理事务 */
     if (ulUasID == NULL_ULONG)
     {
@@ -83,9 +85,17 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
         return SUCCESS;
     }
 
-    /* 匹配对话 */
-    if(ulDlgID == NULL_ULONG)
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    pstHeaderTo = (SIP_HEADER_TO_S *)pstSipMsg->apstHeaders[SIP_HEADER_TO];
+    if (pstHeaderTo->pucTag != NULL_PTR)
     {
+        /* 匹配对话 */
+    }
+
+    if (ulDlgID == NULL_ULONG)
+    {
+        /* 认证 */
+        
         /* 对话外请求 */
         ulRet = SIP_UAS_MethodInspection(pstUbufSipMsg);
         if(ulRet != SUCCESS)
@@ -93,12 +103,15 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
             /* 产生405响应，增加Allow头域 */
         }
 
+        /* 头域检查*/
         ulRet = SIP_UAS_HeaderInspection(pstUbufSipMsg);
         if(ulRet != SUCCESS)
         {
-            /*  */
+            /* 头域不正确继续处理 */
         }
 
+
+        /* 内容检查 */
         ulRet = SIP_UAS_ContentProcessing(pstUbufSipMsg);
         if(ulRet != SUCCESS)
         {
@@ -147,12 +160,28 @@ ULONG SIP_UAS_SendResponse(IN  ULONG ulUasID,
 /*rfc3261 8.2.1*/
 ULONG SIP_UAS_MethodInspection(UBUF_HEADER_S *pstSipMsgUbuf)
 {
+    SIP_MSG_S     *pstSipMsg = NULL_PTR;
+
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstSipMsgUbuf);
+    if (pstSipMsg->uStartLine.stRequstLine.eMethod >= SIP_METHOD_BUTT)
+    {
+        return FAIL;
+    }
+    
     return SUCCESS;
 }
 
 /*rfc3261 8.2.2*/
 ULONG SIP_UAS_HeaderInspection(UBUF_HEADER_S *pstSipMsgUbuf)
 {
+    /* 检查To头域 */
+
+    /* 检查Request URI头域 */
+
+    /* 检查Merged请求*/
+
+    /* Require头域检查 */
+    
     return SUCCESS;
 }
 
@@ -170,16 +199,57 @@ ULONG SIP_UAS_ApplyingExtensions(UBUF_HEADER_S *pstSipMsgUbuf)
 
 ULONG SIP_UAS_GenerateResponse(ULONG ulUasID, UBUF_HEADER_S * pstUbufSipMsg)
 {
-    UBUF_HEADER_S * pstUbufRequestMsg = NULL_PTR;
-
-    pstUbufRequestMsg = g_pstSipUasCB[ulUasID].pstSipMsgUbuf;
-
+    SIP_MSG_S *pstUbufRequestMsg = NULL_PTR;
+    SIP_MSG_S *pstUbufResponseMsg = NULL_PTR;
+    SIP_HEADER_TO_S *pstHeaderTo = NULL_PTR;
+    ULONG ulRuleIndex;
+    
+    pstUbufRequestMsg  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(g_pstSipUasCB[ulUasID].pstSipMsgUbuf);
+    pstUbufResponseMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+        
     /* 克隆From头域 */
+    SIP_GetRuleIndex("From", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex,
+              pstUbufRequestMsg->apstHeaders[SIP_HEADER_FROM], 
+              pstUbufSipMsg, 
+             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_FROM]);
+    
     /* 克隆Call-ID头域 */
+    SIP_GetRuleIndex("Call-ID", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex,
+              pstUbufRequestMsg->apstHeaders[SIP_HEADER_CALL_ID], 
+              pstUbufSipMsg, 
+             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_CALL_ID]);
+
     /* 克隆CSeq头域 */
+    SIP_GetRuleIndex("CSeq", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex,
+              pstUbufRequestMsg->apstHeaders[SIP_HEADER_CSEQ], 
+              pstUbufSipMsg, 
+             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_CSEQ]);
+    
     /* 克隆Via头域 */
+    SIP_GetRuleIndex("Via", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex,
+              pstUbufRequestMsg->apstHeaders[SIP_HEADER_VIA], 
+              pstUbufSipMsg, 
+             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_VIA]);
+
+    
     /* 克隆To头域 */
+    SIP_GetRuleIndex("To", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex,
+              pstUbufRequestMsg->apstHeaders[SIP_HEADER_TO], 
+              pstUbufSipMsg, 
+             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO]);
+
+
     /* 如果To头域没有tag，添加一个tag */
+    pstHeaderTo = pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO];
+    if (pstHeaderTo->pucTag == NULL_PTR)
+    {
+        
+    }
 
     return SUCCESS;
 }
