@@ -7,8 +7,6 @@
 /* 外部依赖模块头文件 */
 #include "common\common.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
-#include "sip\sip.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "connect\connect.h"
@@ -25,7 +23,7 @@
 //UCHAR *g_pucSipTxpHost;
 
 /* 传输层管理，按照传输协议排列，记录该协议下连接队列 */
-ULONG                 g_aulConnTransport[SIP_TRANSPORT_PROTOCOL_BUTT];
+ULONG                 g_aulConnTransport[CONN_TRANSPORT_PROTOCOL_BUTT];
 
 /* 监控连接队列 */
 CONN_LISTEN_S     *g_pstConnListen;

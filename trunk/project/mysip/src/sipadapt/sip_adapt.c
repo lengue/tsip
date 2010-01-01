@@ -357,6 +357,7 @@ ULONG SIP_ADPT_BuildConnConfig(SIP_ADAPT_CFG_S *g_pstCfg,
     xmlNodePtr pstTempNode;
     UCHAR      ucListenNum = 0;
     xmlChar   *szKey;
+    USHORT     usPort;
 
     /* 查找listen节点 */
     pstTempNode = pstNode->children;
@@ -397,10 +398,11 @@ ULONG SIP_ADPT_BuildConnConfig(SIP_ADAPT_CFG_S *g_pstCfg,
         }
 
         szKey = xmlGetProp(pstTempNode, BAD_CAST"port");
-        g_pstCfg->stConnCfg.stListen[ucListenNum].usPort = (USHORT)strtod(szKey, NULL_PTR);
+        usPort = (USHORT)strtod(szKey, NULL_PTR);
+        g_pstCfg->stConnCfg.stListen[ucListenNum].usPort = htons(usPort);
 
         ucListenNum++;
-        if (ucListenNum == SIP_TXP_MAX_LISTEN_NUM)
+        if (ucListenNum == CONN_MAX_LISTEN_NUM)
         {
             break;
         }
@@ -424,7 +426,7 @@ ULONG SIP_ADPT_FreeConnConfig(SIP_ADAPT_CFG_S *g_pstCfg)
 }
 
 /* 接受网络消息 */
-ULONG SIP_ADPT_RecvUpMsg(SIP_LOCATION_S *pstLocation,
+ULONG SIP_ADPT_RecvUpMsg(CONN_LOCATION_S *pstLocation,
                          UCHAR *pucMsg,
                          ULONG ulMsgLen)
 {
@@ -448,7 +450,7 @@ ULONG SIP_ADPT_RecvUpMsg(SIP_LOCATION_S *pstLocation,
         return ulRet;
     }
 
-    memcpy(&stConnMsg.stLocation, pstLocation, sizeof(SIP_LOCATION_S));
+    SIP_ADPT_LocationConn2Sip(pstLocation, &stConnMsg.stLocation);
     stConnMsg.pstMsgUbuf = pstUBuf;
 
     return SYS_SendMsg(SYS_MODULE_CONN,
@@ -485,7 +487,8 @@ ULONG SIP_ADPT_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
     ULONG ulMsgLen;
     ULONG ulRuleIndex;
     SIP_MSG_S *pstSipMsg = NULL_PTR;
-
+    CONN_LOCATION_S stLocation;
+    
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstSipMsgUbuf);
     SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
     SIP_Code(ulRuleIndex,
@@ -495,7 +498,9 @@ ULONG SIP_ADPT_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
                     &ulMsgLen);
     g_pucSipAdptBuffer[ulMsgLen] = '\0';
     printf("\r\nSend Sip Msg:\r\n%s",g_pucSipAdptBuffer);
-    return CONN_SendMsg(g_pucSipAdptBuffer, ulMsgLen, pstPeerLocation);
+
+    SIP_ADPT_LocationSip2Conn(pstPeerLocation, &stLocation);
+    return CONN_SendMsg(g_pucSipAdptBuffer, ulMsgLen, &stLocation);
 }
 
 ULONG SIP_ADPT_StartTimer(ULONG ulName,
@@ -511,4 +516,74 @@ VOID SIP_ADPT_StopTimer(ULONG ulHandle)
 {
     TIMER_Stop(ulHandle);
     return;
+}
+
+/*地址格式转换*/
+ULONG SIP_ADPT_LocationSip2Conn(SIP_LOCATION_S  *pstSipLocation, 
+                                CONN_LOCATION_S *pstConnLocation)
+{
+    switch(pstSipLocation->eProtocol)
+    {
+        case SIP_TRANSPORT_PROTOCOL_TCP:
+            pstConnLocation->eProtocol = CONN_TRANSPORT_PROTOCOL_TCP;
+            break;
+
+        case SIP_TRANSPORT_PROTOCOL_TLS:
+            pstConnLocation->eProtocol = CONN_TRANSPORT_PROTOCOL_TLS;
+            break;
+
+        case SIP_TRANSPORT_PROTOCOL_UDP:
+            pstConnLocation->eProtocol = CONN_TRANSPORT_PROTOCOL_UDP;
+            break;
+
+        case SIP_TRANSPORT_PROTOCOL_SCTP:
+            pstConnLocation->eProtocol = CONN_TRANSPORT_PROTOCOL_SCTP;
+            break;
+
+        default:
+            return FAIL;
+    }  
+
+
+    pstConnLocation->ulIpAddr = inet_addr(pstSipLocation->aucIPStr);
+    pstConnLocation->usPort   = htons(pstSipLocation->usPort);
+
+    return SUCCESS;
+}
+
+/*地址格式转换*/
+ULONG SIP_ADPT_LocationConn2Sip(CONN_LOCATION_S *pstConnLocation, 
+                                SIP_LOCATION_S  *pstSipLocation)
+{
+    char *pstIpStr = NULL_PTR;
+    IN_ADDR stAddr;
+    
+    switch(pstConnLocation->eProtocol)
+    {
+        case CONN_TRANSPORT_PROTOCOL_TCP:
+            pstSipLocation->eProtocol = SIP_TRANSPORT_PROTOCOL_TCP;
+            break;
+
+        case CONN_TRANSPORT_PROTOCOL_TLS:
+            pstSipLocation->eProtocol = SIP_TRANSPORT_PROTOCOL_TLS;
+            break;
+
+        case CONN_TRANSPORT_PROTOCOL_UDP:
+            pstSipLocation->eProtocol = SIP_TRANSPORT_PROTOCOL_UDP;
+            break;
+
+        case CONN_TRANSPORT_PROTOCOL_SCTP:
+            pstSipLocation->eProtocol = SIP_TRANSPORT_PROTOCOL_SCTP;
+            break;
+
+        default:
+            return FAIL;
+    }  
+
+    stAddr.s_addr = pstConnLocation->ulIpAddr;
+    pstIpStr = inet_ntoa(stAddr);
+    strcpy(pstSipLocation->aucIPStr, pstIpStr);
+    pstSipLocation->usPort = ntohs(pstConnLocation->usPort);
+
+    return SUCCESS;
 }

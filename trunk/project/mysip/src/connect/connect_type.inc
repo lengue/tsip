@@ -8,11 +8,11 @@
 typedef struct tagCONN_CB_S
 {
     UCHAR ucUsed;
-    SIP_TRANSPORT_PROTOCOL_E eProtocol;
-    ULONG  ulLocalAddr;  /* 本端IP地址 */
-    USHORT usLocalPort;  /* 本端端口号 */
-    ULONG  ulRemoteAddr; /* 远端IP地址 */
-    USHORT usRemotePort; /* 远端端口号 */
+    CONN_TRANSPORT_PROTOCOL_E eProtocol;
+    ULONG  ulLocalAddr;  /* 本端IP地址，网络字节序 */
+    USHORT usLocalPort;  /* 本端端口号，网络字节序 */
+    ULONG  ulRemoteAddr; /* 远端IP地址，网络字节序 */
+    USHORT usRemotePort; /* 远端端口号，网络字节序 */
     UCHAR  ucState;      /* 连接状态 */
     SOCKET sSocket;      /* 连接关联socket */
     UCHAR  *pucRecvBuff; /* 消息接受缓存，用于流传输协议的定界 */

@@ -7,8 +7,6 @@
 /* 外部依赖模块头文件 */
 #include "common\common.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
-#include "sip\sip.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "connect\connect.h"
@@ -92,7 +90,7 @@ ULONG CONN_Config(CONN_CFG_S *g_pstConnCfg)
         /*根据协议初始化监听协议*/
         switch (pstCfg->eProtocol)
         {
-            case SIP_TRANSPORT_PROTOCOL_UDP:
+            case CONN_TRANSPORT_PROTOCOL_UDP:
                 pstListener = CONN_AddListener(pstCfg);
                 ulRet = CONN_UDPListenProc(pstListener);
                 if (ulRet != SUCCESS)
@@ -101,7 +99,7 @@ ULONG CONN_Config(CONN_CFG_S *g_pstConnCfg)
                 }
                 break;
 
-            case SIP_TRANSPORT_PROTOCOL_TCP:
+            case CONN_TRANSPORT_PROTOCOL_TCP:
                 /* TCP需要一直监听，所以要启动单独的任务 */
                 pstListener = CONN_AddListener(pstCfg);
                 hThread = CreateThread(NULL,
@@ -114,8 +112,8 @@ ULONG CONN_Config(CONN_CFG_S *g_pstConnCfg)
                 break;
 
             /* 其他的传输协议暂时不支持 */
-            case SIP_TRANSPORT_PROTOCOL_TLS:
-            case SIP_TRANSPORT_PROTOCOL_SCTP:
+            case CONN_TRANSPORT_PROTOCOL_TLS:
+            case CONN_TRANSPORT_PROTOCOL_SCTP:
                 break;
 
             default:
@@ -139,7 +137,7 @@ CONN_LISTEN_S* CONN_AddListener(CONN_LOCATION_S *pstLocalLocation)
     }
 
     pstListener = (CONN_LISTEN_S *)malloc(sizeof(CONN_LISTEN_S));
-    memcpy(&pstListener->stLocal, pstLocalLocation, sizeof(SIP_LOCATION_S));
+    memcpy(&pstListener->stLocal, pstLocalLocation, sizeof(CONN_LOCATION_S));
     //pstListener->stSocket = NULL_ULONG;
     pstListener->pstNext  = NULL_PTR;
 
@@ -222,11 +220,11 @@ ULONG CONN_ActiveConnection(ULONG ulConnID)
     switch (g_pstConnCB[ulConnID].eProtocol)
     {
         /* UDP不需要激活 */
-        case SIP_TRANSPORT_PROTOCOL_UDP:
+        case CONN_TRANSPORT_PROTOCOL_UDP:
             break;
 
 
-        case SIP_TRANSPORT_PROTOCOL_TCP:
+        case CONN_TRANSPORT_PROTOCOL_TCP:
             /* 非激活态需要建立连接激活 */
             if (g_pstConnCB[ulConnID].ucState != CONN_STATE_ACTIVE)
             {
@@ -243,8 +241,8 @@ ULONG CONN_ActiveConnection(ULONG ulConnID)
             break;
 
         /* 暂不支持 */
-        case SIP_TRANSPORT_PROTOCOL_SCTP:
-        case SIP_TRANSPORT_PROTOCOL_TLS:
+        case CONN_TRANSPORT_PROTOCOL_SCTP:
+        case CONN_TRANSPORT_PROTOCOL_TLS:
             break;
 
         default:
@@ -350,16 +348,16 @@ ULONG CONN_SendInConnection(UCHAR *pucMsg,
 
     switch (g_pstConnCB[ulConnID].eProtocol)
     {
-        case SIP_TRANSPORT_PROTOCOL_TCP:
+        case CONN_TRANSPORT_PROTOCOL_TCP:
             ulRet = CONN_SendTCPConnMsg(pucMsg, ulMsgLen, ulConnID);
             break;
 
-        case SIP_TRANSPORT_PROTOCOL_UDP:
+        case CONN_TRANSPORT_PROTOCOL_UDP:
             ulRet = CONN_SendUDPConnMsg(pucMsg, ulMsgLen, ulConnID, pstPeerLocation);
             break;
 
-        case SIP_TRANSPORT_PROTOCOL_TLS:
-        case SIP_TRANSPORT_PROTOCOL_SCTP:
+        case CONN_TRANSPORT_PROTOCOL_TLS:
+        case CONN_TRANSPORT_PROTOCOL_SCTP:
             /* 不支持 */
             break;
 
@@ -390,20 +388,20 @@ ULONG CONN_UDPListenProc(CONN_LISTEN_S *pstListener)
 
     /* bind socket */
     stLocal.sin_family = AF_INET;
-    stLocal.sin_port = htons(pstListener->stLocal.usPort);
+    stLocal.sin_port = pstListener->stLocal.usPort;
     if (pstListener->stLocal.ulIpAddr != NULL_ULONG)
-        stLocal.sin_addr.s_addr = htonl(pstListener->stLocal.ulIpAddr);
+        stLocal.sin_addr.s_addr = pstListener->stLocal.ulIpAddr;
     else
-		stLocal.sin_addr.s_addr = htonl(INADDR_ANY);
+        stLocal.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(sSocket, (SOCKADDR *)&stLocal, sizeof(stLocal)) == SOCKET_ERROR)
     {
-		printf("bind() failed: \n");
-		return FAIL;
+        printf("bind() failed: \n");
+        return FAIL;
     }
 
     /* UDP不绑定远端 */
-    stPeerLocation.eProtocol = SIP_TRANSPORT_PROTOCOL_UDP;
+    stPeerLocation.eProtocol = CONN_TRANSPORT_PROTOCOL_UDP;
     stPeerLocation.ulIpAddr = NULL_ULONG;
     stPeerLocation.usPort   = NULL_USHORT;
     ulRet = CONN_AllocConnection(&stPeerLocation, &ulConnID);
@@ -456,10 +454,10 @@ DWORD WINAPI CONN_TCPListenTask(LPVOID lpParam)
 
     /*bind socket*/
     stLocal.sin_family = AF_INET;
-    stLocal.sin_port = htons(pstListener->stLocal.usPort);
+    stLocal.sin_port = pstListener->stLocal.usPort;
     if (pstListener->stLocal.ulIpAddr != NULL_ULONG)
     {
-        stLocal.sin_addr.s_addr = htonl(pstListener->stLocal.ulIpAddr);
+        stLocal.sin_addr.s_addr = pstListener->stLocal.ulIpAddr;
     }
     else
     {
@@ -488,9 +486,9 @@ DWORD WINAPI CONN_TCPListenTask(LPVOID lpParam)
         }
 
         /* 申请连接SIP_TXP_CONNECTION_S */
-        stLocation.eProtocol = SIP_TRANSPORT_PROTOCOL_TCP;
-        stLocation.ulIpAddr      = ntohl(stPeer.sin_addr.s_addr);
-        stLocation.usPort        = ntohs(stPeer.sin_port);
+        stLocation.eProtocol = CONN_TRANSPORT_PROTOCOL_TCP;
+        stLocation.ulIpAddr      = stPeer.sin_addr.s_addr;
+        stLocation.usPort        = stPeer.sin_port;
         CONN_AllocConnection(&stLocation, &ulConnID);
 
         /* 记录信息 */
@@ -528,10 +526,10 @@ DWORD WINAPI CONN_UDPRecvTask(LPVOID lpParam)
     SOCKADDR_IN   stSender;
     ULONG ulLen;
     CONN_LOCATION_S stLocation;
-
+    
     ulLen = sizeof(SOCKADDR);
     ulConnID = (ULONG)lpParam;
-    stLocation.eProtocol = SIP_TRANSPORT_PROTOCOL_TCP;
+    stLocation.eProtocol = CONN_TRANSPORT_PROTOCOL_UDP;
 
     while(1)
     {
@@ -546,6 +544,8 @@ DWORD WINAPI CONN_UDPRecvTask(LPVOID lpParam)
         {
             /* 通知上层 */
             g_pstConnCB[ulConnID].pucRecvBuff[ulRet] = '\0';
+            stLocation.ulIpAddr = stSender.sin_addr.s_addr;
+            stLocation.usPort = stSender.sin_port;
             g_pfnConnMsgProc(&stLocation, g_pstConnCB[ulConnID].pucRecvBuff, ulRet);
         }
     }
@@ -562,7 +562,7 @@ DWORD WINAPI CONN_TCPRecvTask(LPVOID lpParam)
     CONN_LOCATION_S stLocation;
 
     ulConnID = (ULONG)lpParam;
-    stLocation.eProtocol = SIP_TRANSPORT_PROTOCOL_TCP;
+    stLocation.eProtocol = CONN_TRANSPORT_PROTOCOL_TCP;
     stLocation.ulIpAddr = g_pstConnCB[ulConnID].ulRemoteAddr;
     stLocation.usPort = g_pstConnCB[ulConnID].usRemotePort;
     while(1)
@@ -620,8 +620,8 @@ DWORD WINAPI CONN_TCPConnectTask(LPVOID lpParam)
     g_pstConnCB[ulConnID].sSocket = sClient;
 
     stPeer.sin_family = AF_INET;
-    stPeer.sin_port   = htons(g_pstConnCB[ulConnID].usRemotePort);
-    stPeer.sin_addr.s_addr = htonl(g_pstConnCB[ulConnID].ulRemoteAddr);
+    stPeer.sin_port   = g_pstConnCB[ulConnID].usRemotePort;
+    stPeer.sin_addr.s_addr = g_pstConnCB[ulConnID].ulRemoteAddr;
 
     iRet = connect(sClient, (struct sockaddr *)&stPeer, sizeof(stPeer));
     if (iRet == SOCKET_ERROR)
@@ -642,8 +642,8 @@ DWORD WINAPI CONN_TCPConnectTask(LPVOID lpParam)
     iLen = sizeof(stLocal);
     getsockname(sClient, &stLocal, &iLen);
 
-    g_pstConnCB[ulConnID].ulLocalAddr = ntohl(stLocal.sin_addr.s_addr);
-    g_pstConnCB[ulConnID].usLocalPort = ntohs(stLocal.sin_port);
+    g_pstConnCB[ulConnID].ulLocalAddr = stLocal.sin_addr.s_addr;
+    g_pstConnCB[ulConnID].usLocalPort = stLocal.sin_port;
 
     getpeername(sClient, &stPeer, &iLen);
     ulRemoteIP   = ntohl(stPeer.sin_addr.s_addr);
@@ -788,21 +788,16 @@ ULONG CONN_BuffSendMsg(UCHAR *pucMsg,ULONG ulMsgLen, ULONG ulConnID)
 /* 连接的消息发送入口函数 */
 ULONG CONN_SendMsg(UCHAR *pucTextMsg,
                    ULONG ulMsgLen,
-                   SIP_LOCATION_S *pstLocation)
+                   CONN_LOCATION_S *pstLocation)
 {
     ULONG ulSendConnID;
     ULONG ulRet;
-    CONN_LOCATION_S stLocation;
-
-    stLocation.eProtocol = pstLocation->eProtocol;
-    stLocation.ulIpAddr  = inet_addr(pstLocation->aucIPStr);
-    stLocation.usPort    = htons(pstLocation->usPort);
 
     /* 定位发送消息的连接，根据pstLocation寻找连接 */
-    ulRet = CONN_FindConnection(&stLocation, &ulSendConnID);
+    ulRet = CONN_FindConnection(pstLocation, &ulSendConnID);
     if (ulRet != SUCCESS)
     {
-        CONN_AllocConnection(&stLocation, &ulSendConnID);
+        CONN_AllocConnection(pstLocation, &ulSendConnID);
     }
 
     /* 路径MTU和消息长度的差小于200不能使用非流控的传输协议传送，这里添加 */
@@ -814,6 +809,6 @@ ULONG CONN_SendMsg(UCHAR *pucTextMsg,
     CONN_SendInConnection(pucTextMsg,
                           ulMsgLen,
                           ulSendConnID,
-                         &stLocation);
+                          pstLocation);
     return SUCCESS;
 }
