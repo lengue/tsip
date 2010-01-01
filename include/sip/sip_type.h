@@ -53,8 +53,6 @@ typedef struct tagSIP_MSG_S
     SIP_BODY_S   *pstBodys;
 }SIP_MSG_S;
 
-
-
 /* 所有头域依赖的结构 */
 typedef struct tagSIP_NAME_ADDR_S
 {
