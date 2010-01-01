@@ -49,6 +49,11 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
 
+    /* 替换上次的发送消息，因为请求不会发送两次，因此
+      不会释放初始请求消息*/
+    UBUF_FreeBuffer(pstSipTxnCB->pstUbufSendMsg);
+    pstSipTxnCB->pstUbufSendMsg = pstUbufSipMsg;
+
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
@@ -56,30 +61,21 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
         memcpy(&pstSipTxnCB->stPeer, pstPeerLocation, sizeof(SIP_LOCATION_S));
 
         eEvent = SIP_TXN_EVENT_SEND_REQUEST;
-        pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
-        pstSipTxnCB->pstUbufSendMsg = pstUbufSipMsg;
-
         if(pstSipMsg->uStartLine.stRequstLine.eMethod == SIP_METHOD_INVITE)
         {
-            g_pstSipTxnCB[ulTxnID].eType = SIP_TXN_TYPE_INVITE_CLIENT;
+            pstSipTxnCB->eType = SIP_TXN_TYPE_INVITE_CLIENT;
         }
         else
         {
-            g_pstSipTxnCB[ulTxnID].eType = SIP_TXN_TYPE_NON_INVITE_CLIENT;
+            pstSipTxnCB->eType = SIP_TXN_TYPE_NON_INVITE_CLIENT;
         }
 
-        if (g_pstSipTxnCB[ulTxnID].pstUbufInitMsg == NULL_PTR)
-        {
-            g_pstSipTxnCB[ulTxnID].pstUbufInitMsg = pstUbufSipMsg;
-        }
+        pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
+        HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
     {
         /* 头域补充完整 */
-
-        /* 替换最新发送的消息 */
-        UBUF_FreeBuffer(pstSipTxnCB->pstUbufSendMsg);
-        pstSipTxnCB->pstUbufSendMsg = pstUbufSipMsg;
 
         if (pstSipMsg->uStartLine.stStatusLine.eStatusCode < SIP_STATUS_CODE_200)
         {
@@ -108,6 +104,11 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
+
+    /* 替换最新收到的消息 */
+    UBUF_FreeBuffer(pstSipTxnCB->pstUbufRecvMsg);
+    pstSipTxnCB->pstUbufRecvMsg = pstUbufSipMsg;
+        
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
@@ -120,24 +121,20 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
         }
         else if(pstSipMsg->uStartLine.stRequstLine.eMethod == SIP_METHOD_INVITE)
         {
-            g_pstSipTxnCB[ulTxnID].eType = SIP_TXN_TYPE_INVITE_SERVER;
+            pstSipTxnCB->eType = SIP_TXN_TYPE_INVITE_SERVER;
             eEvent = SIP_TXN_EVENT_RECV_REQUEST;
         }
         else
         {
-            g_pstSipTxnCB[ulTxnID].eType = SIP_TXN_TYPE_NON_INVITE_SERVER;
+            pstSipTxnCB->eType = SIP_TXN_TYPE_NON_INVITE_SERVER;
             eEvent = SIP_TXN_EVENT_RECV_REQUEST;
         }
 
-        g_pstSipTxnCB[ulTxnID].pstUbufInitMsg = pstUbufSipMsg;
-        g_pstSipTxnCB[ulTxnID].pstUbufRecvMsg = pstUbufSipMsg;
+        pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
+        HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
     {
-        /* 替换最新收到的消息 */
-        UBUF_FreeBuffer(pstSipTxnCB->pstUbufRecvMsg);
-        pstSipTxnCB->pstUbufRecvMsg = pstUbufSipMsg;
-
         if (pstSipMsg->uStartLine.stStatusLine.eStatusCode < SIP_STATUS_CODE_200)
         {
             eEvent = SIP_TXN_EVENT_RECV_1XX_RESPONSE;

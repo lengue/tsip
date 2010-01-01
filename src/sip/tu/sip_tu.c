@@ -50,7 +50,7 @@ ULONG SIP_TU_RecvUpMsg(ULONG ulCoreID,
 
     switch (g_eSipTuCore)
     {
-    	case SIP_CORE_UA:
+        case SIP_CORE_UA:
             ulRet = SIP_UA_RecvUpMsg(ulCoreID, pstPeerAddr, pstUbufSipMsg);
             break;
 

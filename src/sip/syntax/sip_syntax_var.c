@@ -147,7 +147,7 @@ SIP_APP_RULE_S g_astSipAppRuleTbl[SIP_ABNF_RULE_BUTT] =
     //SIP_ABNF_RULE_VIA_RECEIVED
     {"via-received"    , NULL_ULONG, SIP_CodeViaReceived,           SIP_ParseViaReceived,            SIP_CloneViaReceived},
     //SIP_ABNF_RULE_VIA_BRANCH
-    {"via-branch"      , NULL_ULONG, SIP_CodeViaBranch,             SIP_ParseViaBranch,              SIP_CloneViaBranch},
+    {"via-branch"      , NULL_ULONG, SIP_CodeViaBranch,             SIP_ParseViaBranch,              NULL_PTR},
     //SIP_ABNF_RULE_TTL
     {"ttl"             , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
     //SIP_ABNF_RULE_TOKEN

@@ -59,9 +59,18 @@ ULONG SIP_Txn_AllocTxn(ULONG ulCoreID, ULONG *pulTxnID)
 /* 释放一个事务 */
 ULONG SIP_Txn_FreeTxn(ULONG ulTxnID)
 {
+    SIP_TXN_CB_S *pstSipTxnCB = NULL_PTR;
+
+    pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
+    
     /* 停止定时器资源 */
 
     /* 释放分配的内存 */
+    if (pstSipTxnCB->pstUbufInitMsg != NULL_PTR)
+    {
+        HASH_DeleteNode(g_pstSipTxnCBHash, pstSipTxnCB->pstUbufInitMsg, ulTxnID);
+        UBUF_FreeBuffer(pstSipTxnCB->pstUbufInitMsg);
+    }
 
     COMM_CB_FREE(g_pstSipTxnCB, g_stSipTxnCBQueue, ulTxnID);
 
@@ -169,7 +178,7 @@ ULONG SIP_Txn_CompareResponse(UBUF_HEADER_S *pstUbufResponse,
         return FAIL;
     }
 
-    if(strcpy(pucBranch1, pucBranch1) != 0)
+    if(strcmp(pucBranch1, pucBranch1) != 0)
     {
         return FAIL;
     }
