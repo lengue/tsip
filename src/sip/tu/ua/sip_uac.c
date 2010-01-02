@@ -83,6 +83,7 @@ ULONG SIP_UAC_SendRequest(ULONG ulAppID,
     else
     {
         /* 对话内请求，通过对话构造相关头域 */
+        SIP_Dlg_GenerateRequest(ulDlgID, pstUbufSipMsg);
     }
 
     /* 申请一个UAC控制块 */
@@ -92,7 +93,6 @@ ULONG SIP_UAC_SendRequest(ULONG ulAppID,
     g_pstSipUacCB[ulUacID].pstSipMsgUbuf = pstUbufSipMsg;
 
     SIP_Locate_FindNextHop(pstUbufSipMsg, &pstUri);
-
     ulRet = SIP_Locate_Server(pstUri,
                              &stResult,
                               SIP_UAC_LocateResult,

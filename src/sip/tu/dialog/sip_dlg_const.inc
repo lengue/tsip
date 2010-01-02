@@ -18,3 +18,6 @@ typedef enum tagSIP_NEGO_STATE_E
     SIP_NEGO_STATE_BUTT
 }SIP_NEGO_STATE_E;
 
+
+#define SIP_DLG_MAX_CB 100
+#define SIP_DLG_UBUF_LEN 1000
