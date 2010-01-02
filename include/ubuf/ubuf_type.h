@@ -27,5 +27,3 @@ typedef struct tagUBUF_HEADER_S
     ULONG ulCurrentLen;
     struct tagUBUF_HEADER_S *pNext;
 }UBUF_HEADER_S;
-
-#define UBUF_GET_MSG_PTR(pstUbuf) ((UCHAR *)(pstUbuf) + sizeof(UBUF_HEADER_S))
