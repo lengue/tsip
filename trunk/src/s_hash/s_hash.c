@@ -110,7 +110,7 @@ ULONG HASH_Find(void *pstHash, void *pCompared)
 }
 
 /* 向HASH表中插入一个元素 */
-ULONG HASH_AddNode(void *pstHash, void *pCompared, ULONG ulPara)
+void *HASH_AddNode(void *pstHash, void *pCompared, ULONG ulPara)
 {
     ULONG ulKey;
     HASH_TABLE_S *pstHashTable = NULL_PTR;
@@ -129,41 +129,35 @@ ULONG HASH_AddNode(void *pstHash, void *pCompared, ULONG ulPara)
     }
 
     *ppstHashNode = malloc(sizeof(HASH_NODE_S));
-    (*ppstHashNode)->ulPara = ulPara;
-    (*ppstHashNode)->pstNext = NULL_PTR;
+    (*ppstHashNode)->ulPara   = ulPara;
+    (*ppstHashNode)->ppstHead = &pstHashTable->apstNode[ulKey];
+    (*ppstHashNode)->pstNext  = NULL_PTR;
 
-    return SUCCESS;
+    return *ppstHashNode;
 }
 
 /* 从HASH表中删除一个元素 */
-ULONG HASH_DeleteNode(void *pstHash, void *pCompared, ULONG ulPara)
+ULONG HASH_DeleteNode(void *pstNode)
 {
-    ULONG ulKey;
-    HASH_TABLE_S *pstHashTable = NULL_PTR;
-    HASH_NODE_S  *pstHashNode  = NULL_PTR;
-    HASH_NODE_S  **ppstHashNode  = NULL_PTR;
+    HASH_NODE_S  *pstHashNode   = NULL_PTR;
+    HASH_NODE_S  *ppstNodeTmp  = NULL_PTR;
 
-    pstHashTable = (HASH_TABLE_S *)pstHash;
-
-    /* 生成key */
-    ulKey = pstHashTable->pfnMakeKey(pCompared);
-    ulKey = ulKey % pstHashTable->ulNumber;
+    pstHashNode = (HASH_NODE_S *)pstNode;
+    ppstNodeTmp = pstHashNode->ppstHead;
 
     /* 找到并删除元素 */
-    ppstHashNode = &pstHashTable->apstNode[ulKey];
-    while(*ppstHashNode != NULL_PTR)
+    while ((*ppstNodeTmp != NULL_PTR) && (*ppstNodeTmp != pstHashNode))
     {
-        pstHashNode = *ppstHashNode;
-        if (pstHashNode->ulPara == ulPara)
-        {
-            *ppstHashNode = pstHashNode->pstNext;
-            free(pstHashNode);
-            return SUCCESS;
-        }
-
-        ppstHashNode = &(*ppstHashNode)->pstNext;
+        ppstNodeTmp = &(*ppstNodeTmp)->pstNext;
     }
-
-    return FAIL;
+    
+    if (*ppstNodeTmp == NULL_PTR)
+    {
+        return FAIL;
+    }
+    
+    *ppstNodeTmp = pstHashNode->pstNext;
+    free(pstHashNode);
+    return SUCCESS;
 }
 

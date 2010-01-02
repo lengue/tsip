@@ -68,7 +68,7 @@ ULONG SIP_Txn_FreeTxn(ULONG ulTxnID)
     /* 释放分配的内存 */
     if (pstSipTxnCB->pstUbufInitMsg != NULL_PTR)
     {
-        HASH_DeleteNode(g_pstSipTxnCBHash, pstSipTxnCB->pstUbufInitMsg, ulTxnID);
+        HASH_DeleteNode(pstSipTxnCB->pstHashNode);
         UBUF_FreeBuffer(pstSipTxnCB->pstUbufInitMsg);
     }
 

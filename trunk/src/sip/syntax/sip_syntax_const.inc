@@ -115,15 +115,6 @@ typedef enum tagSIP_ABNF_RULE_E
     pstComponet = *ppStruct;\
 }
 
-/* 克隆专用宏*/
-#define SIP_CLONE_STRING(pstDstUbuf, pucDstStr, pucSrcStr) \
-{ \
-    ULONG ulLen = (ULONG)strlen(pucSrcStr);\
-    (pucDstStr) = UBUF_AddComponent(pstDstUbuf, ulLen + 1); \
-    strncpy((pucDstStr), (pucSrcStr), ulLen); \
-    (pucDstStr)[ulLen] = '\0'; \
-}
-
 /* 编码专用宏 */
 /* 向消息缓存中添加一个普通字符串值 */
 #define SIP_ADD_STRING(pstBuffer, pucString) \

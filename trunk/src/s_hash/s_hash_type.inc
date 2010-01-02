@@ -7,7 +7,9 @@
 typedef struct tagHASH_NODE_S
 {
     ULONG ulPara;
-    struct tagHASH_NODE_S *pstNext;
+    ULONG ulKey;
+    struct tagHASH_NODE_S **ppstHead;
+    struct tagHASH_NODE_S  *pstNext; /*后一个节点*/
 }HASH_NODE_S;
 
 typedef struct tagHASH_TABLE_S

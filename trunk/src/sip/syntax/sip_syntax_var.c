@@ -27,13 +27,13 @@
 /* 本模块内部函数声明头文件 */
 #include "sip_syntax_code.inc"
 #include "sip_syntax_decode.inc"
-#include "sip_syntax_clone.inc"
 
 /* 本模块全局变量声明头文件 */
 #include "sip_syntax_var.inc"
 
 /* 判断模块是否初始化标记 */
 BOOL         g_bSipSyntaxInit = FALSE;
+UCHAR *g_pucSipSyntaxBuffer = NULL_PTR;
 
 ABNF_RULE_LIST_S *g_pstSipRuleList = NULL_PTR;
 
@@ -41,117 +41,117 @@ ABNF_RULE_LIST_S *g_pstSipRuleList = NULL_PTR;
 SIP_APP_RULE_S g_astSipAppRuleTbl[SIP_ABNF_RULE_BUTT] =
 {
     //SIP_ABNF_RULE_SIP_MESSAGE,
-    {"SIP-message"     , NULL_ULONG, SIP_CodeSIPmessage,            SIP_ParseSIPmessage,             SIP_CloneSIPmessage},
+    {"SIP-message"     , NULL_ULONG, SIP_CodeSIPmessage,            SIP_ParseSIPmessage},
     //SIP_ABNF_RULE_REQUEST,
-    {"Request"         , NULL_ULONG, SIP_CodeRequest,               SIP_ParseRequest,                SIP_CloneRequest},
+    {"Request"         , NULL_ULONG, SIP_CodeRequest,               SIP_ParseRequest},
     //SIP_ABNF_RULE_RESPONSE
-    {"Response"        , NULL_ULONG, SIP_CodeResponse,              SIP_ParseResponse,               SIP_CloneResponse},
+    {"Response"        , NULL_ULONG, SIP_CodeResponse,              SIP_ParseResponse},
     //SIP_ABNF_RULE_REQUEST_LINE
-    {"Request-Line"    , NULL_ULONG, SIP_CodeRequestLine,           SIP_ParseRequestLine,            SIP_CloneRequestLine},
+    {"Request-Line"    , NULL_ULONG, SIP_CodeRequestLine,           SIP_ParseRequestLine},
     //SIP_ABNF_RULE_STATUS_LINE
-    {"Status-Line"     , NULL_ULONG, SIP_CodeStatusLine,            SIP_ParseStatusLine,             SIP_CloneStatusLine},
+    {"Status-Line"     , NULL_ULONG, SIP_CodeStatusLine,            SIP_ParseStatusLine},
     //SIP_ABNF_RULE_MESSAGE_HEADER
-    {"message-header"  , NULL_ULONG, SIP_CodeMessageHeader,         SIP_ParseMessageHeader,          SIP_CloneMessageHeader},
+    {"message-header"  , NULL_ULONG, SIP_CodeMessageHeader,         SIP_ParseMessageHeader},
     //SIP_ABNF_RULE_MESSAGE_BODY
-    {"message-body"    , NULL_ULONG, SIP_CodeMessageBody,           SIP_ParseMessageBody,            SIP_CloneMessageBody},
+    {"message-body"    , NULL_ULONG, SIP_CodeMessageBody,           SIP_ParseMessageBody},
      //SIP_ABNF_RULE_METHOD
-    {"Method"          , NULL_ULONG, SIP_CodeMethod,                SIP_ParseMethod,                 SIP_CloneMethod},
+    {"Method"          , NULL_ULONG, SIP_CodeMethod,                SIP_ParseMethod},
     //SIP_ABNF_RULE_INVITE_M
-    {"INVITEm"         , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"INVITEm"         , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_ACK_M
-    {"ACKm"            , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"ACKm"            , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_OPTIONS_M
-    {"OPTIONSm"        , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"OPTIONSm"        , NULL_ULONG, NULL_PTR,                      NULL_PTR},
      //SIP_ABNF_RULE_BYE_M
-    {"BYEm"            , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"BYEm"            , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_CANCEL_M
-    {"CANCELm"         , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"CANCELm"         , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_REGISTER_M
-    {"REGISTERm"       , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"REGISTERm"       , NULL_ULONG, NULL_PTR,                      NULL_PTR},
      //SIP_ABNF_RULE_REQUEST_URI
-    {"Request-URI"     , NULL_ULONG, SIP_CodeRequestURI,            SIP_ParseRequestURI,             SIP_CloneRequestURI},
+    {"Request-URI"     , NULL_ULONG, SIP_CodeRequestURI,            SIP_ParseRequestURI},
     //SIP_ABNF_RULE_SIP_VERSION
-    {"SIP-Version"     , NULL_ULONG, SIP_CodeSIPVersion,            SIP_ParseSIPVersion,             SIP_CloneSIPVersion},
+    {"SIP-Version"     , NULL_ULONG, SIP_CodeSIPVersion,            SIP_ParseSIPVersion},
     //SIP_ABNF_RULE_STATUS_CODE
-    {"Status-Code"     , NULL_ULONG, SIP_CodeStatusCode,            SIP_ParseStatusCode,             SIP_CloneStatusCode},
+    {"Status-Code"     , NULL_ULONG, SIP_CodeStatusCode,            SIP_ParseStatusCode},
     //SIP_ABNF_RULE_ACCEPT
-    {"Accept"          , NULL_ULONG, SIP_CodeHeaderAccept,          SIP_ParseHeaderAccept,           SIP_CloneHeaderAccept},
+    {"Accept"          , NULL_ULONG, SIP_CodeHeaderAccept,          SIP_ParseHeaderAccept},
     //SIP_ABNF_RULE_ACCEPT_ENCODING
-    {"Accept-Encoding" , NULL_ULONG, SIP_CodeHeaderAcceptEncoding,  SIP_ParseHeaderAcceptEncoding,   SIP_CloneHeaderAcceptEncoding},
+    {"Accept-Encoding" , NULL_ULONG, SIP_CodeHeaderAcceptEncoding,  SIP_ParseHeaderAcceptEncoding},
      //SIP_ABNF_RULE_CALL_ID
-    {"Call-ID"         , NULL_ULONG, SIP_CodeHeaderCallID,          SIP_ParseHeaderCallID,           SIP_CloneHeaderCallID},
+    {"Call-ID"         , NULL_ULONG, SIP_CodeHeaderCallID,          SIP_ParseHeaderCallID},
      //SIP_ABNF_RULE_CSEQ
-    {"CSeq"            , NULL_ULONG, SIP_CodeHeaderCseq,            SIP_ParseHeaderCseq,             SIP_CloneHeaderCseq},
+    {"CSeq"            , NULL_ULONG, SIP_CodeHeaderCseq,            SIP_ParseHeaderCseq},
     //SIP_ABNF_RULE_FROM
-    {"From"            , NULL_ULONG, SIP_CodeHeaderFrom,            SIP_ParseHeaderFrom,             SIP_CloneHeaderFrom},
+    {"From"            , NULL_ULONG, SIP_CodeHeaderFrom,            SIP_ParseHeaderFrom},
      //SIP_ABNF_RULE_TO
-    {"To"              , NULL_ULONG, SIP_CodeHeaderTo,              SIP_ParseHeaderTo,               SIP_CloneHeaderTo},
+    {"To"              , NULL_ULONG, SIP_CodeHeaderTo,              SIP_ParseHeaderTo},
     //SIP_ABNF_RULE_VIA
-    {"Via"             , NULL_ULONG, SIP_CodeHeaderVia,             SIP_ParseHeaderVia,              SIP_CloneHeaderVia},
+    {"Via"             , NULL_ULONG, SIP_CodeHeaderVia,             SIP_ParseHeaderVia},
     //SIP_ABNF_RULE_MAX_FORWARDS
-    {"Max-Forwards"    , NULL_ULONG, SIP_CodeHeaderMaxForwards,     SIP_ParseHeaderMaxForwards,      SIP_CloneHeaderMaxForwards},
+    {"Max-Forwards"    , NULL_ULONG, SIP_CodeHeaderMaxForwards,     SIP_ParseHeaderMaxForwards},
     //SIP_ABNF_RULE_SIP_URI
-    {"SIP-URI"         , NULL_ULONG, SIP_CodeSipURI,                SIP_ParseSipURI,                 SIP_CloneSipURI},
+    {"SIP-URI"         , NULL_ULONG, SIP_CodeSipURI,                SIP_ParseSipURI},
     //SIP_ABNF_RULE_SIPS_URI
-    {"SIPS-URI"        , NULL_ULONG, SIP_CodeSipsURI,               SIP_ParseSipsURI,                SIP_CloneSipsURI},
+    {"SIPS-URI"        , NULL_ULONG, SIP_CodeSipsURI,               SIP_ParseSipsURI},
     //SIP_ABNF_RULE_USERINFO
-    {"userinfo"        , NULL_ULONG, SIP_CodeUserinfo,              SIP_ParseUserinfo,               SIP_CloneUserinfo},
+    {"userinfo"        , NULL_ULONG, SIP_CodeUserinfo,              SIP_ParseUserinfo},
     //SIP_ABNF_RULE_HOSTPORT
-    {"hostport"        , NULL_ULONG, SIP_CodeHostport,              SIP_ParseHostport,               SIP_CloneHostport},
+    {"hostport"        , NULL_ULONG, SIP_CodeHostport,              SIP_ParseHostport},
     //SIP_ABNF_RULE_USER
-    {"user"            , NULL_ULONG, SIP_CodeUser,                  NULL_PTR,                        NULL_PTR},
+    {"user"            , NULL_ULONG, SIP_CodeUser,                  NULL_PTR},
     //SIP_ABNF_RULE_PASSWORD
-    {"password"        , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"password"        , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_HOST
-    {"host"            , NULL_ULONG, SIP_CodeHost,                  SIP_ParseHost,                   SIP_CloneHost},
+    {"host"            , NULL_ULONG, SIP_CodeHost,                  SIP_ParseHost},
     //SIP_ABNF_RULE_PORT
-    {"port"            , NULL_ULONG, SIP_CodePort,                  SIP_ParsePort,                   SIP_ClonePort},
+    {"port"            , NULL_ULONG, SIP_CodePort,                  SIP_ParsePort},
     //SIP_ABNF_RULE_HOST_NAME
-    {"hostname"        , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"hostname"        , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_IPV4_ADDRESS
-    {"IPv4address"     , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"IPv4address"     , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_IPV6_ADDRESS
-    {"IPv6address"     , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"IPv6address"     , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_IPV6_REFERENCE
-    {"IPv6reference"   , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"IPv6reference"   , NULL_ULONG, NULL_PTR,                      NULL_PTR},
      //SIP_ABNF_RULE_FROM_SPEC
-    {"from-spec"       , NULL_ULONG, SIP_CodeFromSpec,              SIP_ParseFromSpec,               SIP_CloneFromSpec},
+    {"from-spec"       , NULL_ULONG, SIP_CodeFromSpec,              SIP_ParseFromSpec},
     //SIP_ABNF_RULE_NAME_ADDR
-    {"name-addr"       , NULL_ULONG, SIP_CodeNameAddr,              SIP_ParseNameAddr,               SIP_CloneNameAddr},
+    {"name-addr"       , NULL_ULONG, SIP_CodeNameAddr,              SIP_ParseNameAddr},
     //SIP_ABNF_RULE_ADDR_SPEC
-    {"addr-spec"       , NULL_ULONG, SIP_CodeAddrSpec,              SIP_ParseAddrSpec,               SIP_CloneAddrSpec},
+    {"addr-spec"       , NULL_ULONG, SIP_CodeAddrSpec,              SIP_ParseAddrSpec},
     //SIP_ABNF_RULE_FROM_PARAM
-    {"from-param"      , NULL_ULONG, SIP_CodeFromParam,             SIP_ParseFromParam,              SIP_CloneFromParam},
+    {"from-param"      , NULL_ULONG, SIP_CodeFromParam,             SIP_ParseFromParam},
     //SIP_ABNF_RULE_DISPLAY_NAME
-    {"display-name"    , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"display-name"    , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_TO_PARAM
-    {"to-param"        , NULL_ULONG, SIP_CodeToParam,               SIP_ParseToParam,                SIP_CloneToParam},
+    {"to-param"        , NULL_ULONG, SIP_CodeToParam,               SIP_ParseToParam},
     //SIP_ABNF_RULE_TAG_PARAM
-    {"tag-param"       , NULL_ULONG, NULL_PTR,                      SIP_ParseTagParam,               NULL_PTR},
+    {"tag-param"       , NULL_ULONG, NULL_PTR,                      SIP_ParseTagParam},
     //SIP_ABNF_RULE_CALLID
-    {"callid"          , NULL_ULONG, NULL_PTR,                      SIP_ParseCallID,                 NULL_PTR},
+    {"callid"          , NULL_ULONG, NULL_PTR,                      SIP_ParseCallID},
     //SIP_ABNF_RULE_VIA_PARM
-    {"via-parm"        , NULL_ULONG, SIP_CodeViaParm,               SIP_ParseViaParm,                SIP_CloneViaParm},
+    {"via-parm"        , NULL_ULONG, SIP_CodeViaParm,               SIP_ParseViaParm},
     //SIP_ABNF_RULE_VIA_PARMS
-    {"via-params"      , NULL_ULONG, SIP_CodeViaParams,             SIP_ParseViaParams,              SIP_CloneViaParams},
+    {"via-params"      , NULL_ULONG, SIP_CodeViaParams,             SIP_ParseViaParams},
     //SIP_ABNF_RULE_SENT_PROTOCOL
-    {"sent-protocol"   , NULL_ULONG, SIP_CodeSentProtocol,          SIP_ParseSentProtocol,           SIP_CloneSentProtocol},
+    {"sent-protocol"   , NULL_ULONG, SIP_CodeSentProtocol,          SIP_ParseSentProtocol},
     //SIP_ABNF_RULE_SENT_BY
-    {"sent-by"         , NULL_ULONG, SIP_CodeSentBy,                SIP_ParseSentBy,                 SIP_CloneSentBy},
+    {"sent-by"         , NULL_ULONG, SIP_CodeSentBy,                SIP_ParseSentBy},
     //SIP_ABNF_RULE_TRANSPORT
-    {"transport"       , NULL_ULONG, SIP_CodeTransport,             SIP_ParseTransport,              SIP_CloneTransport},
+    {"transport"       , NULL_ULONG, SIP_CodeTransport,             SIP_ParseTransport},
     //SIP_ABNF_RULE_VIA_TTL
-    {"via-ttl"         , NULL_ULONG, SIP_CodeViaTtl,                SIP_ParseViaTtl,                 SIP_CloneViaTtl},
+    {"via-ttl"         , NULL_ULONG, SIP_CodeViaTtl,                SIP_ParseViaTtl},
     //SIP_ABNF_RULE_VIA_MADDR
-    {"via-maddr"       , NULL_ULONG, SIP_CodeViaMaddr,              SIP_ParseViaMaddr,               SIP_CloneViaMaddr},
+    {"via-maddr"       , NULL_ULONG, SIP_CodeViaMaddr,              SIP_ParseViaMaddr},
     //SIP_ABNF_RULE_VIA_RECEIVED
-    {"via-received"    , NULL_ULONG, SIP_CodeViaReceived,           SIP_ParseViaReceived,            SIP_CloneViaReceived},
+    {"via-received"    , NULL_ULONG, SIP_CodeViaReceived,           SIP_ParseViaReceived},
     //SIP_ABNF_RULE_VIA_BRANCH
-    {"via-branch"      , NULL_ULONG, SIP_CodeViaBranch,             SIP_ParseViaBranch,              NULL_PTR},
+    {"via-branch"      , NULL_ULONG, SIP_CodeViaBranch,             SIP_ParseViaBranch},
     //SIP_ABNF_RULE_TTL
-    {"ttl"             , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"ttl"             , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_TOKEN
-    {"token"           , NULL_ULONG, NULL_PTR,                      NULL_PTR,                        NULL_PTR},
+    {"token"           , NULL_ULONG, NULL_PTR,                      NULL_PTR},
 };
 
 /* 头域参数表 */

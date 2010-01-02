@@ -71,7 +71,7 @@ ULONG SIP_TU_RecvDownMsg(ULONG ulAppRef1,
 
     switch (g_eSipTuCore)
     {
-    	case SIP_CORE_UA:
+        case SIP_CORE_UA:
             ulRet = SIP_UA_RecvDownMsg(ulAppRef1,
                                        ulAppRef2,
                                        ulStackRef1,

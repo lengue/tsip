@@ -71,7 +71,7 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
         }
 
         pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
-        HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
+        pstSipTxnCB->pstHashNode = HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
     {
@@ -131,7 +131,7 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
         }
 
         pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
-        HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
+        pstSipTxnCB->pstHashNode = HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
     {

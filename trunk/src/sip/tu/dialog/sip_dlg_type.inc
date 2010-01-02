@@ -29,22 +29,24 @@ typedef struct tagSIP_APPLICATION_S
     }uApplication;
 }SIP_APPLICATION_S;
 
-
-typedef struct tagSIP_DIALOG_S
+typedef struct tagSIP_DLG_CB_S
 {
-    UCHAR aucDialogID[10];
-    UCHAR aucLocalTag[10];
-    UCHAR aucRemoteTag[10];
+    COMM_CB_HEADER
+    UCHAR          ucState;         /* early/conformed */
+    UBUF_HEADER_S *pstDialogID;     /* SIP_DIALOG_ID_S */
+    UBUF_HEADER_S *pstLocalURI;     /* URI_S */
+    UBUF_HEADER_S *pstRemoteURI;    /* URI_S */
+    UBUF_HEADER_S *pstRemoteTarget; /* URI_S */
+    UBUF_HEADER_S *pastRouteSet;    /* SIP_ROUTE_PARAM_S */
+    ULONG  ulLocalSeq;
+    ULONG  ulRemoteSeq;
+    UCHAR  ucSecureFlag;
+    void  *pstHashNode;
+}SIP_DLG_CB_S;
 
-    UCHAR ucState; /*init/early/conformed*/
-    ULONG ucLocalSeq;
-    ULONG ucRemoteSeq;
-    SIP_URI_S stLocalURI;
-    SIP_URI_S stRemoteURI;
-    HOST_PORT_S stRemoteTarget;
-    SIP_URI_S   astRouteSet[10];
-    UCHAR ucSecureFlag;
-
-    UCHAR ustApp[10];/* 下挂的订阅和会话 */
-}SIP_DIALOG_S;
-
+typedef struct tagSIP_DIALOG_ID_S
+{
+    UCHAR *pucCallID;
+    UCHAR *pucLocalTag;
+    UCHAR *pucRemoteTag;
+}SIP_DIALOG_ID_S;

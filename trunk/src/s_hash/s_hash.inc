@@ -10,5 +10,5 @@ void *HASH_CreateTable(ULONG ulNumber,
 ULONG HASH_DestroyTable(void *pstHash);
 ULONG HASH_DestroyNode(HASH_NODE_S  *pstHashNode);
 ULONG HASH_Find(void *pstHash, void *pCompared);
-ULONG HASH_AddNode(void *pstHash, void *pCompared, ULONG ulPara);
-ULONG HASH_DeleteNode(void *pstHash, void *pCompared, ULONG ulPara);
+void *HASH_AddNode(void *pstHash, void *pCompared, ULONG ulPara);
+ULONG HASH_DeleteNode(void *pstNode);

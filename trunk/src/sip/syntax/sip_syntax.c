@@ -45,6 +45,8 @@ ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg)
         g_bSipSyntaxInit = TRUE;
     }
 
+    g_pucSipSyntaxBuffer = malloc(SIP_MAX_TEXT_MSG_LEN);
+
     /* 初始化依赖模块 */
     ulRet = ABNF_Init();
     if (ulRet != SUCCESS)
@@ -163,10 +165,31 @@ ULONG SIP_Syntax_Decode(ULONG  ulRuleIndex,
     return SUCCESS;
 }
 
+/* 克隆就是编码再解码*/
 ULONG SIP_Syntax_Clone(ULONG          ulRuleIndex,
                        void          *pSrcStruct,
                        UBUF_HEADER_S *pstDstUbuf,
                        void         **ppDstStruct)
 {
-    return SIP_GET_CLONE_FUNC(ulRuleIndex)(pSrcStruct, pstDstUbuf, ppDstStruct);
+    ULONG ulMsgLen;
+    ULONG ulRet;
+    
+    ulRet = SIP_Syntax_Code(ulRuleIndex, 
+                            pSrcStruct, 
+                            g_pucSipSyntaxBuffer, 
+                            SIP_MAX_TEXT_MSG_LEN, 
+                            &ulMsgLen);
+    if (ulRet != SUCCESS)
+    {
+        return ulRet;
+    }
+
+    g_pucSipSyntaxBuffer[ulMsgLen] = '\0';
+    
+    ulRet = SIP_Syntax_Decode(ulRuleIndex, 
+                              g_pucSipSyntaxBuffer, 
+                              ulMsgLen, 
+                              pstDstUbuf, 
+                              ppDstStruct);
+    return ulRet;
 }
