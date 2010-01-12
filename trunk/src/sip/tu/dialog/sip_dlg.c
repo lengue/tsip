@@ -10,14 +10,20 @@
 #include "ubuf\ubuf.h"
 #include "sip\uri.h"
 #include "sip\sip.h"
+#include "s_hash\s_hash.h"
 
 /* 本模块对外提供的常量和结构头文件 */
+#include "..\include\dialog\sip_dlg.h"
 
 /* 本模块内部使用的常量和结构头文件 */
+#include "sip_dlg_const.inc"
+#include "sip_dlg_type.inc"
 
 /* 本模块内部函数声明头文件 */
+#include "sip_dlg.inc"
 
 /* 本模块全局变量声明头文件 */
+#include "sip_dlg_var.inc"
 
 /* 对话模块初始化 */
 ULONG SIP_Dlg_Init()
@@ -33,7 +39,27 @@ ULONG SIP_Dlg_Init()
 
     return SUCCESS;
 }
-    
+
+ULONG SIP_Dlg_InitDialog(ULONG ulDlgID)
+{
+    SIP_DLG_CB_S *pstSipDlgCB = NULL_PTR;
+
+    pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
+
+    pstSipDlgCB->eSessionState = SIP_DLG_SESSION_STATE_BUTT;
+    pstSipDlgCB->pstDialogID = NULL_PTR;
+    pstSipDlgCB->pstLocalURI = NULL_PTR;
+    pstSipDlgCB->pstRemoteURI = NULL_PTR;
+    pstSipDlgCB->pstRemoteTarget = NULL_PTR;
+    pstSipDlgCB->pastRouteSet = NULL_PTR;
+    pstSipDlgCB->ulLocalSeq = NULL_ULONG;
+    pstSipDlgCB->ulRemoteSeq = NULL_ULONG;
+    pstSipDlgCB->ucSecureFlag = FALSE;
+    pstSipDlgCB->pstHashNode = NULL_PTR;
+
+    return SUCCESS;
+}
+
 /* 创建一个对话 */
 ULONG SIP_Dlg_AllocDialog(UCHAR *pucCallID, 
                           UCHAR *pucLocalTag, 
@@ -47,9 +73,11 @@ ULONG SIP_Dlg_AllocDialog(UCHAR *pucCallID,
     /* 申请一个对话控制块 */
     COMM_CB_ALLOC(g_pstSipDlgCB, g_stSipDlgCBQueue, ulDlgID);
 
+    SIP_Dlg_InitDialog(ulDlgID);
+
     pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
     pstSipDlgCB->pstDialogID = UBUF_AllocUBuf(SIP_DLG_UBUF_LEN);
-    pstDialogID = UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialogID);
+    pstDialogID = (SIP_DIALOG_ID_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialogID);
     
     /* 记录对话信息*/
     UBUF_CLONE_STRING(pucCallID, 
@@ -199,83 +227,107 @@ ULONG SIP_Dlg_UpdateSecureFlag(ULONG ulDlgID, UCHAR ucSecureFlag)
     return SUCCESS;
 }
 
+ULONG SIP_Dlg_UpdateSessionState(ULONG ulDlgID, SIP_DLG_SESSION_STATE_E eState)
+{
+    SIP_DLG_CB_S *pstSipDlgCB = NULL_PTR;
+
+    pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
+    pstSipDlgCB->eSessionState = eState;
+
+    return SUCCESS;
+}
+
+ULONG SIP_Dlg_GetSessionState(ULONG ulDlgID, SIP_DLG_SESSION_STATE_E *peState)
+{
+    SIP_DLG_CB_S *pstSipDlgCB = NULL_PTR;
+
+    pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
+    *peState = pstSipDlgCB->eSessionState;
+
+    return SUCCESS;
+}
+
 /* 创建一个对话 */
 ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
 {
-    ULONG ulLen;
     ULONG ulRuleIndex;
-    SIP_DLG_CB_S *pstSipDlgCB = NULL_PTR;
-    SIP_DIALOG_S *pstDialog = NULL_PTR;
-    SIP_MSG_S    *pstSipMsg = NULL_PTR;
+    SIP_DLG_CB_S         *pstSipDlgCB     = NULL_PTR;
+    SIP_DIALOG_ID_S      *pstDialogID     = NULL_PTR;
+    SIP_MSG_S            *pstSipMsg       = NULL_PTR;
     SIP_HEADER_CALL_ID_S *pstHeaderCallID = NULL_PTR;
-    SIP_HEADER_FROM_S    *pstHeaderFrom = NULL_PTR;
-    SIP_HEADER_TO_S      *pstHeaderTo = NULL_PTR;
-    SIP_HEADER_CSEQ_S    *pstHeaderCseq = NULL_PTR;
+    SIP_HEADER_FROM_S    *pstHeaderFrom   = NULL_PTR;
+    SIP_HEADER_TO_S      *pstHeaderTo     = NULL_PTR;
+    SIP_HEADER_CSEQ_S    *pstHeaderCseq   = NULL_PTR;
+    URI_S                *pstUri          = NULL_PTR;
     
     pstSipDlgCB = &g_pstSipDlgCB[ulDlgIndex];
-    pstDialog = (SIP_DIALOG_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialog);
+    pstDialogID = (SIP_DIALOG_ID_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialogID);
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
-    SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
+    
+    SIP_GetRuleIndex("addr-spec", &ulRuleIndex);
         
     /* CallID添加 */
     pstHeaderCallID = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CALL_ID_S));
-    pstSipMsg->apstHeaders[SIP_HEADER_CALL_ID] = pstHeaderCallID;
+    pstSipMsg->apstHeaders[SIP_HEADER_CALL_ID] = (SIP_HEADER_S *)pstHeaderCallID;
     pstHeaderCallID->stHeader.pstNext = NULL_PTR;
 
-    UBUF_CLONE_STRING(pstDialog->pucCallID, 
+    UBUF_CLONE_STRING(pstDialogID->pucCallID, 
                       pstUbufSipMsg,
                       pstHeaderCallID->pucCallID);
         
     /* From头域添加 */
     pstHeaderFrom = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_FROM_S));
-    pstSipMsg->apstHeaders[SIP_HEADER_FROM] = pstHeaderFrom;
+    pstSipMsg->apstHeaders[SIP_HEADER_FROM] = (SIP_HEADER_S *)pstHeaderFrom;
     pstHeaderFrom->stHeader.pstNext = NULL_PTR;
 
     /*tag*/
-    UBUF_CLONE_STRING(pstDialog->pucLocalTag, 
+    UBUF_CLONE_STRING(pstDialogID->pucLocalTag, 
                       pstUbufSipMsg,
                       pstHeaderFrom->pucTag);
     /*uri*/
     pstHeaderFrom->stNameAddr.bName = FALSE;
     pstHeaderFrom->stNameAddr.pucName = NULL_PTR;
-    SIP_Syntax_Clone(ulRuleIndex,
-                     pstDialog->pstLocalURI,
-                     pstUbufSipMsg,
-                    &pstHeaderFrom->stNameAddr.pstUri);
+    
+    pstUri = (URI_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstLocalURI);
+    SIP_Clone(ulRuleIndex,
+              pstUri,
+              pstUbufSipMsg,
+             &pstHeaderFrom->stNameAddr.pstUri);
     
     /* To头域添加*/
     pstHeaderTo= UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_TO_S));
-    pstSipMsg->apstHeaders[SIP_HEADER_TO] = pstHeaderTo;
+    pstSipMsg->apstHeaders[SIP_HEADER_TO] = (SIP_HEADER_S *)pstHeaderTo;
     pstHeaderTo->stHeader.pstNext = NULL_PTR;
     
     /*tag*/
-    UBUF_CLONE_STRING(pstDialog->pucRemoteTag, 
+    UBUF_CLONE_STRING(pstDialogID->pucRemoteTag, 
                       pstUbufSipMsg,
                       pstHeaderTo->pucTag);
 
     /*uri*/
     pstHeaderTo->stNameAddr.bName = FALSE;
     pstHeaderTo->stNameAddr.pucName = NULL_PTR;
-    SIP_Syntax_Clone(ulRuleIndex,
-                     pstDialog->pstRemoteURI,
-                     pstUbufSipMsg,
-                    &pstHeaderTo->stNameAddr.pstUri);
+    pstUri = (URI_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstRemoteURI);
+    SIP_Clone(ulRuleIndex,
+              pstUri,
+              pstUbufSipMsg,
+             &pstHeaderTo->stNameAddr.pstUri);
     
     /* Cseq添加 */
     pstHeaderCseq = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CSEQ_S));
-    pstSipMsg->apstHeaders[SIP_HEADER_CSEQ] = pstHeaderCseq;
+    pstSipMsg->apstHeaders[SIP_HEADER_CSEQ] = (SIP_HEADER_S *)pstHeaderCseq;
     pstHeaderCseq->stHeader.pstNext = NULL_PTR;
 
-    if (pstDialog->ulLocalSeq == NULL_ULONG)
+    if (pstSipDlgCB->ulLocalSeq == NULL_ULONG)
     {
-        pstDialog->ulLocalSeq = 0;
+        pstSipDlgCB->ulLocalSeq = 0;
     }
     else
     {
-        pstDialog->ulLocalSeq++;
+        pstSipDlgCB->ulLocalSeq++;
     }
     pstHeaderCseq->eMethod = pstSipMsg->uStartLine.stRequstLine.eMethod;
-    pstHeaderCseq->ulSeq = pstDialog->ulLocalSeq;
+    pstHeaderCseq->ulSeq = pstSipDlgCB->ulLocalSeq;
 
     /* 填路由相关头域 */
 
@@ -303,7 +355,6 @@ ULONG SIP_Dlg_MakeKey(void *pCompared)
 /* 对话比较函数 */
 ULONG SIP_Dlg_Compare(void *pCompared, ULONG ulPara)
 {
-    ULONG ulRet;
     SIP_DLG_CB_S     *pstSipDlgCB    = NULL_PTR;
     SIP_DIALOG_ID_S  *pstDialogID    = NULL_PTR;
     SIP_DIALOG_ID_S  *pstCmpDialogID = NULL_PTR;
@@ -311,7 +362,7 @@ ULONG SIP_Dlg_Compare(void *pCompared, ULONG ulPara)
     pstCmpDialogID = (SIP_DIALOG_ID_S *)pCompared;
 
     pstSipDlgCB   = &g_pstSipDlgCB[ulPara];
-    pstDialogID   = UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialogID);
+    pstDialogID   = (SIP_DIALOG_ID_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialogID);
     
     if (strcmp(pstDialogID->pucCallID, pstCmpDialogID->pucCallID) != 0)
     {
@@ -352,7 +403,7 @@ ULONG SIP_Dlg_MatchDialog(UBUF_HEADER_S *pstUbufSipMsg, ULONG *pulDlgIndex)
     stDialogID.pucLocalTag  = pstHeaderTo->pucTag;
     stDialogID.pucRemoteTag = pstHeaderFrom->pucTag;
     
-    ulDlgID = HASH_Find(SIP_DLG_MAX_CB, &stDialogID);
+    ulDlgID = HASH_Find(g_pstSipDlgHash, &stDialogID);
     if (ulDlgID == NULL_ULONG)
     {
         return FAIL;
@@ -362,3 +413,17 @@ ULONG SIP_Dlg_MatchDialog(UBUF_HEADER_S *pstUbufSipMsg, ULONG *pulDlgIndex)
     return SUCCESS;
 }
 
+/*  判断对话是否可以删除 */
+ULONG SIP_Dlg_CanDialogRelease(ULONG ulDlgID)
+{
+    SIP_DLG_CB_S *pstSipDlgCB = NULL_PTR;
+
+    pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
+
+    if(pstSipDlgCB->eSessionState == SIP_DLG_SESSION_STATE_BUTT)
+    {
+        return SUCCESS;        
+    }
+
+    return FAIL;
+}

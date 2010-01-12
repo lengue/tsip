@@ -63,8 +63,8 @@ ULONG SIP_TU_RecvUpMsg(ULONG ulCoreID,
 
 ULONG SIP_TU_RecvDownMsg(ULONG ulAppRef1,
                          ULONG ulAppRef2,
-                         ULONG ulStackRef1,
-                         ULONG ulStackRef2,
+                         ULONG *pulStackRef1,
+                         ULONG *pulStackRef2,
                          UBUF_HEADER_S  *pstUbufSipMsg)
 {
     ULONG ulRet;
@@ -74,8 +74,8 @@ ULONG SIP_TU_RecvDownMsg(ULONG ulAppRef1,
         case SIP_CORE_UA:
             ulRet = SIP_UA_RecvDownMsg(ulAppRef1,
                                        ulAppRef2,
-                                       ulStackRef1,
-                                       ulStackRef2,
+                                       pulStackRef1,
+                                       pulStackRef2,
                                        pstUbufSipMsg);
             break;
 

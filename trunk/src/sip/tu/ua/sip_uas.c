@@ -11,6 +11,7 @@
 #include "sip\sip.h"
 
 #include "..\include\locate\sip_locate.h"
+#include "..\include\dialog\sip_dlg.h"
 
 #include "..\..\include\transaction\sip_transaction.h"
 #include "..\..\include\transport\sip_transport.h"
@@ -78,7 +79,6 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
         SIP_UAS_AllocCB(&ulUasID);
         SIP_Txn_AllocTxn(ulUasID, &ulTxnID);
         g_pstSipUasCB[ulUasID].ulTxnID = ulTxnID;
-        g_pstSipUasCB[ulUasID].pstSipMsgUbuf = pstUbufSipMsg;
 
         /* 将消息下发给TXN层 */
         SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg, pstPeerAddr);
@@ -142,18 +142,110 @@ ULONG ulTxnID 事务ID，用于匹配事务
 ULONG *pulDlgID  如果不为空，标识创建或者存在一个对话中
 UBUF_HEADER_S * pstUbufSipMsg 待发送的消息
 */
-ULONG SIP_UAS_SendResponse(IN  ULONG ulUasID,
-                           OUT ULONG ulDlgID,
+ULONG SIP_UAS_SendResponse(ULONG ulAppDlgID,
+                           ULONG ulAppTxnID,
+                           ULONG *pulDlgID,
+                           ULONG ulUasID,
                            UBUF_HEADER_S * pstUbufSipMsg)
 {
-    /* 填充相关头域 */
-    SIP_UAS_GenerateResponse(ulUasID, pstUbufSipMsg);
+    ULONG ulDlgID;
+    ULONG ulRet;
+    ULONG ulTxnID;
+    SIP_DLG_SESSION_STATE_E eSessionState;
+    UBUF_HEADER_S        *pstUbufRequest   = NULL_PTR;
+    SIP_MSG_S            *pstSipRequest    = NULL_PTR;
+    SIP_MSG_S            *pstSipResponse   = NULL_PTR;
+    SIP_HEADER_CALL_ID_S *pstHeaderCallID  = NULL_PTR;
+    SIP_HEADER_FROM_S    *pstHeaderFrom    = NULL_PTR;
+    SIP_HEADER_TO_S      *pstHeaderTo      = NULL_PTR;
+    SIP_HEADER_CONTACT_S *pstHeaderContact = NULL_PTR;
+    SIP_HEADER_CSEQ_S    *pstHeaderCseq    = NULL_PTR;
+
+    pstUbufRequest = SIP_Txn_GetInitMsg(g_pstSipUasCB[ulUasID].ulTxnID);
+    
+    /* 填充通用头域 */
+    SIP_UAS_GenerateResponse(pstUbufRequest, pstUbufSipMsg);
+
+    /* 会话和对话的处理 */
+    pstSipRequest  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    pstSipResponse = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+
+    ulDlgID = g_pstSipUasCB[ulUasID].ulDlgID;
+
+    /*对话外的INVITE的创建会话*/
+    if (pstSipRequest->uStartLine.stRequstLine.eMethod == SIP_METHOD_INVITE)
+    {
+        /* 初始INVITE的非失败响应会创建对话 */
+        if ((ulDlgID == NULL_ULONG) 
+          &&(pstSipResponse->uStartLine.stStatusLine.eStatusCode < SIP_STATUS_CODE_300))
+        {
+            pstHeaderCallID = (SIP_HEADER_CALL_ID_S *)pstSipResponse->apstHeaders[SIP_HEADER_CALL_ID];
+            pstHeaderFrom   = (SIP_HEADER_FROM_S *)pstSipResponse->apstHeaders[SIP_HEADER_FROM];
+            pstHeaderTo     = (SIP_HEADER_TO_S *)pstSipResponse->apstHeaders[SIP_HEADER_TO];
+            pstHeaderContact = (SIP_HEADER_CONTACT_S *)pstSipRequest->apstHeaders[SIP_HEADER_CONTACT];
+            pstHeaderCseq    = (SIP_HEADER_CSEQ_S *)pstSipRequest->apstHeaders[SIP_HEADER_CSEQ];
+
+            /* 创建对话 */
+            SIP_Dlg_AllocDialog(pstHeaderCallID->pucCallID,
+                                pstHeaderTo->pucTag, 
+                                pstHeaderFrom->pucTag, 
+                               &ulDlgID);
+            
+            /* 创建对话 */
+            SIP_Dlg_UpdateLocalURI(ulDlgID, pstHeaderTo->stNameAddr.pstUri);
+            SIP_Dlg_UpdateRemoteSeq(ulDlgID, pstHeaderCseq->ulSeq);
+            //SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pucTemp);
+            SIP_Dlg_UpdateRemoteURI(ulDlgID, pstHeaderFrom->stNameAddr.pstUri);
+            SIP_Dlg_UpdateSecureFlag(ulDlgID, FALSE);
+            //SIP_Dlg_UpdateRouteSet(ulDlgID, pstRouteSet);
+            
+            g_pstSipUasCB[ulUasID].ulDlgID = ulDlgID;
+
+            /* 临时响应创建早会话，成功的响应创建确认对话*/
+            if (pstSipResponse->uStartLine.stStatusLine.eStatusCode < SIP_STATUS_CODE_200)
+            {
+                SIP_Dlg_UpdateSessionState(ulDlgID, SIP_DLG_SESSION_STATE_EARLY);
+            }
+            else
+            {
+                SIP_Dlg_UpdateSessionState(ulDlgID, SIP_DLG_SESSION_STATE_CONFIRM);
+            }
+        }
+        else if (ulDlgID != NULL_ULONG)
+        {
+            SIP_Dlg_GetSessionState(ulDlgID, &eSessionState);
+            if (eSessionState == SIP_DLG_SESSION_STATE_EARLY)
+            {
+                /*成功响应确认对话，失败响应释放早对话，临时响应不处理*/
+                if (pstSipResponse->uStartLine.stStatusLine.eStatusCode >= SIP_STATUS_CODE_300)
+                {
+                    SIP_Dlg_UpdateSessionState(ulDlgID, SIP_DLG_SESSION_STATE_BUTT);
+                    ulRet = SIP_Dlg_CanDialogRelease(ulDlgID);
+                    if (ulRet == SUCCESS)
+                    {
+                        SIP_Dlg_ReleaseDialog(ulDlgID);
+                    } 
+                }
+                else if (pstSipResponse->uStartLine.stStatusLine.eStatusCode >= SIP_STATUS_CODE_200)
+                {
+                    SIP_Dlg_UpdateSessionState(ulDlgID, SIP_DLG_SESSION_STATE_CONFIRM);
+                }
+            }
+        }
+    }
+
+    ulTxnID = g_pstSipUasCB[ulUasID].ulTxnID;
+    
+    /* 收到终结响应后UAS就完成了 */
+    if (pstSipResponse->uStartLine.stStatusLine.eStatusCode >= SIP_STATUS_CODE_200)
+    {
+        SIP_UAS_FreeCB(ulUasID);
+    }
 
     /* 向TXN发送消息 */
-    SIP_Txn_RecvDownMsg(g_pstSipUasCB[ulUasID].ulTxnID,
-                        pstUbufSipMsg,
-                        NULL_PTR);
+    SIP_Txn_RecvDownMsg(ulTxnID, pstUbufSipMsg, NULL_PTR);
 
+    *pulDlgID = ulTxnID;
     return SUCCESS;
 }
 
@@ -197,42 +289,43 @@ ULONG SIP_UAS_ApplyingExtensions(UBUF_HEADER_S *pstSipMsgUbuf)
     return SUCCESS;
 }
 
-ULONG SIP_UAS_GenerateResponse(ULONG ulUasID, UBUF_HEADER_S * pstUbufSipMsg)
+ULONG SIP_UAS_GenerateResponse(UBUF_HEADER_S *pstUbufRequest, UBUF_HEADER_S *pstUbufResponse)
 {
-    SIP_MSG_S *pstUbufRequestMsg = NULL_PTR;
+    SIP_MSG_S *pstUbufRequestMsg  = NULL_PTR;
     SIP_MSG_S *pstUbufResponseMsg = NULL_PTR;
     SIP_HEADER_TO_S *pstHeaderTo = NULL_PTR;
     ULONG ulRuleIndex;
+    UCHAR acString[100];
     
-    pstUbufRequestMsg  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(g_pstSipUasCB[ulUasID].pstSipMsgUbuf);
-    pstUbufResponseMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    pstUbufRequestMsg  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufRequest);
+    pstUbufResponseMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufResponse);
         
     /* 克隆From头域 */
     SIP_GetRuleIndex("From", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
               pstUbufRequestMsg->apstHeaders[SIP_HEADER_FROM], 
-              pstUbufSipMsg, 
+              pstUbufResponse, 
              &pstUbufResponseMsg->apstHeaders[SIP_HEADER_FROM]);
     
     /* 克隆Call-ID头域 */
     SIP_GetRuleIndex("Call-ID", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
               pstUbufRequestMsg->apstHeaders[SIP_HEADER_CALL_ID], 
-              pstUbufSipMsg, 
+              pstUbufResponse, 
              &pstUbufResponseMsg->apstHeaders[SIP_HEADER_CALL_ID]);
 
     /* 克隆CSeq头域 */
     SIP_GetRuleIndex("CSeq", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
               pstUbufRequestMsg->apstHeaders[SIP_HEADER_CSEQ], 
-              pstUbufSipMsg, 
+              pstUbufResponse, 
              &pstUbufResponseMsg->apstHeaders[SIP_HEADER_CSEQ]);
     
     /* 克隆Via头域 */
     SIP_GetRuleIndex("Via", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
               pstUbufRequestMsg->apstHeaders[SIP_HEADER_VIA], 
-              pstUbufSipMsg, 
+              pstUbufResponse, 
              &pstUbufResponseMsg->apstHeaders[SIP_HEADER_VIA]);
 
     
@@ -240,15 +333,16 @@ ULONG SIP_UAS_GenerateResponse(ULONG ulUasID, UBUF_HEADER_S * pstUbufSipMsg)
     SIP_GetRuleIndex("To", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
               pstUbufRequestMsg->apstHeaders[SIP_HEADER_TO], 
-              pstUbufSipMsg, 
+              pstUbufResponse, 
              &pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO]);
 
 
     /* 如果To头域没有tag，添加一个tag */
-    pstHeaderTo = pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO];
+    pstHeaderTo = (SIP_HEADER_TO_S *)pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO];
     if (pstHeaderTo->pucTag == NULL_PTR)
     {
-        
+        SIP_GenerateRandomString(acString, 100);
+        UBUF_CLONE_STRING(acString, pstUbufResponse, pstHeaderTo->pucTag);
     }
 
     return SUCCESS;

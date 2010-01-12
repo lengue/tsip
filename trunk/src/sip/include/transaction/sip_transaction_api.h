@@ -8,3 +8,4 @@ extern ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
                                UBUF_HEADER_S *pstUbufSipMsg,
                                SIP_LOCATION_S *pstPeerLocation);
 extern ULONG SIP_Txn_TimerProc(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eTimer);
+extern UBUF_HEADER_S* SIP_Txn_GetInitMsg(ULONG ulTxnID);

@@ -13,7 +13,7 @@ typedef struct tagSIP_SUBSCRIPTION_S
 {
     UCHAR ucRole;/* 角色，订阅者还是通知者 */
     ULONG ulDuration;
-    HTIMER hRefreshTimer;
+    HTIMER hDurationTimer;
     HTIMER hRefreshTimer;
 }SIP_SUBSCRIPTION_S;
 
@@ -32,7 +32,7 @@ typedef struct tagSIP_APPLICATION_S
 typedef struct tagSIP_DLG_CB_S
 {
     COMM_CB_HEADER
-    UCHAR          ucState;         /* early/conformed */
+    SIP_DLG_SESSION_STATE_E eSessionState;
     UBUF_HEADER_S *pstDialogID;     /* SIP_DIALOG_ID_S */
     UBUF_HEADER_S *pstLocalURI;     /* URI_S */
     UBUF_HEADER_S *pstRemoteURI;    /* URI_S */
