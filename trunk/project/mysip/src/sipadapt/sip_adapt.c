@@ -55,6 +55,8 @@ ULONG SIP_APDT_MsgProc(ULONG ulModuleID, void* pMsg)
     SIP_ADPT_CONN_MSG_S  *pstConnMsg  = NULL_PTR;
     TIMER_MSG_S *pstTimerMsg = NULL_PTR;
     APP_MSG_S   *pstAppMsg   = NULL_PTR;
+    ULONG        ulStackRef1;
+    ULONG        ulStackRef2;    
 
     switch(ulModuleID)
     {
@@ -70,10 +72,13 @@ ULONG SIP_APDT_MsgProc(ULONG ulModuleID, void* pMsg)
 
         case SYS_MODULE_APP:
             pstAppMsg = (APP_MSG_S *)pMsg;
+            ulStackRef1 = pstAppMsg->ulStackRef1;
+            ulStackRef2 = pstAppMsg->ulStackRef2;  
+            
             SIP_RecvDownMsg(pstAppMsg->ulAppRef1,
                             pstAppMsg->ulAppRef2,
-                            pstAppMsg->ulStackRef1,
-                            pstAppMsg->ulStackRef2,
+                           &ulStackRef1,
+                           &ulStackRef2,
                             pstAppMsg->pstUbufSipMsg);
             break;
 

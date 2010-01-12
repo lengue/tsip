@@ -202,8 +202,33 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
 
 ULONG APP_Fsm_WaitLocalAnswer_OffhookProc()
 {
+    UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
+    SIP_MSG_S     *pstSipMsg     = NULL_PTR;
+
     /* 发送200响应 */
+    pstSipMsgUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    if (pstSipMsgUBuf == NULL_PTR)
+    {
+        return FAIL;
+    }
+
+    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
+    memset(pstSipMsg, 0, sizeof(SIP_MSG_S));
+
+    /* 添加方法 */
+    pstSipMsg->eMsgType                            = SIP_MSG_TYPE_RESPONSE;
+    pstSipMsg->uStartLine.stStatusLine.ucVersion   = 2;
+    pstSipMsg->uStartLine.stStatusLine.eStatusCode = SIP_STATUS_CODE_200;
+
+    APP_SendDownMsg(NULL_ULONG,
+                    NULL_ULONG,
+                    NULL_ULONG,
+                    g_ulAppTxnID,
+                    pstSipMsgUBuf);
+
     /* 状态迁为APP_STATE_ACTIVE */
+    g_eAppState = APP_STATE_ACTIVE;
+    
     return SUCCESS;
 }
 
