@@ -140,7 +140,7 @@ void *HASH_AddNode(void *pstHash, void *pCompared, ULONG ulPara)
 ULONG HASH_DeleteNode(void *pstNode)
 {
     HASH_NODE_S  *pstHashNode   = NULL_PTR;
-    HASH_NODE_S  *ppstNodeTmp  = NULL_PTR;
+    HASH_NODE_S  **ppstNodeTmp  = NULL_PTR;
 
     pstHashNode = (HASH_NODE_S *)pstNode;
     ppstNodeTmp = pstHashNode->ppstHead;

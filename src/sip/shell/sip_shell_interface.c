@@ -82,14 +82,14 @@ ULONG SIP_RecvUpMsg(SIP_LOCATION_S *pstPeerLocation, UBUF_HEADER_S *pstUbufSipMs
 /* 协议栈收到应用层下发消息 */
 ULONG SIP_RecvDownMsg(ULONG  ulAppRef1,
                       ULONG  ulAppRef2,
-                      ULONG  ulStackRef1,
-                      ULONG  ulStackRef2,
+                      ULONG *pulStackRef1,
+                      ULONG *pulStackRef2,
                       UBUF_HEADER_S * pstUbufSipMsg)
 {
     return SIP_TU_RecvDownMsg(ulAppRef1,
                               ulAppRef2,
-                              ulStackRef1,
-                              ulStackRef2,
+                              pulStackRef1,
+                              pulStackRef2,
                               pstUbufSipMsg);
 }
 

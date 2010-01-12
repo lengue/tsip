@@ -254,3 +254,10 @@ ULONG SIP_Txn_GenerateBranch(ULONG  *pulTxnID)
 {
     return SUCCESS;
 }
+
+/* 生成branch参数 */
+UBUF_HEADER_S* SIP_Txn_GetInitMsg(ULONG ulTxnID)
+{
+    return g_pstSipTxnCB[ulTxnID].pstUbufInitMsg;
+}
+
