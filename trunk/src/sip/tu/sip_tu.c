@@ -31,7 +31,7 @@ ULONG SIP_TU_Init(SIP_TU_CFG_S *pstCfg)
     g_eSipTuCore = pstCfg->eType;
     switch (g_eSipTuCore)
     {
-    	case SIP_CORE_UA:
+        case SIP_CORE_UA:
             ulRet = SIP_UA_Init();
             break;
 
@@ -43,6 +43,7 @@ ULONG SIP_TU_Init(SIP_TU_CFG_S *pstCfg)
 }
 
 ULONG SIP_TU_RecvUpMsg(ULONG ulCoreID,
+                       ULONG ulTxnID,
                        SIP_LOCATION_S *pstPeerAddr,
                        UBUF_HEADER_S  *pstUbufSipMsg)
 {
@@ -51,7 +52,7 @@ ULONG SIP_TU_RecvUpMsg(ULONG ulCoreID,
     switch (g_eSipTuCore)
     {
         case SIP_CORE_UA:
-            ulRet = SIP_UA_RecvUpMsg(ulCoreID, pstPeerAddr, pstUbufSipMsg);
+            ulRet = SIP_UA_RecvUpMsg(ulCoreID, ulTxnID, pstPeerAddr, pstUbufSipMsg);
             break;
 
         default:
