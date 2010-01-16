@@ -566,7 +566,8 @@ ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara)
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
 
     /* 向TU通报消息 */
-    SIP_TU_RecvUpMsg(ulTxnID,
+    SIP_TU_RecvUpMsg(pstSipTxnCB->ulCoreID,
+                     ulTxnID,
                     &pstSipTxnCB->stPeer,
                      pstSipTxnCB->pstUbufRecvMsg);
 

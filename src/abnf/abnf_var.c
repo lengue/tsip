@@ -102,9 +102,6 @@ ABNF_APP_RULE_S g_astAbnfAppRule[ABNF_RULE_BUTT] =
 /* 判断模块是否初始化标记 */
 BOOL        g_bAbnfInit = FALSE;
 
-UCHAR       *g_pucAbnfMatchText;
-ULONG        g_ulAbnfMatchTextLen;
-ABNF_RULE_LIST_S *g_pstAbnfMatchRuleList;
 ABNF_RULE_LIST_S *g_pstAbnfBuiltRuleList;
 
 /* 栈顶 */

@@ -81,7 +81,7 @@ ULONG ABNF_BuildRuleList(UCHAR *pucText,
         return FAIL;
     }
 
-    ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULELIST)(pstNode, ppstRuleList);
+    ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULELIST)(pstNode, pucText, ppstRuleList);
     if (ulRet != SUCCESS)
     {
         ABNF_FreeRuleList(*ppstRuleList);
@@ -139,10 +139,11 @@ ULONG ABNF_GrammarParse(UCHAR *pucText,
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ABNF_ELEMENT_S       stRuleElement;
+    ABNF_MATCH_TARGET_S  stMatchTarget;
 
-    g_pucAbnfMatchText     = pucText;
-    g_ulAbnfMatchTextLen   = ulLen;
-    g_pstAbnfMatchRuleList = pstRuleList;
+    stMatchTarget.pucText = pucText;
+    stMatchTarget.ulLen = ulLen;
+    stMatchTarget.pstRuleList = pstRuleList;
 
     ABNF_SuccessRecord();
 
@@ -154,7 +155,7 @@ ULONG ABNF_GrammarParse(UCHAR *pucText,
     stRuleElement.u.stRule.ulIndex    = ulMatchRule;
     stRuleElement.pNextElement    = NULL_PTR;
 
-    ulRet = ABNF_MatchElement(0, &stRuleElement, &ulSize, &pstNode);
+    ulRet = ABNF_MatchElement(&stMatchTarget, 0, &stRuleElement, &ulSize, &pstNode);
     if (ulRet == SUCCESS)
     {
         *ppstNode = pstNode;
@@ -970,7 +971,8 @@ ULONG ABNF_FreeNodeTree(ABNF_GRAMMAR_NODE_S *pstGrammarNode)
 }
 
 /* 匹配一个元素 */
-ULONG ABNF_MatchElement(ULONG ulOffset,
+ULONG ABNF_MatchElement(ABNF_MATCH_TARGET_S *pstTarget,
+                        ULONG ulOffset,
                         ABNF_ELEMENT_S *pstElement,
                         ULONG *pulSize,
                         ABNF_GRAMMAR_NODE_S **ppstNode)
@@ -989,35 +991,40 @@ ULONG ABNF_MatchElement(ULONG ulOffset,
         switch (pstElement->eType)
         {
             case ABNF_ELEMENT_DATA_CHAR:
-                ulRet = ABNF_MatchCharElement(ulOffset + ulMatchSize,
+                ulRet = ABNF_MatchCharElement(pstTarget,
+                                              ulOffset + ulMatchSize,
                                               pstElement,
                                              &ulSize,
                                               ppstTempNode);
                 break;
 
             case ABNF_ELEMENT_DATA_STRING:
-                ulRet = ABNF_MatchStringElement(ulOffset + ulMatchSize,
+                ulRet = ABNF_MatchStringElement(pstTarget,
+                                                ulOffset + ulMatchSize,
                                                 pstElement,
                                                &ulSize,
                                                 ppstTempNode);
                 break;
 
             case ABNF_ELEMENT_RULE:
-                ulRet = ABNF_MatchRuleElement(ulOffset + ulMatchSize,
+                ulRet = ABNF_MatchRuleElement(pstTarget,
+                                              ulOffset + ulMatchSize,
                                               pstElement,
                                              &ulSize,
                                               ppstTempNode);
                 break;
 
             case ABNF_ELEMENT_SEQUENCE:
-                ulRet = ABNF_MatchSequenceElement(ulOffset + ulMatchSize,
+                ulRet = ABNF_MatchSequenceElement(pstTarget,
+                                                  ulOffset + ulMatchSize,
                                                   pstElement,
                                                  &ulSize,
                                                   ppstTempNode);
                 break;
 
             case ABNF_ELEMENT_OPTIONAL:
-                ulRet = ABNF_MatchOptionalElement(ulOffset + ulMatchSize,
+                ulRet = ABNF_MatchOptionalElement(pstTarget,
+                                                  ulOffset + ulMatchSize,
                                                   pstElement,
                                                  &ulSize,
                                                   ppstTempNode);
@@ -1058,7 +1065,8 @@ ULONG ABNF_MatchElement(ULONG ulOffset,
 }
 
 /* 匹配一个字符元素 */
-ULONG ABNF_MatchCharElement(ULONG ulOffset,
+ULONG ABNF_MatchCharElement(ABNF_MATCH_TARGET_S *pstTarget,
+                            ULONG ulOffset,
                             ABNF_ELEMENT_S *pstElement,
                             ULONG *pulSize,
                             ABNF_GRAMMAR_NODE_S **ppstNode)
@@ -1066,12 +1074,12 @@ ULONG ABNF_MatchCharElement(ULONG ulOffset,
     UCHAR *pucChar;
 
     /* 已经匹配到尾部，匹配失败 */
-    if (ulOffset >= g_ulAbnfMatchTextLen)
+    if (ulOffset >= pstTarget->ulLen)
     {
         return FAIL;
     }
 
-    pucChar = g_pucAbnfMatchText + ulOffset;
+    pucChar = pstTarget->pucText + ulOffset;
     if ((*pucChar >= pstElement->u.stChar.ucMinValue)
       &&(*pucChar <= pstElement->u.stChar.ucMaxValue))
     {
@@ -1083,7 +1091,8 @@ ULONG ABNF_MatchCharElement(ULONG ulOffset,
 }
 
 /* 匹配一个字符串元素 */
-ULONG ABNF_MatchStringElement(ULONG ulOffset,
+ULONG ABNF_MatchStringElement(ABNF_MATCH_TARGET_S *pstTarget,
+                              ULONG ulOffset,
                               ABNF_ELEMENT_S *pstElement,
                               ULONG *pulSize,
                               ABNF_GRAMMAR_NODE_S **ppstNode)
@@ -1092,12 +1101,12 @@ ULONG ABNF_MatchStringElement(ULONG ulOffset,
     UCHAR *pucString;
 
     /* 已经匹配到尾部，匹配失败 */
-    if ((ulOffset + strlen(pstElement->u.stString.pucString)) >= g_ulAbnfMatchTextLen)
+    if ((ulOffset + strlen(pstElement->u.stString.pucString)) > pstTarget->ulLen)
     {
         return FAIL;
     }
 
-    pucString = g_pucAbnfMatchText + ulOffset;
+    pucString = pstTarget->pucText + ulOffset;
 
     if (pstElement->u.stString.bSensitive == FALSE)
     {
@@ -1122,7 +1131,8 @@ ULONG ABNF_MatchStringElement(ULONG ulOffset,
 }
 
 /* 匹配一个规则元素 */
-ULONG ABNF_MatchRuleElement(ULONG ulOffset,
+ULONG ABNF_MatchRuleElement(ABNF_MATCH_TARGET_S *pstTarget,
+                            ULONG ulOffset,
                             ABNF_ELEMENT_S *pstElement,
                             ULONG *pulSize,
                             ABNF_GRAMMAR_NODE_S **ppstNode)
@@ -1143,12 +1153,22 @@ ULONG ABNF_MatchRuleElement(ULONG ulOffset,
     }
     else
     {
-        pstMatchElement = g_pstAbnfMatchRuleList->pstRules[ulIndex].pstElements;
+        #if DEBUG_ABNF_CORE
+        printf("\r\nMatchRule(%s) start at %d", pstTarget->pstRuleList->pstRules[ulIndex].aucName, ulOffset);
+        #endif
+        pstMatchElement = pstTarget->pstRuleList->pstRules[ulIndex].pstElements;
     }
 
     pstNode = ABNF_AllocNode(ulOffset, bCoreFlag, ulIndex);
 
-    ulRet = ABNF_MatchElement(ulOffset, pstMatchElement, &ulSize, &pstNode->pstChild);
+    ulRet = ABNF_MatchElement(pstTarget, ulOffset, pstMatchElement, &ulSize, &pstNode->pstChild);
+    #if DEBUG_ABNF_CORE
+    if (bCoreFlag != TRUE)
+    {
+        printf("\r\nMatchRule(%s) result is %d", pstTarget->pstRuleList->pstRules[ulIndex].aucName, ulRet);
+    }
+    #endif
+    
     if(ulRet != SUCCESS)
     {
         ABNF_FreeNodeTree(pstNode);
@@ -1172,7 +1192,8 @@ ULONG ABNF_MatchRuleElement(ULONG ulOffset,
 }
 
 /* 匹配一个组合序列 */
-ULONG ABNF_MatchSequenceElement(ULONG ulOffset,
+ULONG ABNF_MatchSequenceElement(ABNF_MATCH_TARGET_S *pstTarget,
+                                ULONG ulOffset,
                                 ABNF_ELEMENT_S *pstElement,
                                 ULONG *pulSize,
                                 ABNF_GRAMMAR_NODE_S **ppstNode)
@@ -1188,7 +1209,8 @@ ULONG ABNF_MatchSequenceElement(ULONG ulOffset,
     pstMatchElement = pstElement->u.pstFirstChild;
     while (pstMatchElement != NULL_PTR)
     {
-        ulRet = ABNF_MatchElement(ulOffset+ulMatchSize,
+        ulRet = ABNF_MatchElement(pstTarget,
+                                  ulOffset+ulMatchSize,
                                   pstMatchElement,
                                  &ulSize,
                                   ppstTempNode);
@@ -1217,7 +1239,8 @@ ULONG ABNF_MatchSequenceElement(ULONG ulOffset,
 }
 
 /* 匹配一个可选序列 */
-ULONG ABNF_MatchOptionalElement(ULONG ulOffset,
+ULONG ABNF_MatchOptionalElement(ABNF_MATCH_TARGET_S *pstTarget,
+                                ULONG ulOffset,
                                 ABNF_ELEMENT_S *pstElement,
                                 ULONG *pulSize,
                                 ABNF_GRAMMAR_NODE_S **ppstNode)
@@ -1231,7 +1254,7 @@ ULONG ABNF_MatchOptionalElement(ULONG ulOffset,
 
     while (pstMatchElement != NULL_PTR)
     {
-        ulRet = ABNF_MatchElement(ulOffset, pstMatchElement, &ulSize, &pstNode);
+        ulRet = ABNF_MatchElement(pstTarget, ulOffset, pstMatchElement, &ulSize, &pstNode);
         if(ulRet != SUCCESS)
         {
             ABNF_FreeNodeTree(pstNode);
@@ -1294,7 +1317,7 @@ ABNF_RULE_LIST_S **ppStruct
 /*******************************************************************************
 rulelist       =  1*( rule / (*c-wsp c-nl) )
 *******************************************************************************/
-ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRuleNum = 0;
     ULONG ulLoop = 0;
@@ -1338,7 +1361,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
         pstTempNode2 = pstTempNode->pstChild;
 
         strncpy(pstRule[ulLoop].aucName,
-                g_pucAbnfMatchText + pstTempNode2->ulOffset,
+                pucText + pstTempNode2->ulOffset,
                 pstTempNode2->ulSize);
         pstRule[ulLoop].aucName[pstTempNode2->ulSize] = '\0';
         pstRule[ulLoop].ulAppRuleIndex = NULL_ULONG;
@@ -1358,7 +1381,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULE)(pstTempNode, &pstRuleList->pstRules);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULE)(pstTempNode, pucText, &pstRuleList->pstRules);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1374,7 +1397,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 rule           =  rulename defined-as elements c-nl
 *******************************************************************************/
-ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ABNF_RULE_S      *pstRule     = NULL_PTR;
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
@@ -1395,7 +1418,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
         }
 
         strncpy(aucRuleName,
-                g_pucAbnfMatchText + pstTempNode->ulOffset,
+                pucText + pstTempNode->ulOffset,
                 pstTempNode->ulSize);
         aucRuleName[pstTempNode->ulSize] = '\0';
 
@@ -1421,7 +1444,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ELEMENTS)(pstTempNode, &pstRule->pstElements);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ELEMENTS)(pstTempNode, pucText, &pstRule->pstElements);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1435,7 +1458,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 rulename       =  ALPHA *(ALPHA / DIGIT / "-")
 *******************************************************************************/
-ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     BOOL  bCoreFlag;
     ULONG ulRuleIndex;
@@ -1443,7 +1466,7 @@ ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     UCHAR aucRuleName[ABNF_MAX_RULE_NAME_LEN+1];
 
     strncpy(aucRuleName,
-            g_pucAbnfMatchText + pstNode->ulOffset,
+            pucText + pstNode->ulOffset,
             pstNode->ulSize);
     aucRuleName[pstNode->ulSize] ='\0';
 
@@ -1467,7 +1490,7 @@ ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 elements       =  alternation *c-wsp
 *******************************************************************************/
-ULONG ABNF_ParseElements(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseElements(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
@@ -1481,7 +1504,7 @@ ULONG ABNF_ParseElements(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ALTERNATION)(pstTempNode, ppStruct);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ALTERNATION)(pstTempNode, pucText, ppStruct);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1495,7 +1518,7 @@ ULONG ABNF_ParseElements(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 alternation    =  concatenation *(*c-wsp "/" *c-wsp concatenation)
 *******************************************************************************/
-ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_ELEMENT_S  **ppstElement     = NULL_PTR;
@@ -1533,7 +1556,7 @@ ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_CONCATENATION)(pstTempNode, ppstElement);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_CONCATENATION)(pstTempNode, pucText, ppstElement);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1553,7 +1576,7 @@ ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 concatenation  =  repetition *(1*c-wsp repetition)
 *******************************************************************************/
-ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_ELEMENT_S **ppstElement = NULL_PTR;
@@ -1591,7 +1614,7 @@ ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_REPETITION)(pstTempNode, ppstElement);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_REPETITION)(pstTempNode, pucText, ppstElement);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1606,7 +1629,7 @@ ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 repetition     =  [repeat] element
 *******************************************************************************/
-ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
@@ -1621,7 +1644,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ELEMENT)(pstTempNode, ppStruct);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ELEMENT)(pstTempNode, pucText, ppStruct);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1639,7 +1662,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_REPEAT)(pstTempNode, ppStruct);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_REPEAT)(pstTempNode, pucText, ppStruct);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1653,7 +1676,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 repeat         =  1*DIGIT / (*DIGIT "*" *DIGIT)
 *******************************************************************************/
-ULONG ABNF_ParseRepeat(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseRepeat(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulMinRepeat = 0;
     ULONG ulMaxRepeat = NULL_ULONG;
@@ -1664,7 +1687,7 @@ ULONG ABNF_ParseRepeat(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     /* 查找最小循环值 */
     while (ulLoop < pstNode->ulSize)
     {
-        pucChar = g_pucAbnfMatchText+ pstNode->ulOffset + ulLoop;
+        pucChar = pucText + pstNode->ulOffset + ulLoop;
         if (*pucChar >= '0' && *pucChar <= '9')
         {
             ulMinRepeat = ulMinRepeat*10 + (*pucChar - '0');
@@ -1696,7 +1719,7 @@ ULONG ABNF_ParseRepeat(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             ulMaxRepeat = 0;
             while (ulLoop < pstNode->ulSize)
             {
-                pucChar = g_pucAbnfMatchText+ pstNode->ulOffset + ulLoop;
+                pucChar = pucText + pstNode->ulOffset + ulLoop;
                 if (*pucChar >= '0' && *pucChar <= '9')
                 {
                     ulMaxRepeat = ulMaxRepeat*10 + (*pucChar - '0');
@@ -1725,7 +1748,7 @@ ULONG ABNF_ParseRepeat(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 element        =  rulename / group / option / char-val / num-val / prose-val
 *******************************************************************************/
-ULONG ABNF_ParseElement(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseElement(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstTempNode = NULL_PTR;
@@ -1736,27 +1759,27 @@ ULONG ABNF_ParseElement(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     {
         if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_RULENAME))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULENAME)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULENAME)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_GROUP))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_GROUP)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_GROUP)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_OPTION))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_OPTION)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_OPTION)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_CHAR_VAL))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_CHAR_VAL)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_CHAR_VAL)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_NUM_VAL))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_NUM_VAL)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_NUM_VAL)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_PROSE_VAL))
         {
-            //ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_PROSE_VAL)(pstTempNode, ppStruct);
+            //ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_PROSE_VAL)(pstTempNode, pucText,  ppStruct);
         }
         else
         {
@@ -1777,7 +1800,7 @@ ULONG ABNF_ParseElement(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 group          =  "(" *c-wsp alternation *c-wsp ")"
 *******************************************************************************/
-ULONG ABNF_ParseGroup(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseGroup(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
@@ -1792,7 +1815,7 @@ ULONG ABNF_ParseGroup(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ALTERNATION)(pstTempNode, ppStruct);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ALTERNATION)(pstTempNode, pucText, ppStruct);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1806,7 +1829,7 @@ ULONG ABNF_ParseGroup(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 option         =  "[" *c-wsp alternation *c-wsp "]"
 *******************************************************************************/
-ULONG ABNF_ParseOption(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseOption(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
@@ -1822,7 +1845,7 @@ ULONG ABNF_ParseOption(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
             continue;
         }
 
-        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ALTERNATION)(pstTempNode, ppStruct);
+        ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_ALTERNATION)(pstTempNode, pucText, ppStruct);
         if (ulRet != SUCCESS)
         {
             return ulRet;
@@ -1840,13 +1863,13 @@ ULONG ABNF_ParseOption(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 char-val       =  DQUOTE *(%x20-21 / %x23-7E) DQUOTE
 *******************************************************************************/
-ULONG ABNF_ParseCharVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseCharVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     UCHAR aucString[100]={'\0'};
 
     /* 需要去掉前后的"号 */
     strncpy(aucString,
-            g_pucAbnfMatchText + pstNode->ulOffset + 1,
+            pucText + pstNode->ulOffset + 1,
             pstNode->ulSize - 2);
     aucString[pstNode->ulSize - 2] = '\0';
 
@@ -1862,7 +1885,7 @@ ULONG ABNF_ParseCharVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 num-val        =  "%" (bin-val / dec-val / hex-val)
 *******************************************************************************/
-ULONG ABNF_ParseNumVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseNumVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     ULONG ulRet = SUCCESS;
     ABNF_GRAMMAR_NODE_S *pstTempNode = NULL_PTR;
@@ -1873,15 +1896,15 @@ ULONG ABNF_ParseNumVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     {
         if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_BIN_VAL))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_BIN_VAL)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_BIN_VAL)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_DEC_VAL))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_DEC_VAL)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_DEC_VAL)(pstTempNode, pucText, ppStruct);
         }
         else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_HEX_VAL))
         {
-            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_HEX_VAL)(pstTempNode, ppStruct);
+            ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_HEX_VAL)(pstTempNode, pucText, ppStruct);
         }
         else
         {
@@ -1903,7 +1926,7 @@ ULONG ABNF_ParseNumVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 bin-val        =  "b" 1*BIT [ 1*("." 1*BIT) / ("-" 1*BIT) ]
 *******************************************************************************/
-ULONG ABNF_ParseBinVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseBinVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     UCHAR  ucHeadChar = 0;
     UCHAR  ucEndChar = 0;
@@ -1913,7 +1936,7 @@ ULONG ABNF_ParseBinVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     UCHAR  aucString[MAX_STRING_LEN + 1];
 
     /*过滤b字符*/
-    pucChar = g_pucAbnfMatchText + pstNode->ulOffset + 1;
+    pucChar = pucText + pstNode->ulOffset + 1;
 
     while ((*pucChar >= '0') && (*pucChar <= '1'))
     {
@@ -1983,7 +2006,7 @@ ULONG ABNF_ParseBinVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 dec-val        =  "d" 1*DIGIT [ 1*("." 1*DIGIT) / ("-" 1*DIGIT) ]
 *******************************************************************************/
-ULONG ABNF_ParseDecVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseDecVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     UCHAR  ucHeadChar = 0;
     UCHAR  ucEndChar = 0;
@@ -1993,7 +2016,7 @@ ULONG ABNF_ParseDecVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     UCHAR  aucString[MAX_STRING_LEN + 1];
 
     /*过滤d字符*/
-    pucChar = g_pucAbnfMatchText + pstNode->ulOffset + 1;
+    pucChar = pucText + pstNode->ulOffset + 1;
 
     while ((*pucChar >= '0') && (*pucChar <= '9'))
     {
@@ -2063,7 +2086,7 @@ ULONG ABNF_ParseDecVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
 /*******************************************************************************
 hex-val        =  "x" 1*HEXDIG [ 1*("." 1*HEXDIG) / ("-" 1*HEXDIG) ]
 *******************************************************************************/
-ULONG ABNF_ParseHexVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
+ULONG ABNF_ParseHexVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
     UCHAR  ucHeadChar = 0;
     UCHAR  ucEndChar = 0;
@@ -2074,7 +2097,7 @@ ULONG ABNF_ParseHexVal(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct)
     UCHAR  aucString[MAX_STRING_LEN + 1];
 
     /*过滤x字符*/
-    pucChar = g_pucAbnfMatchText + pstNode->ulOffset + 1;
+    pucChar = pucText + pstNode->ulOffset + 1;
 
     while (((*pucChar >= '0') && (*pucChar <= '9'))
          ||((*pucChar >= 'a') && (*pucChar <= 'f'))
