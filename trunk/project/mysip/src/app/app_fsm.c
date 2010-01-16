@@ -102,7 +102,7 @@ ULONG APP_Fsm_Idle_OffhookProc()
     memset(pstTo, 0, sizeof(SIP_HEADER_TO_S));
     pstSipMsg->apstHeaders[SIP_HEADER_TO] = (SIP_HEADER_S *)pstTo;
     pstTo->stHeader.pstNext = NULL_PTR;
-    pstTo->stNameAddr.bName = FALSE;
+    pstTo->stNameAddr.bName = TRUE;
     ulRet = SIP_Decode(ulRuleIndex,
                               aucURI,
                              (ULONG)strlen(aucURI),
@@ -118,7 +118,7 @@ ULONG APP_Fsm_Idle_OffhookProc()
     memset(pstFrom, 0, sizeof(SIP_HEADER_FROM_S));
     pstSipMsg->apstHeaders[SIP_HEADER_FROM] = (SIP_HEADER_S *)pstFrom;
     pstFrom->stHeader.pstNext = NULL_PTR;
-    pstFrom->stNameAddr.bName = FALSE;
+    pstFrom->stNameAddr.bName = TRUE;
     ulRet = SIP_Decode(ulRuleIndex,
                               g_pucAppPublicID,
                              (ULONG)strlen(g_pucAppPublicID),
