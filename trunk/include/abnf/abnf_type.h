@@ -70,7 +70,7 @@ typedef struct tagABNF_RULE_LIST_S
     ABNF_RULE_S *pstRules;  /* 规则数组 */
 }ABNF_RULE_LIST_S;
 
-typedef ULONG (*ABNF_PARSE_FUNC)(ABNF_GRAMMAR_NODE_S *pstNode, void **ppStruct);
+typedef ULONG (*ABNF_PARSE_FUNC)(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct);
 
 typedef struct tagABNF_APP_RULE_S
 {
