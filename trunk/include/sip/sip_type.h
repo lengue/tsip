@@ -99,6 +99,12 @@ typedef struct tagSIP_ROUTE_PARAM_S
     struct tagSIP_ROUTE_PARAM_S  *pstNext;
 }SIP_ROUTE_PARAM_S;
 
+typedef struct tagSIP_CONTACT_PARAM_S
+{
+    struct tagSIP_CONTACT_PARAM_S *pstNext;
+    SIP_NAME_ADDR_S                stAddr;
+    ULONG                          ulExpires;
+}SIP_CONTACT_PARAM_S;
 
 /* 所有头域的结构 */
 typedef struct tagSIP_HEADER_ACCEPT_S
@@ -158,7 +164,8 @@ typedef struct tagSIP_HEADER_CALL_INFO_S
 typedef struct tagSIP_HEADER_CONTACT_S
 {
     SIP_HEADER_S stHeader;
-    UCHAR *pucTemp;
+    UCHAR        ucIsStar;            /* 为TRUE表示*号，否则是地址 */
+    SIP_CONTACT_PARAM_S *pstParam;     /* 不为*号时的地址列表*/
 }SIP_HEADER_CONTACT_S;
 
 typedef struct tagSIP_HEADER_CONTENT_DISPOSITION_S
