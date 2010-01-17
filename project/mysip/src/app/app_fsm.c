@@ -129,6 +129,9 @@ ULONG APP_Fsm_Idle_OffhookProc()
         return FAIL;
     }
 
+    /*添加Contact头域*/
+
+    
     APP_SendDownMsg(NULL_ULONG,
                     0,
                     NULL_ULONG,
@@ -142,8 +145,33 @@ ULONG APP_Fsm_Idle_OffhookProc()
 
 ULONG APP_Fsm_WaitRemoteAnswer_RemoteAnswerProc()
 {
+    UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
+    SIP_MSG_S     *pstSipMsg     = NULL_PTR;
+    ULONG          ulRet;
+    
     /* 发送ACK */
+    pstSipMsgUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    if (pstSipMsgUBuf == NULL_PTR)
+    {
+        return FAIL;
+    }
+
+    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
+    memset(pstSipMsg, 0, sizeof(SIP_MSG_S));
+
+    /* 添加方法 */
+    pstSipMsg->eMsgType                          = SIP_MSG_TYPE_REQUEST;
+    pstSipMsg->uStartLine.stRequstLine.eMethod   = SIP_METHOD_ACK;
+    pstSipMsg->uStartLine.stRequstLine.ucVersion = 2;
+
+    APP_SendDownMsg(0,
+                    0,
+                    g_ulStackDlgID,
+                    NULL_ULONG,
+                    pstSipMsgUBuf);
+
     /* 状态迁为APP_STATE_ACTIVE */
+    g_eAppState = APP_STATE_ACTIVE;
     return SUCCESS;
 }
 
@@ -189,10 +217,13 @@ ULONG APP_Fsm_Idle_IncommingCallProc()
     pstSipMsg->uStartLine.stStatusLine.ucVersion   = 2;
     pstSipMsg->uStartLine.stStatusLine.eStatusCode = SIP_STATUS_CODE_180;
 
-    APP_SendDownMsg(NULL_ULONG,
+    /*添加Contact头域*/
+
+    
+    APP_SendDownMsg(0,
+                    0,
                     NULL_ULONG,
-                    NULL_ULONG,
-                    g_ulAppTxnID,
+                    g_ulStackTxnID,
                     pstSipMsgUBuf);
 
     /* 状态迁为APP_STATE_WAIT_LOCAL_ANSWER */
@@ -220,10 +251,12 @@ ULONG APP_Fsm_WaitLocalAnswer_OffhookProc()
     pstSipMsg->uStartLine.stStatusLine.ucVersion   = 2;
     pstSipMsg->uStartLine.stStatusLine.eStatusCode = SIP_STATUS_CODE_200;
 
-    APP_SendDownMsg(NULL_ULONG,
-                    NULL_ULONG,
-                    NULL_ULONG,
-                    g_ulAppTxnID,
+    /*添加Contact头域*/
+
+    APP_SendDownMsg(0,
+                    0,
+                    g_ulStackDlgID,
+                    g_ulStackTxnID,
                     pstSipMsgUBuf);
 
     /* 状态迁为APP_STATE_ACTIVE */

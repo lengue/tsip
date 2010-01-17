@@ -80,6 +80,17 @@ ULONG SIP_APDT_MsgProc(ULONG ulModuleID, void* pMsg)
                            &ulStackRef1,
                            &ulStackRef2,
                             pstAppMsg->pstUbufSipMsg);
+
+            if (ulStackRef1 != pstAppMsg->ulStackRef1)
+            {
+                
+            }
+
+            if (ulStackRef2 != pstAppMsg->ulStackRef2)
+            {
+                
+            }
+            
             break;
 
         default:
