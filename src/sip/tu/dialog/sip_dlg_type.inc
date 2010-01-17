@@ -32,6 +32,7 @@ typedef struct tagSIP_APPLICATION_S
 typedef struct tagSIP_DLG_CB_S
 {
     COMM_CB_HEADER
+    ULONG ulAppDlgID;
     SIP_DLG_SESSION_STATE_E eSessionState;
     UBUF_HEADER_S *pstDialogID;     /* SIP_DIALOG_ID_S */
     UBUF_HEADER_S *pstLocalURI;     /* URI_S */

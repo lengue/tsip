@@ -427,3 +427,14 @@ ULONG SIP_Dlg_CanDialogRelease(ULONG ulDlgID)
 
     return FAIL;
 }
+
+/* 映射协议栈对话ID和应用层ID */
+ULONG SIP_Dlg_IDMap(ULONG ulDlgID, ULONG ulAppDlgID)
+{
+    SIP_DLG_CB_S *pstSipDlgCB = NULL_PTR;
+    
+    pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
+    pstSipDlgCB->ulAppDlgID = ulAppDlgID;
+
+    return SUCCESS;
+}

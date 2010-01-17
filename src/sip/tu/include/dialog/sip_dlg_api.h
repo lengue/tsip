@@ -15,3 +15,4 @@ extern ULONG SIP_Dlg_UpdateSessionState(ULONG ulDlgID, SIP_DLG_SESSION_STATE_E e
 extern ULONG SIP_Dlg_GetSessionState(ULONG ulDlgID, SIP_DLG_SESSION_STATE_E *peState);
 extern ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg);
 extern ULONG SIP_Dlg_CanDialogRelease(ULONG ulDlgID);
+extern ULONG SIP_Dlg_IDMap(ULONG ulDlgID, ULONG ulAppDlgID);

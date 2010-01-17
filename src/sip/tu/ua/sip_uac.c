@@ -154,7 +154,7 @@ ULONG SIP_UAC_ProcessingResponse(ULONG ulUacID,
             pstHeaderCallID  = (SIP_HEADER_CALL_ID_S *)pstSipResponse->apstHeaders[SIP_HEADER_CALL_ID];
             pstHeaderFrom    = (SIP_HEADER_FROM_S *)pstSipResponse->apstHeaders[SIP_HEADER_FROM];
             pstHeaderTo      = (SIP_HEADER_TO_S *)pstSipResponse->apstHeaders[SIP_HEADER_TO];
-            pstHeaderContact = (SIP_HEADER_CONTACT_S *)pstSipRequest->apstHeaders[SIP_HEADER_CONTACT];
+            pstHeaderContact = (SIP_HEADER_CONTACT_S *)pstSipResponse->apstHeaders[SIP_HEADER_CONTACT];
             pstHeaderCseq    = (SIP_HEADER_CSEQ_S *)pstSipRequest->apstHeaders[SIP_HEADER_CSEQ];
 
             /* 创建对话 */
@@ -167,7 +167,7 @@ ULONG SIP_UAC_ProcessingResponse(ULONG ulUacID,
             SIP_Dlg_UpdateLocalURI(ulDlgID, pstHeaderFrom->stNameAddr.pstUri);
             SIP_Dlg_UpdateRemoteURI(ulDlgID, pstHeaderTo->stNameAddr.pstUri);
             SIP_Dlg_UpdateLocalSeq(ulDlgID, pstHeaderCseq->ulSeq);
-            //SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pucTemp);
+            SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pstParam->stAddr.pstUri);
             SIP_Dlg_UpdateSecureFlag(ulDlgID, FALSE);
             //SIP_Dlg_UpdateRouteSet(ulDlgID, pstRouteSet);
             

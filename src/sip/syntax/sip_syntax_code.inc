@@ -86,3 +86,8 @@ ULONG SIP_CodeHeaderVia(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer);
 ULONG SIP_CodeHeaderMaxForwards(void *pstStruct,
                          SIP_SYNTAX_BUFFER_S *pstBuffer);
+ULONG SIP_CodeHeaderContact(void *pstStruct,
+                            SIP_SYNTAX_BUFFER_S *pstBuffer);
+ULONG SIP_CodeContactParam(void *pstStruct,
+                           SIP_SYNTAX_BUFFER_S *pstBuffer);
+

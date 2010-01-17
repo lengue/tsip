@@ -16,12 +16,11 @@
 #include "..\..\include\tu\sip_tu.h"
 
 #include "..\include\locate\sip_locate.h"
+#include "..\include\dialog\sip_dlg.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 
-
 /* 本模块内部使用的常量和结构头文件 */
-
 
 /* 本模块内部函数声明头文件 */
 #include "sip_uac.inc"
@@ -94,3 +93,19 @@ ULONG SIP_UA_RecvDownMsg(ULONG ulAppRef1,
 
     return ulRet;
 }
+
+
+/* 映射协议栈和应用的参考号1，适用于应用层处理网络上
+报响应创建对话时处理 */
+ULONG SIP_UA_MapRef1(ULONG ulStackRef1, ULONG ulAppRef1)
+{
+    return SIP_Dlg_IDMap(ulStackRef1, ulAppRef1);
+}
+
+/* 映射协议栈和应用的参考号2，适用于应用层处理网络上
+报请求时处理 */
+ULONG SIP_UA_MapRef2(ULONG ulStackRef2, ULONG ulAppRef2)
+{
+    return SIP_UAS_IDMap(ulStackRef2, ulAppRef2);
+}
+

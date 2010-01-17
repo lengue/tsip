@@ -87,3 +87,40 @@ ULONG SIP_TU_RecvDownMsg(ULONG ulAppRef1,
     return SUCCESS;
 }
 
+/* 映射协议栈和应用的参考号1，适用于应用层处理网络上
+报响应创建对话时处理 */
+ULONG SIP_TU_MapRef1(ULONG ulStackRef1, ULONG ulAppRef1)
+{
+    ULONG ulRet;
+
+    switch (g_eSipTuCore)
+    {
+        case SIP_CORE_UA:
+            ulRet = SIP_UA_MapRef1(ulStackRef1, ulAppRef1);
+            break;
+
+        default:
+            break;
+    }
+
+    return SUCCESS;
+}
+
+/* 映射协议栈和应用的参考号2，适用于应用层处理网络上
+报请求时处理 */
+ULONG SIP_TU_MapRef2(ULONG ulStackRef2, ULONG ulAppRef2)
+{
+    ULONG ulRet;
+
+    switch (g_eSipTuCore)
+    {
+        case SIP_CORE_UA:
+            ulRet = SIP_UA_MapRef2(ulStackRef2, ulAppRef2);
+            break;
+
+        default:
+            break;
+    }
+
+    return SUCCESS;
+}
