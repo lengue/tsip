@@ -1164,6 +1164,37 @@ ULONG SIP_CodeAddrSpec(void *pstStruct,
     return ulRet;
 }
 
+/*******************************************************************************
+contact-param  =  (name-addr / addr-spec) *(SEMI contact-params)
+*******************************************************************************/
+ULONG SIP_CodeContactParam(void *pstStruct,
+                           SIP_SYNTAX_BUFFER_S *pstBuffer)
+{
+    ULONG ulRet;
+    SIP_CONTACT_PARAM_S *pstContactParam = NULL_PTR;
+    URI_S               *pstUri = NULL_PTR;
+
+    pstContactParam = (SIP_CONTACT_PARAM_S *)pstStruct;
+    if (pstContactParam->stAddr.bName == TRUE)
+    {
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(&pstContactParam->stAddr, pstBuffer);
+    }
+    else
+    {
+        pstUri = pstContactParam->stAddr.pstUri;
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUri, pstBuffer);
+    }
+
+    if (ulRet!= SUCCESS)
+    {
+        return ulRet;
+    }
+
+    /* 参数以后再加 */
+    
+    return SUCCESS;
+}
+
 /* 所有的头域 */
 /*******************************************************************************
 Accept         =  "Accept" HCOLON
@@ -1338,3 +1369,46 @@ ULONG SIP_CodeHeaderMaxForwards(void *pstStruct,
 
     return SUCCESS;
 }
+
+/*******************************************************************************
+Contact        =  ("Contact" / "m" ) HCOLON
+                  ( STAR / (contact-param *(COMMA contact-param)))
+*******************************************************************************/
+ULONG SIP_CodeHeaderContact(void *pstStruct,
+                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+{
+    ULONG ulRet;
+    SIP_CONTACT_PARAM_S   *pstContactParam = NULL_PTR;
+    SIP_HEADER_CONTACT_S  *pstContact      = NULL_PTR;
+    BOOL  bFirst = TRUE;
+
+    pstContact = (SIP_HEADER_CONTACT_S *)pstStruct;
+    SIP_ADD_STRING(pstBuffer, "Contact: ");
+
+    if (pstContact->ucIsStar == TRUE)
+    {
+        SIP_ADD_STRING(pstBuffer, "*");    
+        return SUCCESS;
+    }
+
+    pstContactParam = pstContact->pstParam;
+    while (pstContactParam != NULL_PTR)
+    {
+        if (bFirst != TRUE)
+        {
+            SIP_ADD_STRING(pstBuffer, ",");
+        }
+
+        ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_CONTACT_PARAM)(pstContactParam, pstBuffer);
+        if (ulRet != NULL_PTR)
+        {
+            return ulRet;
+        }
+
+        bFirst = FALSE;
+        pstContactParam = pstContactParam->pstNext;
+    }
+
+    return SUCCESS;
+}
+

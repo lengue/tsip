@@ -168,3 +168,12 @@ ULONG SIP_ParseHeaderMaxForwards(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                  UCHAR               *pucString,
                                  UBUF_HEADER_S       *pstUbuf,
                                  void               **ppStruct);
+ULONG SIP_ParseHeaderContact(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
+                             UCHAR               *pucString,
+                             UBUF_HEADER_S       *pstUbuf,
+                             void               **ppStruct);
+ULONG SIP_ParseContactParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
+                            UCHAR               *pucString,
+                            UBUF_HEADER_S       *pstUbuf,
+                            void               **ppStruct);
+

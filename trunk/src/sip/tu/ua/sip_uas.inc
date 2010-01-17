@@ -23,3 +23,4 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
                                 SIP_LOCATION_S *pstPeerAddr,
                                 UBUF_HEADER_S  *pstUbufSipMsg);
 ULONG SIP_UAS_GenerateResponse(UBUF_HEADER_S *pstUbufRequest, UBUF_HEADER_S *pstUbufResponse);
+ULONG SIP_UAS_IDMap(ULONG ulUasID, ULONG ulAppTxnID);

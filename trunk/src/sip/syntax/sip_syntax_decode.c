@@ -1311,6 +1311,50 @@ ULONG SIP_ParseViaBranch(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     return ulRet;
 }
 
+/*******************************************************************************
+contact-param  =  (name-addr / addr-spec) *(SEMI contact-params)
+*******************************************************************************/
+ULONG SIP_ParseContactParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
+                            UCHAR               *pucString,
+                            UBUF_HEADER_S       *pstUbuf,
+                            void               **ppStruct)
+{
+    ULONG ulRet = SUCCESS;
+    ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
+    SIP_CONTACT_PARAM_S *pstContactParam = NULL_PTR;
+    void                *pStruct   = NULL_PTR;
+
+    SIP_GET_COMPONET_PTR(pstContactParam, SIP_CONTACT_PARAM_S, pstUbuf, ppStruct);
+    pstContactParam->ulExpires = NULL_ULONG;
+    pstContactParam->pstNext   = NULL_PTR;
+
+    pstNode = pstGrammarNode->pstChild;
+    while (pstNode != NULL_PTR)
+    {
+        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_NAME_ADDR))
+        {
+            pStruct = &pstContactParam->stAddr;
+            ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(pstNode,
+                                                                pucString,
+                                                                pstUbuf,
+                                                               &pStruct);
+        }
+        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
+        {
+            pStruct = &pstContactParam->stAddr;
+            ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
+                                                                pucString,
+                                                                pstUbuf,
+                                                               &pStruct);
+        }
+
+        pstNode = pstNode->pstNextNode;
+    }
+
+    return ulRet;
+}
+
+
 /* 下面是所有头域的编码函数 */
 /*******************************************************************************
 Accept         =  "Accept" HCOLON
@@ -1563,3 +1607,55 @@ ULONG SIP_ParseHeaderMaxForwards(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
 
     return SUCCESS;
 }
+
+/*******************************************************************************
+Contact        =  ("Contact" / "m" ) HCOLON
+                  ( STAR / (contact-param *(COMMA contact-param)))
+*******************************************************************************/
+ULONG SIP_ParseHeaderContact(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
+                             UCHAR               *pucString,
+                             UBUF_HEADER_S       *pstUbuf,
+                             void               **ppStruct)
+{
+    ULONG ulRet;
+    ABNF_GRAMMAR_NODE_S  *pstNode    = NULL_PTR;
+    SIP_HEADER_CONTACT_S *pstContact = NULL_PTR;
+    SIP_CONTACT_PARAM_S **ppstParm   = NULL_PTR;
+
+    SIP_GET_COMPONET_PTR(pstContact, SIP_HEADER_CONTACT_S, pstUbuf, ppStruct);
+    pstContact->ucIsStar = FALSE;
+    pstContact->pstParam = NULL_PTR;
+
+    ppstParm = &pstContact->pstParam;
+    pstNode = pstGrammarNode->pstChild;
+    while (pstNode != NULL_PTR)
+    {
+        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_STAR))
+        {
+            pstContact->ucIsStar = TRUE;
+            return SUCCESS;
+        }
+
+        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_CONTACT_PARAM))
+        {
+            ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_CONTACT_PARAM)(pstNode,
+                                                                    pucString,
+                                                                    pstUbuf,
+                                                                    ppstParm);
+            if (ulRet != SUCCESS)
+            {
+                return FAIL;
+            }
+            else
+            {
+                ppstParm = &(*ppstParm)->pstNext;
+            }
+
+        }
+
+        pstNode = pstNode->pstNextNode;
+    }
+
+    return SUCCESS;
+}
+

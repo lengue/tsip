@@ -15,4 +15,5 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg);
 ULONG SIP_Dlg_MakeKey(void *pCompared);
 ULONG SIP_Dlg_Compare(void *pCompared, ULONG ulPara);
 ULONG SIP_Dlg_MatchDialog(UBUF_HEADER_S *pstUbufSipMsg, ULONG *pulDlgIndex);
+ULONG SIP_Dlg_IDMap(ULONG ulDlgID, ULONG ulAppDlgID);
 

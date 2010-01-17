@@ -152,6 +152,12 @@ SIP_APP_RULE_S g_astSipAppRuleTbl[SIP_ABNF_RULE_BUTT] =
     {"ttl"             , NULL_ULONG, NULL_PTR,                      NULL_PTR},
     //SIP_ABNF_RULE_TOKEN
     {"token"           , NULL_ULONG, NULL_PTR,                      NULL_PTR},
+    //SIP_ABNF_RULE_STAR
+    {"STAR"            , NULL_ULONG, NULL_PTR,                      NULL_PTR},
+    //SIP_ABNF_RULE_CONTACT
+    {"Contact"         , NULL_ULONG, SIP_CodeHeaderContact,         SIP_ParseHeaderContact},
+    //SIP_ABNF_RULE_CONTACT_PARAM
+    {"contact-param"   , NULL_ULONG, SIP_CodeContactParam,          SIP_ParseContactParam},    
 };
 
 /* 头域参数表 */

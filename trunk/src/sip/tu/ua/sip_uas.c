@@ -194,7 +194,7 @@ ULONG SIP_UAS_SendResponse(ULONG ulAppDlgID,
             /* 创建对话 */
             SIP_Dlg_UpdateLocalURI(ulDlgID, pstHeaderTo->stNameAddr.pstUri);
             SIP_Dlg_UpdateRemoteSeq(ulDlgID, pstHeaderCseq->ulSeq);
-            //SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pucTemp);
+            SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pstParam->stAddr.pstUri);
             SIP_Dlg_UpdateRemoteURI(ulDlgID, pstHeaderFrom->stNameAddr.pstUri);
             SIP_Dlg_UpdateSecureFlag(ulDlgID, FALSE);
             //SIP_Dlg_UpdateRouteSet(ulDlgID, pstRouteSet);
@@ -344,6 +344,16 @@ ULONG SIP_UAS_GenerateResponse(UBUF_HEADER_S *pstUbufRequest, UBUF_HEADER_S *pst
         SIP_GenerateRandomString(acString, 100);
         UBUF_CLONE_STRING(acString, pstUbufResponse, pstHeaderTo->pucTag);
     }
+
+    return SUCCESS;
+}
+
+ULONG SIP_UAS_IDMap(ULONG ulUasID, ULONG ulAppTxnID)
+{
+    SIP_UAS_CB_S   *pstSipUasCB = NULL_PTR;
+
+    pstSipUasCB = &g_pstSipUasCB[ulUasID];
+    pstSipUasCB->ulAppTxnID = ulAppTxnID;
 
     return SUCCESS;
 }
