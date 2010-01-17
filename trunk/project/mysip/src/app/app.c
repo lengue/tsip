@@ -105,10 +105,12 @@ ULONG APP_RecvUpMsg(ULONG ulStackRef1,
     {
         case SIP_MSG_TYPE_REQUEST:
             APP_SipRequestProc(ulStackRef1, ulStackRef2, pstUbufSipMsg);
+            g_ulStackTxnID = ulStackRef2;
             break;
 
         case SIP_MSG_TYPE_RESPONSE:
             APP_SipResponseProc(ulStackRef1, ulStackRef2, pstUbufSipMsg);
+            g_ulStackDlgID = ulStackRef1;
             break;
 
         default:
@@ -139,10 +141,6 @@ ULONG APP_SipRequestProc(ULONG ulDlgID,
         default:
             return FAIL;
     }
-
-    g_ulAppDlgID = ulDlgID;
-    g_ulAppTxnID = ulTxnID;
-    g_pstAppUbufSipMsg = pstUbufSipMsg;
 
     APP_FsmProc(eEvent);
     return SUCCESS;
@@ -201,4 +199,18 @@ ULONG APP_SendDownMsg(ULONG ulAppRef1,
                        SYS_MODULE_SIP,
                       &stAppMsg,
                        sizeof(APP_MSG_S));
+}
+
+/*≤Œøº∫≈”≥…‰*/
+ULONG APP_MapRef1(ULONG ulAppDlgID, ULONG ulStackRef1)
+{
+    g_ulStackDlgID = ulStackRef1;
+    return SUCCESS;
+}
+
+/*≤Œøº∫≈”≥…‰*/
+ULONG APP_MapRef2(ULONG ulAppTxnID, ULONG ulStackRef2)
+{
+    g_ulStackTxnID = ulStackRef2;
+    return SUCCESS;
 }

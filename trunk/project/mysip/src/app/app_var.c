@@ -26,6 +26,5 @@ APP_FN_FSM_PROC g_apfnAppFsm[APP_STATE_BUTT][APP_EVENT_BUTT];
 APP_STATE_E g_eAppState;
 UCHAR g_ucRemoteAlertFlag = FALSE;
 UCHAR *g_pucAppPublicID = "sip:tangchunping@huawei.com";
-ULONG g_ulAppDlgID;
-ULONG g_ulAppTxnID;
-UBUF_HEADER_S *g_pstAppUbufSipMsg = NULL_PTR;
+ULONG g_ulStackDlgID;
+ULONG g_ulStackTxnID;
