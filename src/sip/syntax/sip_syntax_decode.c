@@ -1341,11 +1341,10 @@ ULONG SIP_ParseContactParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
         {
-            pStruct = &pstContactParam->stAddr;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                               &pStruct);
+                                                               &pstContactParam->stAddr.pstUri);
         }
 
         pstNode = pstNode->pstNextNode;
@@ -1468,6 +1467,9 @@ ULONG SIP_ParseHeaderFrom(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
+    SIP_HEADER_FROM_S   *pstFrom = NULL_PTR;
+
+    SIP_GET_COMPONET_PTR(pstFrom, SIP_HEADER_FROM_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
@@ -1477,7 +1479,7 @@ ULONG SIP_ParseHeaderFrom(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
-                                                                ppStruct);
+                                                               &pstFrom);
             if (ulRet != SUCCESS)
             {
                 return FAIL;
@@ -1530,7 +1532,7 @@ ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
         }
         else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TO_PARAM))
         {
-            ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
+            ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TO_PARAM)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
                                                                 ppStruct);

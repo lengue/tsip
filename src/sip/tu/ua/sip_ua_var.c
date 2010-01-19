@@ -24,7 +24,8 @@
 #include "sip_uas.inc"
 
 /* 本模块全局变量声明头文件 */
-SIP_UAC_CB_S   *g_pstSipUacCB = NULL_PTR;
+SIP_UAC_CB_S  *g_pstSipUacCB = NULL_PTR;
 COMM_QUEUE_S   g_stSipUacCBQueue;
-SIP_UAS_CB_S   *g_pstSipUasCB = NULL_PTR;
+SIP_UAS_CB_S  *g_pstSipUasCB = NULL_PTR;
 COMM_QUEUE_S   g_stSipUasCBQueue;
+UCHAR         *g_pucSipUaContact = NULL_PTR;

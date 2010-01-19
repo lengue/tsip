@@ -32,7 +32,7 @@ ULONG SIP_TU_Init(SIP_TU_CFG_S *pstCfg)
     switch (g_eSipTuCore)
     {
         case SIP_CORE_UA:
-            ulRet = SIP_UA_Init();
+            ulRet = SIP_UA_Init(pstCfg->pucContact);
             break;
 
         default:

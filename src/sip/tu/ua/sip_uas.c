@@ -78,7 +78,11 @@ ULONG SIP_UAS_ProcessingRequest(ULONG ulCoreID,
         /* 初始化环境 */
         SIP_UAS_AllocCB(&ulUasID);
         SIP_Txn_AllocTxn(ulUasID, &ulTxnID);
-        g_pstSipUasCB[ulUasID].ulTxnID = ulTxnID;
+
+        g_pstSipUasCB[ulUasID].ulAppDlgID = NULL_ULONG;
+        g_pstSipUasCB[ulUasID].ulAppTxnID = NULL_ULONG;
+        g_pstSipUasCB[ulUasID].ulDlgID    = NULL_ULONG;
+        g_pstSipUasCB[ulUasID].ulTxnID    = ulTxnID;
 
         /* 将消息下发给TXN层 */
         SIP_Txn_RecvUpMsg(ulTxnID, pstUbufSipMsg, pstPeerAddr);
@@ -291,60 +295,82 @@ ULONG SIP_UAS_ApplyingExtensions(UBUF_HEADER_S *pstSipMsgUbuf)
 
 ULONG SIP_UAS_GenerateResponse(UBUF_HEADER_S *pstUbufRequest, UBUF_HEADER_S *pstUbufResponse)
 {
-    SIP_MSG_S *pstUbufRequestMsg  = NULL_PTR;
-    SIP_MSG_S *pstUbufResponseMsg = NULL_PTR;
+    SIP_MSG_S *pstRequestMsg  = NULL_PTR;
+    SIP_MSG_S *pstResponseMsg = NULL_PTR;
     SIP_HEADER_TO_S *pstHeaderTo = NULL_PTR;
+    SIP_HEADER_CONTACT_S *pstHeaderContact = NULL_PTR;
     ULONG ulRuleIndex;
     UCHAR acString[100];
     
-    pstUbufRequestMsg  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufRequest);
-    pstUbufResponseMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufResponse);
+    pstRequestMsg  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufRequest);
+    pstResponseMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufResponse);
         
     /* 克隆From头域 */
     SIP_GetRuleIndex("From", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
-              pstUbufRequestMsg->apstHeaders[SIP_HEADER_FROM], 
+              pstRequestMsg->apstHeaders[SIP_HEADER_FROM], 
               pstUbufResponse, 
-             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_FROM]);
+             &pstResponseMsg->apstHeaders[SIP_HEADER_FROM]);
     
     /* 克隆Call-ID头域 */
     SIP_GetRuleIndex("Call-ID", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
-              pstUbufRequestMsg->apstHeaders[SIP_HEADER_CALL_ID], 
+              pstRequestMsg->apstHeaders[SIP_HEADER_CALL_ID], 
               pstUbufResponse, 
-             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_CALL_ID]);
+             &pstResponseMsg->apstHeaders[SIP_HEADER_CALL_ID]);
 
     /* 克隆CSeq头域 */
     SIP_GetRuleIndex("CSeq", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
-              pstUbufRequestMsg->apstHeaders[SIP_HEADER_CSEQ], 
+              pstRequestMsg->apstHeaders[SIP_HEADER_CSEQ], 
               pstUbufResponse, 
-             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_CSEQ]);
+             &pstResponseMsg->apstHeaders[SIP_HEADER_CSEQ]);
     
     /* 克隆Via头域 */
     SIP_GetRuleIndex("Via", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
-              pstUbufRequestMsg->apstHeaders[SIP_HEADER_VIA], 
+              pstRequestMsg->apstHeaders[SIP_HEADER_VIA], 
               pstUbufResponse, 
-             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_VIA]);
+             &pstResponseMsg->apstHeaders[SIP_HEADER_VIA]);
 
     
     /* 克隆To头域 */
     SIP_GetRuleIndex("To", &ulRuleIndex);
     SIP_Clone(ulRuleIndex,
-              pstUbufRequestMsg->apstHeaders[SIP_HEADER_TO], 
+              pstRequestMsg->apstHeaders[SIP_HEADER_TO], 
               pstUbufResponse, 
-             &pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO]);
+             &pstResponseMsg->apstHeaders[SIP_HEADER_TO]);
 
 
     /* 如果To头域没有tag，添加一个tag */
-    pstHeaderTo = (SIP_HEADER_TO_S *)pstUbufResponseMsg->apstHeaders[SIP_HEADER_TO];
+    pstHeaderTo = (SIP_HEADER_TO_S *)pstResponseMsg->apstHeaders[SIP_HEADER_TO];
     if (pstHeaderTo->pucTag == NULL_PTR)
     {
         SIP_GenerateRandomString(acString, 100);
         UBUF_CLONE_STRING(acString, pstUbufResponse, pstHeaderTo->pucTag);
     }
 
+    /*INVITE的响应需要添加Contact头域*/
+    if (pstRequestMsg->uStartLine.stRequstLine.eMethod == SIP_METHOD_INVITE)
+    {
+        pstHeaderContact = (SIP_HEADER_CONTACT_S *)UBUF_AddComponent(pstUbufResponse, sizeof(SIP_HEADER_CONTACT_S));
+        pstHeaderContact->stHeader.pstNext = NULL_PTR;
+        pstResponseMsg->apstHeaders[SIP_HEADER_CONTACT] = (SIP_HEADER_S *)pstHeaderContact;
+        pstHeaderContact->ucIsStar = FALSE;
+        pstHeaderContact->pstParam = (SIP_CONTACT_PARAM_S *)UBUF_AddComponent(pstUbufResponse, sizeof(SIP_CONTACT_PARAM_S));
+        pstHeaderContact->pstParam->pstNext = NULL_PTR;
+        pstHeaderContact->pstParam->ulExpires = NULL_ULONG;
+        pstHeaderContact->pstParam->stAddr.bName = FALSE;
+        pstHeaderContact->pstParam->stAddr.pucName = NULL_PTR;
+        pstHeaderContact->pstParam->stAddr.pstUri = NULL_PTR;
+        SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
+        SIP_Syntax_Decode(ulRuleIndex,
+                          g_pucSipUaContact,
+                          (ULONG)strlen(g_pucSipUaContact),
+                          pstUbufResponse,
+                         &pstHeaderContact->pstParam->stAddr.pstUri);
+    }
+    
     return SUCCESS;
 }
 

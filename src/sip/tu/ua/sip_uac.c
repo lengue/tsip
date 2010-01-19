@@ -93,7 +93,8 @@ ULONG SIP_UAC_SendRequest(ULONG ulAppDlgID,
     g_pstSipUacCB[ulUacID].ulAppDlgID = ulAppDlgID;
     g_pstSipUacCB[ulUacID].ulAppTxnID = ulAppTxnID;
     g_pstSipUacCB[ulUacID].pstSipMsgUbuf = pstUbufSipMsg;
-
+    memset(g_pstSipUacCB[ulUacID].astFork, 0xff, SIP_LOCATION_MAX_NUMBER * 8);
+    
     SIP_Locate_FindNextHop(pstUbufSipMsg, &pstUri);
     ulRet = SIP_Locate_Server(pstUri,
                              &stResult,
@@ -233,6 +234,7 @@ ULONG SIP_UAC_ProcessingResponse(ULONG ulUacID,
 ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
                            ULONG ulPara)
 {
+    UCHAR  ucSeq;
     ULONG  ulTxnID;
     ULONG  ulUacID;
     SIP_UAC_CB_S *pstUacCB = NULL_PTR;
@@ -257,6 +259,9 @@ ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
 
         /*申请一个事务*/
         SIP_Txn_AllocTxn(ulUacID, &ulTxnID);
+        
+        SIP_UAC_AllocTxnSeq(ulUacID, &ucSeq);
+        pstUacCB->astFork[ucSeq].ulTxnID = ulTxnID;
 
         /*在事务上发送请求*/
         SIP_Txn_RecvDownMsg(ulTxnID,
@@ -282,12 +287,14 @@ ULONG SIP_UAC_GenerateRequest(UBUF_HEADER_S * pstUbufSipMsg)
     SIP_HEADER_CALL_ID_S *pstCallID = NULL_PTR;
     SIP_HEADER_CSEQ_S    *pstCseq   = NULL_PTR;
     SIP_HEADER_MAX_FORWARDS_S *pstMaxForwards   = NULL_PTR;
-    SIP_HEADER_VIA_S          *pstVia   = NULL_PTR;
+    SIP_HEADER_VIA_S          *pstVia       = NULL_PTR;
+    SIP_HEADER_CONTACT_S      *pstContact   = NULL_PTR;
     CHAR            acString[100];
     UCHAR           *pucString = NULL_PTR;
     ULONG            ulRuleIndex;
 
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
 
     /* From 头域不能为空 */
     if (pstSipMsg->apstHeaders[SIP_HEADER_FROM] == NULL_PTR)
@@ -313,7 +320,6 @@ ULONG SIP_UAC_GenerateRequest(UBUF_HEADER_S * pstUbufSipMsg)
     if (pstSipMsg->uStartLine.stRequstLine.pstRequestURI == NULL_PTR)
     {
         pstTo = (SIP_HEADER_TO_S *)pstSipMsg->apstHeaders[SIP_HEADER_TO];
-        SIP_Syntax_GetRuleIndex("addr-spec", &ulRuleIndex);
         SIP_Syntax_Clone(ulRuleIndex,
                          pstTo->stNameAddr.pstUri,
                          pstUbufSipMsg,
@@ -350,6 +356,26 @@ ULONG SIP_UAC_GenerateRequest(UBUF_HEADER_S * pstUbufSipMsg)
         pstMaxForwards->ulMaxForwards = 70;
     }
 
+    /*对话外的INVITE要创建对话，因此要加Contact头域*/
+    if (pstSipMsg->uStartLine.stRequstLine.eMethod == SIP_METHOD_INVITE)
+    {
+        pstContact = (SIP_HEADER_CONTACT_S *)UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CONTACT_S));
+        pstContact->stHeader.pstNext = NULL_PTR;
+        pstSipMsg->apstHeaders[SIP_HEADER_CONTACT] = (SIP_HEADER_S *)pstContact;
+        pstContact->ucIsStar = FALSE;
+        pstContact->pstParam = (SIP_CONTACT_PARAM_S *)UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_CONTACT_PARAM_S));
+        pstContact->pstParam->pstNext = NULL_PTR;
+        pstContact->pstParam->ulExpires = NULL_ULONG;
+        pstContact->pstParam->stAddr.bName = FALSE;
+        pstContact->pstParam->stAddr.pucName = NULL_PTR;
+        pstContact->pstParam->stAddr.pstUri  = NULL_PTR;
+        SIP_Syntax_Decode(ulRuleIndex,
+                          g_pucSipUaContact,
+                          (ULONG)strlen(g_pucSipUaContact),
+                          pstUbufSipMsg,
+                         &pstContact->pstParam->stAddr.pstUri);
+    }
+    
     return SUCCESS;
 }
 
@@ -394,6 +420,25 @@ ULONG SIP_UAC_FindTxnSeq(ULONG ulUacID, ULONG ulTxnID, UCHAR *pucSeq)
     }
 
     return FAIL;
+}
+
+/* 申请一个事物序号 */
+ULONG SIP_UAC_AllocTxnSeq(ULONG ulUacID, UCHAR *pucSeq)
+{
+    UCHAR ucLoop;
+    SIP_UAC_CB_S *pstSipUacCB = NULL_PTR;
+
+    pstSipUacCB = &g_pstSipUacCB[ulUacID];
+    for (ucLoop = 0; ucLoop < SIP_LOCATION_MAX_NUMBER; ucLoop++)
+    {
+        if (pstSipUacCB->astFork[ucLoop].ulTxnID == NULL_ULONG)
+        {
+            *pucSeq = ucLoop;
+            return SUCCESS;
+        }
+    }
+
+    return FAIL;    
 }
 
 /* 判断请求是否已经完成，条件是所有关联的事物的事物都完成*/

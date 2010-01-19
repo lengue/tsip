@@ -260,7 +260,8 @@ ULONG SIP_CodeMessageHeader(void *pstStruct,
     for (ulLoop = 0; ulLoop < SIP_HEADER_BUTT; ulLoop++)
     {
         ulAppIndex = SIP_GET_HEADER_RULE_INDEX(ulLoop);
-        if (SIP_GET_CODE_FUNC(ulAppIndex)== NULL_PTR)
+        if ((ulAppIndex >= SIP_ABNF_RULE_BUTT) 
+          ||(SIP_GET_CODE_FUNC(ulAppIndex)== NULL_PTR))
         {
             /* 没有编码函数不处理 */
             continue;
