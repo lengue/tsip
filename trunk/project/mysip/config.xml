@@ -4,6 +4,8 @@
 		<!--可选的包括UA/PROXY/REGISTAR-->
 		<core>UA</core>
 		<route>sip:proxy@192.168.1.120:5060</route>
+		<agent ver="tsip_ver_1.0"/>
+		<contact>sip:tsip_ua@127.0.0.1:5060</contact>
 	</tu>
 	<transaction>
 		<T1>500</T1>

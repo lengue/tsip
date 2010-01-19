@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="Ws2_32.lib H:\voip\lib\win32\libxml2\libxml2.lib"
+				AdditionalOptions="Ws2_32.lib E:\tsip\trunk\lib\win32\libxml2\libxml2.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -192,10 +192,6 @@
 						>
 						<File
 							RelativePath="..\..\src\sip\syntax\sip_syntax.c"
-							>
-						</File>
-						<File
-							RelativePath="..\..\src\sip\syntax\sip_syntax_clone.c"
 							>
 						</File>
 						<File

@@ -250,15 +250,21 @@ ULONG SIP_ADPT_BuildTuConfig(SIP_ADAPT_CFG_S *g_pstCfg,
                 xmlFree(szKey);
                 return FAIL;
             }
-
+            
             xmlFree(szKey);
-            return SUCCESS;
+        }
+        else if (!xmlStrcmp(pstTempNode->name, BAD_CAST "contact"))
+        {
+            szKey = xmlNodeListGetString(doc, pstTempNode->children, 1);
+            g_pstCfg->stSipCfg.stTuCfg.pucContact = malloc(SIP_ADAPT_CONTACT_LEN+1);
+            strncpy(g_pstCfg->stSipCfg.stTuCfg.pucContact, szKey, SIP_ADAPT_CONTACT_LEN);
+            xmlFree(szKey);
         }
 
         pstTempNode = pstTempNode->next;
     }
 
-    return FAIL;
+    return SUCCESS;
 }
 
 
@@ -266,6 +272,7 @@ ULONG SIP_ADPT_FreeTuConfig(SIP_ADAPT_CFG_S *g_pstCfg)
 {
     return SUCCESS;
 }
+
 ULONG SIP_ADPT_BuildTransactionConfig(SIP_ADAPT_CFG_S *g_pstCfg,
                                       xmlDocPtr doc,
                                       xmlNodePtr pstNode)
