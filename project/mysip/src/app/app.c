@@ -154,14 +154,14 @@ ULONG APP_SipResponseProc(ULONG ulDlgID,
     APP_EVENT_E eEvent;
 
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
-    switch(pstSipMsg->eMsgType)
+    switch (pstSipMsg->uStartLine.stStatusLine.eStatusCode)
     {
-        case SIP_METHOD_INVITE:
-            eEvent = APP_EVENT_REMOTE_ANSWER;
+        case SIP_STATUS_CODE_180:
+            eEvent = APP_EVENT_REMOTE_RING;
             break;
 
-        case SIP_METHOD_BYE:
-            eEvent = APP_EVENT_REMOTE_RELEASE;
+        case SIP_STATUS_CODE_200:
+            eEvent = APP_EVENT_REMOTE_ANSWER;
             break;
 
         default:
