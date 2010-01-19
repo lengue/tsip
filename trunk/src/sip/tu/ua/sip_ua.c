@@ -21,18 +21,27 @@
 /* 本模块对外提供的常量和结构头文件 */
 
 /* 本模块内部使用的常量和结构头文件 */
+#include "sip_ua_const.inc"
+#include "sip_ua_type.inc"
 
 /* 本模块内部函数声明头文件 */
 #include "sip_uac.inc"
 #include "sip_uas.inc"
 
 /* 本模块全局变量声明头文件 */
-ULONG SIP_UA_Init()
+#include "sip_ua_var.inc"
+
+ULONG SIP_UA_Init(UCHAR *pucContact)
 {
     ULONG ulRet;
 
+    g_pucSipUaContact = malloc(100);
+    strcpy(g_pucSipUaContact, pucContact);
+
     ulRet  = SIP_UAC_Init();
     ulRet |= SIP_UAS_Init();
+    
+    ulRet |= SIP_Dlg_Init();
 
     return ulRet;
 }

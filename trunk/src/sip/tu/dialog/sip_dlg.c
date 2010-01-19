@@ -77,7 +77,10 @@ ULONG SIP_Dlg_AllocDialog(UCHAR *pucCallID,
 
     pstSipDlgCB = &g_pstSipDlgCB[ulDlgID];
     pstSipDlgCB->pstDialogID = UBUF_AllocUBuf(SIP_DLG_UBUF_LEN);
-    pstDialogID = (SIP_DIALOG_ID_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstDialogID);
+    pstDialogID = (SIP_DIALOG_ID_S *)UBUF_AddComponent(pstSipDlgCB->pstDialogID, sizeof(SIP_DIALOG_ID_S));
+    pstDialogID->pucCallID    = NULL_PTR;
+    pstDialogID->pucLocalTag  = NULL_PTR;
+    pstDialogID->pucRemoteTag = NULL_PTR;
     
     /* 记录对话信息*/
     UBUF_CLONE_STRING(pucCallID, 
@@ -86,11 +89,11 @@ ULONG SIP_Dlg_AllocDialog(UCHAR *pucCallID,
 
     UBUF_CLONE_STRING(pucLocalTag, 
                       pstSipDlgCB->pstDialogID,
-                      pstDialogID->pucCallID);
+                      pstDialogID->pucLocalTag);
 
     UBUF_CLONE_STRING(pucRemoteTag, 
                       pstSipDlgCB->pstDialogID,
-                      pstDialogID->pucCallID);
+                      pstDialogID->pucRemoteTag);
 
     /*将该对话加入到HASH链表中*/
     pstSipDlgCB->pstHashNode = HASH_AddNode(g_pstSipDlgHash, pstDialogID, ulDlgID);
@@ -265,9 +268,17 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     
     SIP_GetRuleIndex("addr-spec", &ulRuleIndex);
-        
+
+    /* Request URI添加*/
+    pstUri = (URI_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstRemoteTarget);
+    SIP_Clone(ulRuleIndex,
+              pstUri,
+              pstUbufSipMsg,
+             &pstSipMsg->uStartLine.stRequstLine.pstRequestURI);
+    
     /* CallID添加 */
     pstHeaderCallID = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CALL_ID_S));
+    memset(pstHeaderCallID, 0, sizeof(SIP_HEADER_CALL_ID_S));
     pstSipMsg->apstHeaders[SIP_HEADER_CALL_ID] = (SIP_HEADER_S *)pstHeaderCallID;
     pstHeaderCallID->stHeader.pstNext = NULL_PTR;
 
@@ -277,6 +288,7 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
         
     /* From头域添加 */
     pstHeaderFrom = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_FROM_S));
+    memset(pstHeaderFrom, 0, sizeof(SIP_HEADER_FROM_S));
     pstSipMsg->apstHeaders[SIP_HEADER_FROM] = (SIP_HEADER_S *)pstHeaderFrom;
     pstHeaderFrom->stHeader.pstNext = NULL_PTR;
 
@@ -296,6 +308,7 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
     
     /* To头域添加*/
     pstHeaderTo= UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_TO_S));
+    memset(pstHeaderTo, 0, sizeof(SIP_HEADER_TO_S));
     pstSipMsg->apstHeaders[SIP_HEADER_TO] = (SIP_HEADER_S *)pstHeaderTo;
     pstHeaderTo->stHeader.pstNext = NULL_PTR;
     
@@ -315,6 +328,7 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
     
     /* Cseq添加 */
     pstHeaderCseq = UBUF_AddComponent(pstUbufSipMsg, sizeof(SIP_HEADER_CSEQ_S));
+    memset(pstHeaderCseq, 0, sizeof(SIP_HEADER_CSEQ_S));
     pstSipMsg->apstHeaders[SIP_HEADER_CSEQ] = (SIP_HEADER_S *)pstHeaderCseq;
     pstHeaderCseq->stHeader.pstNext = NULL_PTR;
 

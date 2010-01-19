@@ -1,4 +1,4 @@
-extern ULONG SIP_UA_Init();
+extern ULONG SIP_UA_Init(UCHAR *pucContact);
 extern ULONG SIP_UA_RecvDownMsg(ULONG ulAppRef1,
                                 ULONG ulAppRef2,
                                 ULONG *pulStackRef1,
