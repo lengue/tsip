@@ -413,6 +413,7 @@ typedef struct tagSIP_TXP_CFG_S
 typedef struct tagSIP_TU_CFG_S
 {
     SIP_CORE_TYPE_E eType;
+    UCHAR *pucContact;
 }SIP_TU_CFG_S;
 
 typedef struct tagSIP_TXN_CFG_S
