@@ -12,6 +12,7 @@
 #include "sip\sip.h"
 #include "s_hash\s_hash.h"
 
+#include "..\include\shell\sip_shell.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "..\include\transaction\sip_transaction.h"
@@ -21,6 +22,7 @@
 #include "sip_txn_type.inc"
 
 /* 本模块内部函数声明头文件 */
+#include "sip_txn_fsm.inc"
 #include "sip_txn_fsm.inc"
 #include "sip_txn_mngt.inc"
 
@@ -46,8 +48,7 @@ ULONG SIP_Txn_AllocTxn(ULONG ulCoreID, ULONG *pulTxnID)
     pstSipTxnCB->eType          = SIP_TXN_TYPE_BUTT;
     pstSipTxnCB->eState         = SIP_TXN_STATE_INIT;
     pstSipTxnCB->pstUbufInitMsg = NULL_PTR;
-    pstSipTxnCB->pstUbufSendMsg = NULL_PTR;
-    pstSipTxnCB->pstUbufRecvMsg = NULL_PTR;
+    pstSipTxnCB->ucReSendNum    = 0;
     memset(pstSipTxnCB->astTimers,
            0xff,
            SIP_TXN_MAX_FSM_TIMER*sizeof(SIP_TXN_TIMER_S));
@@ -59,11 +60,21 @@ ULONG SIP_Txn_AllocTxn(ULONG ulCoreID, ULONG *pulTxnID)
 /* 释放一个事务 */
 ULONG SIP_Txn_FreeTxn(ULONG ulTxnID)
 {
+    UCHAR         ucLoop;
     SIP_TXN_CB_S *pstSipTxnCB = NULL_PTR;
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
     
     /* 停止定时器资源 */
+    for (ucLoop = 0; ucLoop < SIP_TXN_MAX_FSM_TIMER; ucLoop++)
+    {
+        if (pstSipTxnCB->astTimers[ucLoop].hTimerID != NULL_ULONG)
+        {
+            SIP_StopTimer(pstSipTxnCB->astTimers[ucLoop].hTimerID);
+            pstSipTxnCB->astTimers[ucLoop].hTimerID   = NULL_ULONG;
+            pstSipTxnCB->astTimers[ucLoop].eTimerName = NULL_ULONG;
+        }
+    }
 
     /* 释放分配的内存 */
     if (pstSipTxnCB->pstUbufInitMsg != NULL_PTR)

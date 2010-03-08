@@ -297,7 +297,7 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
                       pstUbufSipMsg,
                       pstHeaderFrom->pucTag);
     /*uri*/
-    pstHeaderFrom->stNameAddr.bName = FALSE;
+    pstHeaderFrom->stNameAddr.bName = TRUE;
     pstHeaderFrom->stNameAddr.pucName = NULL_PTR;
     
     pstUri = (URI_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstLocalURI);
@@ -318,7 +318,7 @@ ULONG SIP_Dlg_GenerateRequest(ULONG ulDlgIndex, UBUF_HEADER_S *pstUbufSipMsg)
                       pstHeaderTo->pucTag);
 
     /*uri*/
-    pstHeaderTo->stNameAddr.bName = FALSE;
+    pstHeaderTo->stNameAddr.bName = TRUE;
     pstHeaderTo->stNameAddr.pucName = NULL_PTR;
     pstUri = (URI_S *)UBUF_GET_MSG_PTR(pstSipDlgCB->pstRemoteURI);
     SIP_Clone(ulRuleIndex,

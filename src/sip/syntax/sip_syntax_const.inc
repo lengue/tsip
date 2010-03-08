@@ -135,3 +135,12 @@ typedef enum tagSIP_ABNF_RULE_E
     pstBuffer->ulCurrentLen += (ULONG)strlen(pstBuffer->pucBuffer + pstBuffer->ulCurrentLen); \
 }
 
+/* ¿ËÂ¡×¨ÓÃºê*/
+#define SIP_CLONE_STRING(pstDstUbuf, pucDstStr, pucSrcStr) \
+{ \
+    ULONG ulLen = (ULONG)strlen(pucSrcStr);\
+    (pucDstStr) = UBUF_AddComponent(pstDstUbuf, ulLen + 1); \
+    strncpy((pucDstStr), (pucSrcStr), ulLen); \
+    (pucDstStr)[ulLen] = '\0'; \
+}
+

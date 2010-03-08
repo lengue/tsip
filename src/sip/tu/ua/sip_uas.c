@@ -171,7 +171,7 @@ ULONG SIP_UAS_SendResponse(ULONG ulAppDlgID,
     SIP_UAS_GenerateResponse(pstUbufRequest, pstUbufSipMsg);
 
     /* 会话和对话的处理 */
-    pstSipRequest  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+    pstSipRequest  = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufRequest);
     pstSipResponse = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
 
     ulDlgID = g_pstSipUasCB[ulUasID].ulDlgID;

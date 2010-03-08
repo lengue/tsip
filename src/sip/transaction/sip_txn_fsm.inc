@@ -16,4 +16,4 @@ ULONG SIP_Txn_StartTimerA(ULONG ulTxnID);
 ULONG SIP_Txn_StartTimerB(ULONG ulTxnID);
 ULONG SIP_Txn_LookupTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName, UCHAR *pucSeq);
 ULONG SIP_Txn_AllocTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName, UCHAR *pucSeq);
-ULONG SIP_Txn_FreeTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName);
+ULONG SIP_Txn_StopTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName);

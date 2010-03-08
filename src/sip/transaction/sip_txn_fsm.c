@@ -529,6 +529,7 @@ ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent)
     if (g_astSipTxnFsm[eType][eState][eEvent].eNextState == SIP_TXN_STATE_TERMINATED)
     {
         /* 释放该事务 */
+        SIP_Txn_FreeTxn(ulTxnID);
     }
     else
     {
@@ -546,14 +547,8 @@ ULONG SIP_Txn_ActSendMsg(ULONG ulTxnID, ULONG ulPara)
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
 
     /* 发送新的请求 */
-    SIP_Txp_RecvDownMsg(pstSipTxnCB->pstUbufSendMsg,
+    SIP_Txp_RecvDownMsg(g_pstSipTxnRecvMsg,
                        &pstSipTxnCB->stPeer);
-
-    if (ulPara == TRUE)
-    {
-        UBUF_FreeBuffer(pstSipTxnCB->pstUbufSendMsg);
-        pstSipTxnCB->pstUbufRecvMsg = NULL_PTR;
-    }
 
     return SUCCESS;
 }
@@ -569,13 +564,7 @@ ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara)
     SIP_TU_RecvUpMsg(pstSipTxnCB->ulCoreID,
                      ulTxnID,
                     &pstSipTxnCB->stPeer,
-                     pstSipTxnCB->pstUbufRecvMsg);
-
-    if (ulPara == TRUE)
-    {
-        UBUF_FreeBuffer(pstSipTxnCB->pstUbufRecvMsg);
-        pstSipTxnCB->pstUbufRecvMsg = NULL_PTR;
-    }
+                     g_pstSipTxnRecvMsg);
 
     return SUCCESS;
 }
@@ -620,16 +609,9 @@ ULONG SIP_Txn_ActStartTimer(ULONG ulTxnID, ULONG ulPara)
 ULONG SIP_Txn_ActStopTimer(ULONG ulTxnID, ULONG ulPara)
 {
     SIP_TXN_TIMER_NAME_E eName;
-    UCHAR ucSeq;
-    ULONG ulRet;
 
     eName = ulPara;
-    ulRet = SIP_Txn_LookupTimer(ulTxnID, eName, &ucSeq);
-    if (ulRet != SUCCESS)
-    {
-        /* 没有找到直接认为停止OK */
-        return SUCCESS;
-    }
+    SIP_Txn_StopTimer(ulTxnID, eName);
 
     return SUCCESS;
 }
@@ -637,26 +619,20 @@ ULONG SIP_Txn_ActStopTimer(ULONG ulTxnID, ULONG ulPara)
 ULONG SIP_Txn_StartTimerA(ULONG ulTxnID)
 {
     UCHAR ucSeq;
-    ULONG ulRet;
+    ULONG ulTimerLen;
+    
+    ulTimerLen = 1 << g_pstSipTxnCB[ulTxnID].ucReSendNum;
 
-    ulRet = SIP_Txn_LookupTimer(ulTxnID, SIP_TXN_TIMER_A, &ucSeq);
-    if (ulRet == SUCCESS)
-    {
-        /* 已经存在A定时器这double时长后重启 */
-        g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].ulimerLen *= 2;
-    }
-    else
-    {
-        /* 分配A定时器 */
-        SIP_Txn_AllocTimer(ulTxnID, SIP_TXN_TIMER_A, &ucSeq);
-        g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].ulimerLen = 1;
-    }
+    /* 分配A定时器 */
+    SIP_Txn_AllocTimer(ulTxnID, SIP_TXN_TIMER_A, &ucSeq);
 
     SIP_StartTimer(SIP_TXN_TIMER_A,
-                   g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].ulimerLen * g_ulSipTxnT1,
+                   ulTimerLen * g_ulSipTxnT1,
                    ulTxnID,
                    SIP_TIMER_NO_LOOP,
                   &g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].hTimerID);
+
+    g_pstSipTxnCB[ulTxnID].ucReSendNum++;
 
     return SUCCESS;
 }
@@ -667,10 +643,9 @@ ULONG SIP_Txn_StartTimerB(ULONG ulTxnID)
 
     /* 分配A定时器 */
     SIP_Txn_AllocTimer(ulTxnID, SIP_TXN_TIMER_B, &ucSeq);
-    g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].ulimerLen = 64;
 
     SIP_StartTimer(SIP_TXN_TIMER_B,
-                   g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].ulimerLen * g_ulSipTxnT1,
+                   64 * g_ulSipTxnT1,
                    ulTxnID,
                    SIP_TIMER_NO_LOOP,
                   &g_pstSipTxnCB[ulTxnID].astTimers[ucSeq].hTimerID);
@@ -714,14 +689,18 @@ ULONG SIP_Txn_AllocTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName, UCHAR *pucSe
 }
 
 /* 分配定时器 */
-ULONG SIP_Txn_FreeTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName)
+ULONG SIP_Txn_StopTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName)
 {
     UCHAR ucLoop;
 
     for (ucLoop = 0; ucLoop < SIP_TXN_MAX_FSM_TIMER; ucLoop++)
     {
-        if(g_pstSipTxnCB[ulTxnID].astTimers[ucLoop].eTimerName == NULL_ULONG)
+        if(g_pstSipTxnCB[ulTxnID].astTimers[ucLoop].eTimerName == eName)
         {
+            SIP_StopTimer(g_pstSipTxnCB[ulTxnID].astTimers[ucLoop].hTimerID);
+            g_pstSipTxnCB[ulTxnID].astTimers[ucLoop].hTimerID   = NULL_ULONG;
+            g_pstSipTxnCB[ulTxnID].astTimers[ucLoop].eTimerName = NULL_ULONG;
+
             return SUCCESS;
         }
     }

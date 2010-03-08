@@ -52,7 +52,13 @@ ULONG SIP_UAC_AllocCB(ULONG *pulUacID)
 /* 释放UAC控制块 */
 VOID SIP_UAC_FreeCB(ULONG ulUacID)
 {
+    SIP_UAC_CB_S *pstSipUacCB = NULL_PTR;
+    
+    pstSipUacCB  = &g_pstSipUacCB[ulUacID];
+    UBUF_FreeBuffer(pstSipUacCB->pstSipMsgUbuf);
+
     COMM_CB_FREE(g_pstSipUacCB, g_stSipUacCBQueue, ulUacID);
+
     return;
 }
 
@@ -231,15 +237,19 @@ ULONG SIP_UAC_ProcessingResponse(ULONG ulUacID,
     return SUCCESS;
 }
 
+/* 下一条地址获取成功 */
 ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
                            ULONG ulPara)
 {
     UCHAR  ucSeq;
     ULONG  ulTxnID;
     ULONG  ulUacID;
-    SIP_UAC_CB_S *pstUacCB = NULL_PTR;
-    SIP_MSG_S    *pstSipMsg = NULL_PTR;
-
+    ULONG  ulRuleIndex;
+    SIP_UAC_CB_S *pstUacCB     = NULL_PTR;
+    SIP_MSG_S    *pstUacSipMsg = NULL_PTR;
+    SIP_MSG_S    *pstSipMsg    = NULL_PTR;
+    UBUF_HEADER_S *pstUbufSendMsg = NULL_PTR;
+    
     if (pstResult->ulNumber == 0)
     {
         /* 通知TU发送失败 */
@@ -247,12 +257,17 @@ ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
 
     ulUacID = ulPara;
     pstUacCB = &g_pstSipUacCB[ulUacID];
-
-    /* 找到下一跳后就可以添加Via头域 */
-    SIP_UAC_AddViaHeader(pstUacCB->pstSipMsgUbuf);
+    pstUacSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUacCB->pstSipMsgUbuf);
 
     /* 一个一个轮着发 */
-    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUacCB->pstSipMsgUbuf);
+
+    /* 单独克隆一份用来发送 */
+    pstUbufSendMsg = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex, pstUacSipMsg, pstUbufSendMsg, &pstSipMsg);
+
+    /* 找到下一跳后就可以添加Via头域 */
+    SIP_UAC_AddViaHeader(pstUbufSendMsg);
     if (pstSipMsg->uStartLine.stRequstLine.eMethod != SIP_METHOD_ACK)
     {
         /* 不是ACK通过事务发送 */
@@ -263,15 +278,15 @@ ULONG SIP_UAC_LocateResult(SIP_LOCATION_RESULT_S *pstResult,
         SIP_UAC_AllocTxnSeq(ulUacID, &ucSeq);
         pstUacCB->astFork[ucSeq].ulTxnID = ulTxnID;
 
-        /*在事务上发送请求*/
+        /* 在事务上发送请求*/
         SIP_Txn_RecvDownMsg(ulTxnID,
-                            pstUacCB->pstSipMsgUbuf,
+                            pstUbufSendMsg,
                            &pstResult->astLocations[0]);
     }
     else
     {
         /* ACK直接调用TXP发送 */
-        SIP_Txp_RecvDownMsg(pstUacCB->pstSipMsgUbuf,
+        SIP_Txp_RecvDownMsg(pstUbufSendMsg,
                            &pstResult->astLocations[0]);
     }
 
@@ -400,6 +415,7 @@ ULONG SIP_UAC_AddViaHeader(UBUF_HEADER_S *pstUbufSipMsg)
     SIP_GenerateRandomString(acBranch + strlen(pcMagic),
                              100 - (ULONG)strlen(pcMagic));
     UBUF_CLONE_STRING(acBranch, pstUbufSipMsg, pstViaPara->pucBranch);
+    pstViaPara->ulTtl = NULL_ULONG;
     return SUCCESS;
 }
 
