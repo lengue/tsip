@@ -44,15 +44,13 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
                           SIP_LOCATION_S *pstPeerLocation)
 {
     SIP_TXN_EVENT_E eEvent;
+    ULONG ulRuleIndex;
     SIP_MSG_S      *pstSipMsg = NULL_PTR;
+    SIP_MSG_S      *pstSipMsgTemp = NULL_PTR;
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
 
+    g_pstSipTxnRecvMsg = pstUbufSipMsg;
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
-
-    /* 替换上次的发送消息，因为请求不会发送两次，因此
-      不会释放初始请求消息*/
-    UBUF_FreeBuffer(pstSipTxnCB->pstUbufSendMsg);
-    pstSipTxnCB->pstUbufSendMsg = pstUbufSipMsg;
 
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
@@ -70,13 +68,15 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
             pstSipTxnCB->eType = SIP_TXN_TYPE_NON_INVITE_CLIENT;
         }
 
-        pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
+        /* 请求涉及到重发和匹配，需要保存一份 */
+        pstSipTxnCB->pstUbufInitMsg = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+        SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+        SIP_Clone(ulRuleIndex, pstSipMsg, pstSipTxnCB->pstUbufInitMsg, &pstSipMsgTemp);
         pstSipTxnCB->pstHashNode = HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
     {
         /* 头域补充完整 */
-
         if (pstSipMsg->uStartLine.stStatusLine.eStatusCode < SIP_STATUS_CODE_200)
         {
             eEvent = SIP_TXN_EVENT_SEND_1XX_RESPONSE;
@@ -92,6 +92,8 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
     }
 
     SIP_Txn_FsmProc(ulTxnID, eEvent);
+    g_pstSipTxnRecvMsg = NULL_PTR;
+    
     return SUCCESS;
 }
 
@@ -101,13 +103,12 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
 {
     SIP_TXN_EVENT_E eEvent;
     SIP_MSG_S      *pstSipMsg   = NULL_PTR;
+    SIP_MSG_S      *pstSipMsgTemp = NULL_PTR;
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
-
+    ULONG           ulRuleIndex;
+    
+    g_pstSipTxnRecvMsg = pstUbufSipMsg;    
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
-
-    /* 替换最新收到的消息 */
-    UBUF_FreeBuffer(pstSipTxnCB->pstUbufRecvMsg);
-    pstSipTxnCB->pstUbufRecvMsg = pstUbufSipMsg;
         
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
@@ -130,7 +131,10 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
             eEvent = SIP_TXN_EVENT_RECV_REQUEST;
         }
 
-        pstSipTxnCB->pstUbufInitMsg = pstUbufSipMsg;
+        /* 请求涉及到重发和匹配，需要保存一份 */
+        pstSipTxnCB->pstUbufInitMsg = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+        SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+        SIP_Clone(ulRuleIndex, pstSipMsg, pstSipTxnCB->pstUbufInitMsg, &pstSipMsgTemp);
         pstSipTxnCB->pstHashNode = HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
@@ -150,12 +154,31 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
     }
 
     SIP_Txn_FsmProc(ulTxnID, eEvent);
+    g_pstSipTxnRecvMsg = NULL_PTR;
+    
     return SUCCESS;
 }
 
 ULONG SIP_Txn_TimerProc(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eTimer)
 {
     SIP_TXN_EVENT_E      eEvent;
+    UCHAR                ucSeq;
+    ULONG                ulRet;
+    SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
+
+    pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
+    ulRet = SIP_Txn_LookupTimer(ulTxnID, eTimer, &ucSeq);
+    if (ulRet != SUCCESS)
+    {
+        /* 找不到说明根本没启，也不用处理 */
+        return ulRet;
+    }
+    else
+    {
+        /* 找到后将句柄清空 */
+        pstSipTxnCB->astTimers[ucSeq].eTimerName = NULL_ULONG;
+        pstSipTxnCB->astTimers[ucSeq].hTimerID   = NULL_ULONG;
+    }
 
     switch (eTimer)
     {

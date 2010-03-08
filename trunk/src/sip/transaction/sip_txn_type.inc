@@ -1,7 +1,6 @@
 typedef struct tagSIP_TXN_TIMER_S
 {
     SIP_TXN_TIMER_NAME_E    eTimerName;
-    ULONG                   ulimerLen;
     ULONG                   hTimerID;
 }SIP_TXN_TIMER_S;
 
@@ -13,9 +12,8 @@ typedef struct tagSIP_TXN_CB_S
     SIP_TXN_TYPE_E    eType;
     SIP_TXN_STATE_E   eState;
     SIP_LOCATION_S    stPeer;
+    UCHAR             ucReSendNum;
     UBUF_HEADER_S    *pstUbufInitMsg; /* 创建该事务的请求消息 */
-    UBUF_HEADER_S    *pstUbufSendMsg; /* 最近一次发送的SIP消息 */
-    UBUF_HEADER_S    *pstUbufRecvMsg; /* 最近一次收到的SIP消息 */
     SIP_TXN_TIMER_S   astTimers[SIP_TXN_MAX_FSM_TIMER]; /* 定时器个数 */
 }SIP_TXN_CB_S;
 

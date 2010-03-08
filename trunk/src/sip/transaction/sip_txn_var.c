@@ -26,9 +26,10 @@
 
 /* 连接空闲队列以及连接控制块 */
 /* 所有的事务控制块 */
-SIP_TXN_CB_S *g_pstSipTxnCB = NULL_PTR;
+SIP_TXN_CB_S  *g_pstSipTxnCB = NULL_PTR;
 COMM_QUEUE_S   g_stSipTxnCBQueue;
-void         *g_pstSipTxnCBHash     = NULL_PTR;
+void          *g_pstSipTxnCBHash     = NULL_PTR;
+UBUF_HEADER_S *g_pstSipTxnRecvMsg = NULL_PTR;
 
 SIP_TXN_FSM_S g_astSipTxnFsm[SIP_TXN_TYPE_BUTT][SIP_TXN_STATE_TERMINATED][SIP_TXN_EVENT_BUTT];
 

@@ -171,25 +171,5 @@ ULONG SIP_Syntax_Clone(ULONG          ulRuleIndex,
                        UBUF_HEADER_S *pstDstUbuf,
                        void         **ppDstStruct)
 {
-    ULONG ulMsgLen;
-    ULONG ulRet;
-    
-    ulRet = SIP_Syntax_Code(ulRuleIndex, 
-                            pSrcStruct, 
-                            g_pucSipSyntaxBuffer, 
-                            SIP_MAX_TEXT_MSG_LEN, 
-                            &ulMsgLen);
-    if (ulRet != SUCCESS)
-    {
-        return ulRet;
-    }
-
-    g_pucSipSyntaxBuffer[ulMsgLen] = '\0';
-    
-    ulRet = SIP_Syntax_Decode(ulRuleIndex, 
-                              g_pucSipSyntaxBuffer, 
-                              ulMsgLen, 
-                              pstDstUbuf, 
-                              ppDstStruct);
-    return ulRet;
+    return SIP_GET_CLONE_FUNC(ulRuleIndex)(pSrcStruct, pstDstUbuf, ppDstStruct);
 }

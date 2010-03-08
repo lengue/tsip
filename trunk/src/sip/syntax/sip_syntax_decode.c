@@ -1652,7 +1652,6 @@ ULONG SIP_ParseHeaderContact(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             {
                 ppstParm = &(*ppstParm)->pstNext;
             }
-
         }
 
         pstNode = pstNode->pstNextNode;
