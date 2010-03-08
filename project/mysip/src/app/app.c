@@ -117,6 +117,8 @@ ULONG APP_RecvUpMsg(ULONG ulStackRef1,
             return FAIL;
     }
 
+    /* 网络侧消息的终点，释放消息 */
+    UBUF_FreeBuffer(pstUbufSipMsg);
     return SUCCESS;
 }
 

@@ -38,8 +38,8 @@ ULONG APP_FsmInitProc()
     g_apfnAppFsm[APP_STATE_ACTIVE][APP_EVENT_ONHOK]          = APP_Fsm_Active_OnhokProc;
     g_apfnAppFsm[APP_STATE_ACTIVE][APP_EVENT_REMOTE_RELEASE] = APP_Fsm_Active_RemoteReleaseProc;
     g_apfnAppFsm[APP_STATE_ACTIVE][APP_EVENT_INCOMING_CALL] = APP_Fsm_Busy_IncommingCallProc;
-    g_apfnAppFsm[APP_STATE_WAIT_CLEAR][APP_EVENT_ONHOK] = APP_Fsm_WaitClear_OnhookProc;
-    g_apfnAppFsm[APP_STATE_WAIT_CLEAR][APP_EVENT_INCOMING_CALL] = APP_Fsm_Busy_IncommingCallProc;
+    g_apfnAppFsm[APP_STATE_WAIT_LOCAL_CLEAR][APP_EVENT_ONHOK] = APP_Fsm_WaitClear_OnhookProc;
+    g_apfnAppFsm[APP_STATE_WAIT_LOCAL_CLEAR][APP_EVENT_INCOMING_CALL] = APP_Fsm_Busy_IncommingCallProc;
 
     return SUCCESS;
 }
@@ -130,7 +130,6 @@ ULONG APP_Fsm_Idle_OffhookProc()
     }
 
     /*添加Contact头域*/
-
     
     APP_SendDownMsg(NULL_ULONG,
                     0,
@@ -147,7 +146,6 @@ ULONG APP_Fsm_WaitRemoteAnswer_RemoteAnswerProc()
 {
     UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
     SIP_MSG_S     *pstSipMsg     = NULL_PTR;
-    ULONG          ulRet;
     
     /* 发送ACK */
     pstSipMsgUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
@@ -177,15 +175,65 @@ ULONG APP_Fsm_WaitRemoteAnswer_RemoteAnswerProc()
 
 ULONG APP_Fsm_Active_RemoteReleaseProc()
 {
+    UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
+    SIP_MSG_S     *pstSipMsg     = NULL_PTR;
+
     /* 发送BYE的200 */
+    pstSipMsgUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    if (pstSipMsgUBuf == NULL_PTR)
+    {
+        return FAIL;
+    }
+
+    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
+    memset(pstSipMsg, 0, sizeof(SIP_MSG_S));
+
+    /* 添加方法 */
+    pstSipMsg->eMsgType                            = SIP_MSG_TYPE_RESPONSE;
+    pstSipMsg->uStartLine.stStatusLine.ucVersion   = 2;
+    pstSipMsg->uStartLine.stStatusLine.eStatusCode = SIP_STATUS_CODE_200;
+
+    /*添加Contact头域*/
+    
+    APP_SendDownMsg(0,
+                    0,
+                    g_ulStackDlgID,
+                    g_ulStackTxnID,
+                    pstSipMsgUBuf);
+    
     /* 状态迁为APP_STATE_WAIT_CLEAR */
+    g_eAppState = APP_STATE_IDLE;
     return SUCCESS;
 }
 
 ULONG APP_Fsm_Active_OnhokProc()
 {
+    UBUF_HEADER_S *pstSipMsgUBuf = NULL_PTR;
+    SIP_MSG_S     *pstSipMsg     = NULL_PTR;
+    
     /* 发送BYE */
+    pstSipMsgUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    if (pstSipMsgUBuf == NULL_PTR)
+    {
+        return FAIL;
+    }
+
+    pstSipMsg = UBUF_AddComponent(pstSipMsgUBuf, sizeof(SIP_MSG_S));
+    memset(pstSipMsg, 0, sizeof(SIP_MSG_S));
+
+    /* 添加方法 */
+    pstSipMsg->eMsgType                          = SIP_MSG_TYPE_REQUEST;
+    pstSipMsg->uStartLine.stRequstLine.eMethod   = SIP_METHOD_BYE;
+    pstSipMsg->uStartLine.stRequstLine.ucVersion = 2;
+
+    APP_SendDownMsg(0,
+                    0,
+                    g_ulStackDlgID,
+                    NULL_ULONG,
+                    pstSipMsgUBuf);
+
     /* 状态迁为APP_STATE_WAIT_CLEAR */
+    g_eAppState = APP_STATE_WAIT_REMOTE_CLEAR;
     return SUCCESS;
 }
 

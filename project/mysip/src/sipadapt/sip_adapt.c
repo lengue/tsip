@@ -448,6 +448,27 @@ ULONG SIP_ADPT_FreeConnConfig(SIP_ADAPT_CFG_S *g_pstCfg)
     return SUCCESS;
 }
 
+/* 发送用户消息 */
+ULONG SIP_ADPT_SendUpMsg(ULONG ulStackRef1,
+                         ULONG ulStackRef2,
+                         ULONG AppRef1,
+                         ULONG AppRef2,
+                         UBUF_HEADER_S *pstUbufSipMsg)
+{
+    APP_MSG_S stAppMsg;
+
+    stAppMsg.ulAppRef1 = AppRef1;
+    stAppMsg.ulAppRef2 = AppRef1;
+    stAppMsg.ulStackRef1 = ulStackRef1;
+    stAppMsg.ulStackRef2 = ulStackRef2;
+    stAppMsg.pstUbufSipMsg = pstUbufSipMsg;
+
+    return SYS_SendMsg(SYS_MODULE_SIP,
+                       SYS_MODULE_APP,
+                      &stAppMsg,
+                       sizeof(APP_MSG_S));
+}
+
 /* 接受网络消息 */
 ULONG SIP_ADPT_RecvUpMsg(CONN_LOCATION_S *pstLocation,
                          UCHAR *pucMsg,
@@ -459,6 +480,7 @@ ULONG SIP_ADPT_RecvUpMsg(CONN_LOCATION_S *pstLocation,
     ULONG ulRuleIndex;
     SIP_MSG_S *pstSipMsg = NULL_PTR;
 
+    /* 网络侧消息处理的开始 */
     printf("\r\nRecv Sip Msg:\r\n%s",pucMsg);
     pstUBuf = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
     SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
@@ -482,27 +504,6 @@ ULONG SIP_ADPT_RecvUpMsg(CONN_LOCATION_S *pstLocation,
                        sizeof(SIP_ADPT_CONN_MSG_S));
 }
 
-/* 发送用户消息 */
-ULONG SIP_ADPT_SendUpMsg(ULONG ulStackRef1,
-                         ULONG ulStackRef2,
-                         ULONG AppRef1,
-                         ULONG AppRef2,
-                         UBUF_HEADER_S *pstUbufSipMsg)
-{
-    APP_MSG_S stAppMsg;
-
-    stAppMsg.ulAppRef1 = AppRef1;
-    stAppMsg.ulAppRef2 = AppRef1;
-    stAppMsg.ulStackRef1 = ulStackRef1;
-    stAppMsg.ulStackRef2 = ulStackRef2;
-    stAppMsg.pstUbufSipMsg = pstUbufSipMsg;
-
-    return SYS_SendMsg(SYS_MODULE_SIP,
-                       SYS_MODULE_APP,
-                      &stAppMsg,
-                       sizeof(APP_MSG_S));
-}
-
 /* 发送网络消息 */
 ULONG SIP_ADPT_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
                            SIP_LOCATION_S *pstPeerLocation)
@@ -521,6 +522,9 @@ ULONG SIP_ADPT_SendDownMsg(UBUF_HEADER_S  *pstSipMsgUbuf,
                     &ulMsgLen);
     g_pucSipAdptBuffer[ulMsgLen] = '\0';
     printf("\r\nSend Sip Msg:\r\n%s",g_pucSipAdptBuffer);
+
+    /* 应用层消息处理的结束 */
+    UBUF_FreeBuffer(pstSipMsgUbuf);
 
     SIP_ADPT_LocationSip2Conn(pstPeerLocation, &stLocation);
     return CONN_SendMsg(g_pucSipAdptBuffer, ulMsgLen, &stLocation);
