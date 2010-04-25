@@ -284,7 +284,7 @@ ULONG SIP_CloneMessageHeader(void          *pSrcStruct,
     SIP_MSG_S    *pstSrcSipMsg  = NULL_PTR;
     SIP_MSG_S    *pstDstSipMsg  = NULL_PTR;
     SIP_HEADER_S *pstSrcHeader  = NULL_PTR;
-    SIP_HEADER_S *pstDstHeader  = NULL_PTR;
+    SIP_HEADER_S **ppstDstHeader  = NULL_PTR;
 
     pstSrcSipMsg = (SIP_MSG_S *)pSrcStruct;
     SIP_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
@@ -300,19 +300,19 @@ ULONG SIP_CloneMessageHeader(void          *pSrcStruct,
 
         /* 可能存在多个相同头域，挨个编码 */
         pstSrcHeader = pstSrcSipMsg->apstHeaders[ulLoop];
-        pstDstHeader = pstDstSipMsg->apstHeaders[ulLoop];
+        ppstDstHeader = &pstDstSipMsg->apstHeaders[ulLoop];
         while (pstSrcHeader != NULL_PTR)
         {
             ulRet = SIP_GET_CLONE_FUNC(ulAppIndex)(pstSrcHeader,
                                                    pstDstUbufMsg,
-                                                  &pstDstHeader);
+                                                   ppstDstHeader);
             if (ulRet != SUCCESS)
             {
                 return FAIL;
             }
 
             pstSrcHeader = pstSrcHeader->pstNext;
-            pstDstHeader = pstDstHeader->pstNext;
+            ppstDstHeader = &(*ppstDstHeader)->pstNext;
         }
     }
 

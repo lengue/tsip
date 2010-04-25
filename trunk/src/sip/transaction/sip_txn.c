@@ -48,11 +48,15 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
     SIP_MSG_S      *pstSipMsg = NULL_PTR;
     SIP_MSG_S      *pstSipMsgTemp = NULL_PTR;
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
+    UBUF_HEADER_S  *pstUbufBuffer = NULL_PTR;
 
-    g_pstSipTxnRecvMsg = pstUbufSipMsg;
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
-
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
+
+    pstUbufBuffer = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex, pstSipMsg, pstUbufBuffer, &pstSipMsgTemp);
+
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
         /* 记录发送地址 */
@@ -69,9 +73,7 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
         }
 
         /* 请求涉及到重发和匹配，需要保存一份 */
-        pstSipTxnCB->pstUbufInitMsg = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
-        SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
-        SIP_Clone(ulRuleIndex, pstSipMsg, pstSipTxnCB->pstUbufInitMsg, &pstSipMsgTemp);
+        pstSipTxnCB->pstUbufRequest = pstUbufBuffer;
         pstSipTxnCB->pstHashNode = HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
@@ -89,10 +91,11 @@ ULONG SIP_Txn_RecvDownMsg(ULONG ulTxnID,
         {
             eEvent = SIP_TXN_EVENT_SEND_3456XX_RESPONSE;
         }
+
+        pstSipTxnCB->pstUbufResponse = pstUbufBuffer;
     }
 
-    SIP_Txn_FsmProc(ulTxnID, eEvent);
-    g_pstSipTxnRecvMsg = NULL_PTR;
+    SIP_Txn_FsmProc(ulTxnID, eEvent, pstUbufSipMsg);
     
     return SUCCESS;
 }
@@ -106,10 +109,8 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
     SIP_MSG_S      *pstSipMsgTemp = NULL_PTR;
     SIP_TXN_CB_S   *pstSipTxnCB = NULL_PTR;
     ULONG           ulRuleIndex;
-    
-    g_pstSipTxnRecvMsg = pstUbufSipMsg;    
+
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
-        
     pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstUbufSipMsg);
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
@@ -132,9 +133,9 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
         }
 
         /* 请求涉及到重发和匹配，需要保存一份 */
-        pstSipTxnCB->pstUbufInitMsg = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+        pstSipTxnCB->pstUbufRequest = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
         SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
-        SIP_Clone(ulRuleIndex, pstSipMsg, pstSipTxnCB->pstUbufInitMsg, &pstSipMsgTemp);
+        SIP_Clone(ulRuleIndex, pstSipMsg, pstSipTxnCB->pstUbufRequest, &pstSipMsgTemp);
         pstSipTxnCB->pstHashNode = HASH_AddNode(g_pstSipTxnCBHash, pstUbufSipMsg, ulTxnID);
     }
     else
@@ -153,8 +154,7 @@ ULONG SIP_Txn_RecvUpMsg(ULONG ulTxnID,
         }
     }
 
-    SIP_Txn_FsmProc(ulTxnID, eEvent);
-    g_pstSipTxnRecvMsg = NULL_PTR;
+    SIP_Txn_FsmProc(ulTxnID, eEvent, pstUbufSipMsg);
     
     return SUCCESS;
 }
@@ -226,6 +226,6 @@ ULONG SIP_Txn_TimerProc(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eTimer)
             return FAIL;
     }
 
-    SIP_Txn_FsmProc(ulTxnID, eEvent);
+    SIP_Txn_FsmProc(ulTxnID, eEvent, NULL_PTR);
     return SUCCESS;
 }

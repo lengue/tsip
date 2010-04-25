@@ -5,13 +5,15 @@
 ÐÞ¸Ä¼ÇÂ¼:
 *******************************************************************************/
 ULONG SIP_Txn_FsmInit();
-ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent);
-ULONG SIP_Txn_ActSendMsg(ULONG ulTxnID, ULONG ulPara);
-ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara);
-ULONG SIP_Txn_ActInformTU(ULONG ulTxnID, ULONG ulPara);
-ULONG SIP_Txn_ActSendAck(ULONG ulTxnID, ULONG ulPara);
-ULONG SIP_Txn_ActStartTimer(ULONG ulTxnID, ULONG ulPara);
-ULONG SIP_Txn_ActStopTimer(ULONG ulTxnID, ULONG ulPara);
+ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActSendMsg(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActReSendRequest(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActReSendResponse(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActInformTU(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActSendAck(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActStartTimer(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
+ULONG SIP_Txn_ActStopTimer(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg);
 ULONG SIP_Txn_StartTimerA(ULONG ulTxnID);
 ULONG SIP_Txn_StartTimerB(ULONG ulTxnID);
 ULONG SIP_Txn_LookupTimer(ULONG ulTxnID, SIP_TXN_TIMER_NAME_E eName, UCHAR *pucSeq);

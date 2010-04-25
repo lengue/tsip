@@ -97,7 +97,7 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_CALLING;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_A_FIRE].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_A_FIRE].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_A_FIRE].astActions[0].pfnProc = SIP_Txn_ActReSendRequest;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_A_FIRE].astActions[1].pfnProc = SIP_Txn_ActStartTimer;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_A_FIRE].astActions[1].ulPara  = SIP_TXN_TIMER_A;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_A_FIRE].eNextState = SIP_TXN_STATE_CALLING;
@@ -214,7 +214,7 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_TRYING;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[0].pfnProc = SIP_Txn_ActReSendRequest;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[1].pfnProc = SIP_Txn_ActStartTimer;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[1].ulPara  = SIP_TXN_TIMER_E;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].eNextState = SIP_TXN_STATE_CALLING;
@@ -249,7 +249,7 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_PROCEEDING;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[0].pfnProc = SIP_Txn_ActReSendRequest;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[1].pfnProc = SIP_Txn_ActStartTimer;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].astActions[1].ulPara  = SIP_TXN_TIMER_E;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_E_FIRE].eNextState = SIP_TXN_STATE_CALLING;
@@ -343,7 +343,7 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_PROCEEDING;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActReSendResponse;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].eNextState = SIP_TXN_STATE_PROCEEDING;
 
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_SEND_1XX_RESPONSE].ulValid = TRUE;
@@ -368,11 +368,11 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_COMPLETED;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActReSendResponse;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].eNextState = SIP_TXN_STATE_COMPLETED;
 
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_G_FIRE].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_G_FIRE].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_G_FIRE].astActions[0].pfnProc = SIP_Txn_ActReSendResponse;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_G_FIRE].eNextState = SIP_TXN_STATE_COMPLETED;
 
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_H_FIRE].ulValid = TRUE;
@@ -464,7 +464,7 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_PROCEEDING;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActReSendResponse;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].eNextState = SIP_TXN_STATE_PROCEEDING;
 
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_SEND_1XX_RESPONSE].ulValid = TRUE;
@@ -489,7 +489,7 @@ ULONG SIP_Txn_FsmInit()
 
     eState = SIP_TXN_STATE_COMPLETED;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].ulValid = TRUE;
-    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActSendMsg;
+    g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].astActions[0].pfnProc = SIP_Txn_ActReSendResponse;
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_RECV_REQUEST].eNextState = SIP_TXN_STATE_COMPLETED;
 
     g_astSipTxnFsm[eType][eState][SIP_TXN_EVENT_TIMER_J_FIRE].ulValid = TRUE;
@@ -502,7 +502,7 @@ ULONG SIP_Txn_FsmInit()
     return SUCCESS;
 }
 
-ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent)
+ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent, UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_TXN_TYPE_E  eType;
     SIP_TXN_STATE_E eState;
@@ -522,7 +522,9 @@ ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent)
         pfnAction = g_astSipTxnFsm[eType][eState][eEvent].astActions[ulLoop].pfnProc;
         if (pfnAction != NULL_PTR)
         {
-            pfnAction(ulTxnID, g_astSipTxnFsm[eType][eState][eEvent].astActions[ulLoop].ulPara);
+            pfnAction(ulTxnID, 
+                      g_astSipTxnFsm[eType][eState][eEvent].astActions[ulLoop].ulPara, 
+                      pstUbufSipMsg);
         }
     }
 
@@ -540,21 +542,67 @@ ULONG SIP_Txn_FsmProc(ULONG ulTxnID, SIP_TXN_EVENT_E eEvent)
 }
 
 /* 向网络侧发送消息 */
-ULONG SIP_Txn_ActSendMsg(ULONG ulTxnID, ULONG ulPara)
+ULONG SIP_Txn_ActSendMsg(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_TXN_CB_S *pstSipTxnCB = NULL_PTR;
 
     pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
 
     /* 发送新的请求 */
-    SIP_Txp_RecvDownMsg(g_pstSipTxnRecvMsg,
+    SIP_Txp_RecvDownMsg(pstUbufSipMsg,
+                       &pstSipTxnCB->stPeer);
+
+    return SUCCESS;
+}
+
+/* 向网络侧重新发送请求消息 */
+ULONG SIP_Txn_ActReSendRequest(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
+{
+    SIP_TXN_CB_S *pstSipTxnCB = NULL_PTR;
+    SIP_MSG_S    *pstSipMsg = NULL_PTR;
+    SIP_MSG_S    *pstSipMsgTemp = NULL_PTR;
+    UBUF_HEADER_S *pstUbufBuffer = NULL_PTR;
+    ULONG ulRuleIndex;
+    
+    pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
+
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstSipTxnCB->pstUbufRequest);
+    pstUbufBuffer = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex, pstSipMsg, pstUbufBuffer, &pstSipMsgTemp);
+
+    /* 发送新的请求 */
+    SIP_Txp_RecvDownMsg(pstUbufBuffer,
+                       &pstSipTxnCB->stPeer);
+
+    return SUCCESS;
+}
+
+/* 向网络侧重新发送响应消息 */
+ULONG SIP_Txn_ActReSendResponse(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
+{
+    SIP_TXN_CB_S *pstSipTxnCB = NULL_PTR;
+    SIP_MSG_S    *pstSipMsg = NULL_PTR;
+    SIP_MSG_S    *pstSipMsgTemp = NULL_PTR;
+    UBUF_HEADER_S *pstUbufBuffer = NULL_PTR;
+    ULONG ulRuleIndex;
+
+    pstSipTxnCB = &g_pstSipTxnCB[ulTxnID];
+
+    pstSipMsg = (SIP_MSG_S *)UBUF_GET_MSG_PTR(pstSipTxnCB->pstUbufResponse);
+    pstUbufBuffer = UBUF_AllocUBuf(SIP_MAX_UBUF_MSG_LEN);
+    SIP_GetRuleIndex("SIP-message", &ulRuleIndex);
+    SIP_Clone(ulRuleIndex, pstSipMsg, pstUbufBuffer, &pstSipMsgTemp);
+
+    /* 发送新的请求 */
+    SIP_Txp_RecvDownMsg(pstUbufBuffer,
                        &pstSipTxnCB->stPeer);
 
     return SUCCESS;
 }
 
 /* 向TU侧发送消息 */
-ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara)
+ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_TXN_CB_S *pstSipTxnCB = NULL_PTR;
 
@@ -564,25 +612,25 @@ ULONG SIP_Txn_ActPassMsg(ULONG ulTxnID, ULONG ulPara)
     SIP_TU_RecvUpMsg(pstSipTxnCB->ulCoreID,
                      ulTxnID,
                     &pstSipTxnCB->stPeer,
-                     g_pstSipTxnRecvMsg);
+                     pstUbufSipMsg);
 
     return SUCCESS;
 }
 
 /* 向TU侧发送事件指示 */
-ULONG SIP_Txn_ActInformTU(ULONG ulTxnID, ULONG ulPara)
+ULONG SIP_Txn_ActInformTU(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
 {
     return SUCCESS;
 }
 
 /* 发送ACK请求 */
-ULONG SIP_Txn_ActSendAck(ULONG ulTxnID, ULONG ulPara)
+ULONG SIP_Txn_ActSendAck(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
 {
     return SUCCESS;
 }
 
 /* 重启定时器A */
-ULONG SIP_Txn_ActStartTimer(ULONG ulTxnID, ULONG ulPara)
+ULONG SIP_Txn_ActStartTimer(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_TXN_TIMER_NAME_E eName;
 
@@ -606,7 +654,7 @@ ULONG SIP_Txn_ActStartTimer(ULONG ulTxnID, ULONG ulPara)
 
 
 /* 重启定时器A */
-ULONG SIP_Txn_ActStopTimer(ULONG ulTxnID, ULONG ulPara)
+ULONG SIP_Txn_ActStopTimer(ULONG ulTxnID, ULONG ulPara, UBUF_HEADER_S *pstUbufSipMsg)
 {
     SIP_TXN_TIMER_NAME_E eName;
 

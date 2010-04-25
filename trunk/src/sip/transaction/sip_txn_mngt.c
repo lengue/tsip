@@ -47,7 +47,8 @@ ULONG SIP_Txn_AllocTxn(ULONG ulCoreID, ULONG *pulTxnID)
     pstSipTxnCB->ulCoreID       = ulCoreID;
     pstSipTxnCB->eType          = SIP_TXN_TYPE_BUTT;
     pstSipTxnCB->eState         = SIP_TXN_STATE_INIT;
-    pstSipTxnCB->pstUbufInitMsg = NULL_PTR;
+    pstSipTxnCB->pstUbufRequest = NULL_PTR;
+    pstSipTxnCB->pstUbufResponse = NULL_PTR;
     pstSipTxnCB->ucReSendNum    = 0;
     memset(pstSipTxnCB->astTimers,
            0xff,
@@ -77,10 +78,16 @@ ULONG SIP_Txn_FreeTxn(ULONG ulTxnID)
     }
 
     /* 释放分配的内存 */
-    if (pstSipTxnCB->pstUbufInitMsg != NULL_PTR)
+    if (pstSipTxnCB->pstUbufRequest != NULL_PTR)
     {
         HASH_DeleteNode(pstSipTxnCB->pstHashNode);
-        UBUF_FreeBuffer(pstSipTxnCB->pstUbufInitMsg);
+        UBUF_FreeBuffer(pstSipTxnCB->pstUbufRequest);
+    }
+
+    /* 释放分配的内存 */
+    if (pstSipTxnCB->pstUbufResponse != NULL_PTR)
+    {
+        UBUF_FreeBuffer(pstSipTxnCB->pstUbufResponse);
     }
 
     COMM_CB_FREE(g_pstSipTxnCB, g_stSipTxnCBQueue, ulTxnID);
@@ -147,11 +154,11 @@ ULONG SIP_Txn_Compare(void *pCompared, ULONG ulPara)
 
     if (pstSipMsg->eMsgType == SIP_MSG_TYPE_REQUEST)
     {
-        ulRet = SIP_Txn_CompareRequest(pstUbufSipMsg, g_pstSipTxnCB[ulPara].pstUbufInitMsg);
+        ulRet = SIP_Txn_CompareRequest(pstUbufSipMsg, g_pstSipTxnCB[ulPara].pstUbufRequest);
     }
     else
     {
-        ulRet = SIP_Txn_CompareResponse(pstUbufSipMsg, g_pstSipTxnCB[ulPara].pstUbufInitMsg);
+        ulRet = SIP_Txn_CompareResponse(pstUbufSipMsg, g_pstSipTxnCB[ulPara].pstUbufRequest);
     }
 
     return ulRet;
@@ -269,6 +276,6 @@ ULONG SIP_Txn_GenerateBranch(ULONG  *pulTxnID)
 /* 生成branch参数 */
 UBUF_HEADER_S* SIP_Txn_GetInitMsg(ULONG ulTxnID)
 {
-    return g_pstSipTxnCB[ulTxnID].pstUbufInitMsg;
+    return g_pstSipTxnCB[ulTxnID].pstUbufRequest;
 }
 
