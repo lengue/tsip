@@ -91,7 +91,7 @@ ULONG SIP_StopTimer(ULONG ulHandle)
     }
 
     g_stSiphellCfg.pfnStopTimer(ulHandle);
-	return SUCCESS;
+    return SUCCESS;
 }
 
 ULONG SIP_GenerateRandomString(CHAR *pcBuffer, ULONG ulBufferLen)
@@ -103,6 +103,6 @@ ULONG SIP_GenerateRandomString(CHAR *pcBuffer, ULONG ulBufferLen)
     }
 
     g_stSiphellCfg.pfnGenerateRandom(pcBuffer, ulBufferLen);
-	return SUCCESS;
+    return SUCCESS;
 }
 

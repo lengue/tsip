@@ -198,7 +198,7 @@ ULONG SIP_UAS_SendResponse(ULONG ulAppDlgID,
             /* 创建对话 */
             SIP_Dlg_UpdateLocalURI(ulDlgID, pstHeaderTo->stNameAddr.pstUri);
             SIP_Dlg_UpdateRemoteSeq(ulDlgID, pstHeaderCseq->ulSeq);
-            SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pstParam->stAddr.pstUri);
+            //SIP_Dlg_UpdateRemoteTarget(ulDlgID, pstHeaderContact->pstParam->stAddr.pstUri);
             SIP_Dlg_UpdateRemoteURI(ulDlgID, pstHeaderFrom->stNameAddr.pstUri);
             SIP_Dlg_UpdateSecureFlag(ulDlgID, FALSE);
             //SIP_Dlg_UpdateRouteSet(ulDlgID, pstRouteSet);
