@@ -54,7 +54,7 @@ ULONG SIP_ParseSIPmessage(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     下同 */
 
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REQUEST))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_REQUEST))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST)(pstNode, pucString, pstUbuf, ppStruct);
     }
@@ -91,7 +91,7 @@ ULONG SIP_ParseRequest(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while(pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REQUEST_LINE))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_REQUEST_LINE))
         {
             pStruct = &pstSipMsg->uStartLine.stRequstLine;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST_LINE)(pstNode,
@@ -104,14 +104,14 @@ ULONG SIP_ParseRequest(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                 return FAIL;
             }
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_MESSAGE_HEADER))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_MESSAGE_HEADER))
         {
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstNode,
                                                              pucString,
                                                              pstUbuf,
                                                              ppStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_MESSAGE_BODY))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_MESSAGE_BODY))
         {
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstNode,
                                                            pucString,
@@ -148,7 +148,7 @@ ULONG SIP_ParseResponse(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while(pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_STATUS_LINE))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_STATUS_LINE))
         {
             pStruct = &pstSipMsg->uStartLine.stStatusLine;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_STATUS_LINE)(pstNode,
@@ -161,14 +161,14 @@ ULONG SIP_ParseResponse(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                 return FAIL;
             }
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_MESSAGE_HEADER))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_MESSAGE_HEADER))
         {
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_HEADER)(pstNode,
                                                             pucString,
                                                             pstUbuf,
                                                             ppStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_MESSAGE_BODY))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_MESSAGE_BODY))
         {
             SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstNode,
                                                            pucString,
@@ -200,7 +200,7 @@ ULONG SIP_ParseRequestLine(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_METHOD))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_METHOD))
         {
             pStruct = &pstRequestLine->eMethod;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_METHOD)(pstNode,
@@ -208,14 +208,14 @@ ULONG SIP_ParseRequestLine(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                              pstUbuf,
                                                             &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REQUEST_URI))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_REQUEST_URI))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_REQUEST_URI)(pstNode,
                                                                   pucString,
                                                                   pstUbuf,
                                                                  &pstRequestLine->pstRequestURI);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIP_VERSION))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SIP_VERSION))
         {
             pStruct = &pstRequestLine->ucVersion;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(pstNode,
@@ -253,7 +253,7 @@ ULONG SIP_ParseStatusLine(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIP_VERSION))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SIP_VERSION))
         {
             pStruct = &pstStatusLine->ucVersion;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(pstNode,
@@ -261,7 +261,7 @@ ULONG SIP_ParseStatusLine(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                 pstUbuf,
                                                                &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_STATUS_CODE))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_STATUS_CODE))
         {
             pStruct = &pstStatusLine->eStatusCode;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_STATUS_CODE)(pstNode,
@@ -351,7 +351,7 @@ ULONG SIP_ParseMessageHeader(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
             continue;
         }
 
-        if (!SIP_RULE_MATCH(pstNode, ulAppIndex))
+        if (!ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, ulAppIndex))
         {
             continue;
         }
@@ -407,27 +407,27 @@ ULONG SIP_ParseMethod(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     SIP_GET_COMPONET_PTR(peMthod, SIP_METHOD_E, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_INVITE_M))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_INVITE_M))
     {
         *peMthod = SIP_METHOD_INVITE;
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ACK_M))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_ACK_M))
     {
         *peMthod = SIP_METHOD_ACK;
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_OPTIONS_M))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_OPTIONS_M))
     {
         *peMthod = SIP_METHOD_OPTIONS;
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_BYE_M))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_BYE_M))
     {
         *peMthod = SIP_METHOD_BYE;
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_CANCEL_M))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_CANCEL_M))
     {
         *peMthod = SIP_METHOD_CANCEL;
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_REGISTER_M))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_REGISTER_M))
     {
         *peMthod = SIP_METHOD_REGISTER;
     }
@@ -452,14 +452,14 @@ ULONG SIP_ParseRequestURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     URI_S *pstUri = NULL_PTR;
 
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIP_URI))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SIP_URI))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_URI)(pstNode,
                                                           pucString,
                                                           pstUbuf,
                                                           ppStruct);
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIPS_URI))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SIPS_URI))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIPS_URI)(pstNode,
                                                            pucString,
@@ -545,14 +545,14 @@ ULONG SIP_ParseSipURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_USERINFO))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_USERINFO))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_USERINFO)(pstNode,
                                                                pucString,
                                                                pstUbuf,
                                                               &pstUri->u.stSipUri.pstUserInfo);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOSTPORT))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_HOSTPORT))
         {
             pStruct = &pstUri->u.stSipUri.stHostPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOSTPORT)(pstNode,
@@ -587,14 +587,14 @@ ULONG SIP_ParseSipsURI(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_USERINFO))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_USERINFO))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_USERINFO)(pstNode,
                                                                pucString,
                                                                pstUbuf,
                                                               &pstUri->u.stSipUri.pstUserInfo);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOSTPORT))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_HOSTPORT))
         {
             pStruct = &pstUri->u.stSipUri.stHostPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOSTPORT)(pstNode,
@@ -626,11 +626,11 @@ ULONG SIP_ParseUserinfo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_USER))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_USER))
         {
             SIP_GET_STRING(pucStr, pstNode, pucString, pstUbuf, &pstUserInfo->pucUserInfo);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_USER))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_USER))
         {
             SIP_GET_STRING(pucStr, pstNode, pucString, pstUbuf, &pstUserInfo->pucPassword);
         }
@@ -662,7 +662,7 @@ ULONG SIP_ParseHostport(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_HOST))
         {
             pStruct = &pstHostPort->stHost;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
@@ -670,7 +670,7 @@ ULONG SIP_ParseHostport(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                           pstUbuf,
                                                          &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_PORT))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_PORT))
         {
             pStruct = &pstHostPort->usPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_PORT)(pstNode,
@@ -700,16 +700,16 @@ ULONG SIP_ParseHost(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     SIP_GET_COMPONET_PTR(pstHost, URI_HOST_S, pstUbuf, ppStruct);
 
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST_NAME))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_HOST_NAME))
     {
         pstHost->eHostType = URI_HOST_DOMAIN;
         /* ABNF中没有检查合法性，这里要添加检查 */
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_IPV4_ADDRESS))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_IPV4_ADDRESS))
     {
         pstHost->eHostType = URI_HOST_IPV4;
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_IPV6_REFERENCE))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_IPV6_REFERENCE))
     {
         pstHost->eHostType = URI_HOST_IPV6;
     }
@@ -764,7 +764,7 @@ ULONG SIP_ParseFromSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_NAME_ADDR))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_NAME_ADDR))
         {
             pstFrom->stNameAddr.bName = TRUE;
             pStruct = &pstFrom->stNameAddr;
@@ -773,7 +773,7 @@ ULONG SIP_ParseFromSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                 pstUbuf,
                                                                &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_ADDR_SPEC))
         {
             pstFrom->stNameAddr.bName = FALSE;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
@@ -781,7 +781,7 @@ ULONG SIP_ParseFromSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                 pstUbuf,
                                                                &pstFrom->stNameAddr.pstUri);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_FROM_PARAM))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_FROM_PARAM))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_FROM_PARAM)(pstNode,
                                                                  pucString,
@@ -813,11 +813,11 @@ ULONG SIP_ParseNameAddr(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_DISPLAY_NAME))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_DISPLAY_NAME))
         {
             SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstNameAddr->pucName);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_ADDR_SPEC))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
@@ -843,14 +843,14 @@ ULONG SIP_ParseAddrSpec(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     ULONG       ulRet;
 
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIP_URI))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SIP_URI))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIP_URI)(pstNode,
                                                           pucString,
                                                           pstUbuf,
                                                           ppStruct);
     }
-    else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SIPS_URI))
+    else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SIPS_URI))
     {
         ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SIPS_URI)(pstNode,
                                                           pucString,
@@ -880,7 +880,7 @@ ULONG SIP_ParseFromParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
 
     /* 目前只处理tag参数 */
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TAG_PARAM))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TAG_PARAM))
     {
         return SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TAG_PARAM)(pstNode,
                                                            pucString,
@@ -906,7 +906,7 @@ ULONG SIP_ParseToParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
 
     /* 目前只处理tag参数 */
     pstNode = pstGrammarNode->pstChild;
-    if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TAG_PARAM))
+    if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TAG_PARAM))
     {
         return SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TAG_PARAM)(pstNode,
                                                            pucString,
@@ -931,7 +931,7 @@ ULONG SIP_ParseTagParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TOKEN))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TOKEN))
         {
             SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, ppStruct);
             return SUCCESS;
@@ -983,7 +983,7 @@ ULONG SIP_ParseViaParm(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SENT_PROTOCOL))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SENT_PROTOCOL))
         {
             pStruct = &pstViaParm->eProtocolType;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SENT_PROTOCOL)(pstNode,
@@ -991,7 +991,7 @@ ULONG SIP_ParseViaParm(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                     pstUbuf,
                                                                    &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_SENT_BY))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_SENT_BY))
         {
             pStruct = &pstViaParm->stSendBy;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_SENT_BY)(pstNode,
@@ -999,7 +999,7 @@ ULONG SIP_ParseViaParm(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                               pstUbuf,
                                                              &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_PARMS))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_VIA_PARMS))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_PARMS)(pstNode,
                                                                 pucString,
@@ -1028,7 +1028,7 @@ ULONG SIP_ParseSentProtocol(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TRANSPORT))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TRANSPORT))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TRANSPORT)(pstNode,
                                                                 pucString,
@@ -1103,7 +1103,7 @@ ULONG SIP_ParseSentBy(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_HOST))
         {
             pStruct = &pstSentBy->stHost;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
@@ -1111,7 +1111,7 @@ ULONG SIP_ParseSentBy(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                            pstUbuf,
                                                           &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_PORT))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_PORT))
         {
             pStruct = &pstSentBy->usPort;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
@@ -1148,7 +1148,7 @@ ULONG SIP_ParseViaParams(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_TTL))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_VIA_TTL))
         {
             pStruct = &pstViaParm->ulTtl;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_TTL)(pstNode,
@@ -1156,21 +1156,21 @@ ULONG SIP_ParseViaParams(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                               pstUbuf,
                                                              &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_MADDR))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_VIA_MADDR))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_MADDR)(pstNode,
                                                                 pucString,
                                                                 pstUbuf,
                                                                &pstViaParm->pstMaddr);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_RECEIVED))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_VIA_RECEIVED))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_RECEIVED)(pstNode,
                                                                    pucString,
                                                                    pstUbuf,
                                                                   &pstViaParm->pstReceived);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_BRANCH))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_VIA_BRANCH))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_BRANCH)(pstNode,
                                                                  pucString,
@@ -1202,7 +1202,7 @@ ULONG SIP_ParseViaTtl(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TTL))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TTL))
         {
             pucChar = SIP_GET_OFFSET_POINT(pucString, pstNode->ulOffset);
             SIP_GET_DEC_NUM(ulTtl, pucChar);
@@ -1230,7 +1230,7 @@ ULONG SIP_ParseViaMaddr(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_HOST))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_HOST))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_HOST)(pstNode,
                                                            pucString,
@@ -1262,13 +1262,13 @@ ULONG SIP_ParseViaReceived(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_IPV4_ADDRESS))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_IPV4_ADDRESS))
         {
             pstViaReceived->eIpType = SIP_IP_TYPE_IPV4;
             SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaReceived->u.pucIPV4);
             break;
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_IPV6_ADDRESS))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_IPV6_ADDRESS))
         {
             pstViaReceived->eIpType = SIP_IP_TYPE_IPV6;
             SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaReceived->u.pucIPV6);
@@ -1299,7 +1299,7 @@ ULONG SIP_ParseViaBranch(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TOKEN))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TOKEN))
         {
             SIP_GET_STRING(pucStrPtr, pstNode, pucString, pstUbuf, &pstViaParm->pucBranch);
             break;
@@ -1331,7 +1331,7 @@ ULONG SIP_ParseContactParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_NAME_ADDR))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_NAME_ADDR))
         {
             pStruct = &pstContactParam->stAddr;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_NAME_ADDR)(pstNode,
@@ -1339,7 +1339,7 @@ ULONG SIP_ParseContactParam(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                 pstUbuf,
                                                                &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_ADDR_SPEC))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
                                                                 pucString,
@@ -1393,7 +1393,7 @@ ULONG SIP_ParseHeaderCallID(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_CALLID))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_CALLID))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_CALLID)(pstNode,
                                                              pucString,
@@ -1442,7 +1442,7 @@ ULONG SIP_ParseHeaderCseq(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_METHOD))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_METHOD))
         {
             pStruct = &pstSeq->eMethod;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_METHOD)(pstNode,
@@ -1474,7 +1474,7 @@ ULONG SIP_ParseHeaderFrom(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_FROM_SPEC))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_FROM_SPEC))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstNode,
                                                                 pucString,
@@ -1513,7 +1513,7 @@ ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_NAME_ADDR))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_NAME_ADDR))
         {
             pstTo->stNameAddr.bName = TRUE;
             pStruct = &pstTo->stNameAddr;
@@ -1522,7 +1522,7 @@ ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                 pstUbuf,
                                                                &pStruct);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_ADDR_SPEC))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_ADDR_SPEC))
         {
             pstTo->stNameAddr.bName = FALSE;
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstNode,
@@ -1530,7 +1530,7 @@ ULONG SIP_ParseHeaderTo(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
                                                                 pstUbuf,
                                                                &pstTo->stNameAddr.pstUri);
         }
-        else if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_TO_PARAM))
+        else if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_TO_PARAM))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_TO_PARAM)(pstNode,
                                                                 pucString,
@@ -1563,7 +1563,7 @@ ULONG SIP_ParseHeaderVia(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_VIA_PARM))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_VIA_PARM))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_VIA_PARM)(pstNode,
                                                                pucString,
@@ -1632,13 +1632,13 @@ ULONG SIP_ParseHeaderContact(ABNF_GRAMMAR_NODE_S *pstGrammarNode,
     pstNode = pstGrammarNode->pstChild;
     while (pstNode != NULL_PTR)
     {
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_STAR))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_STAR))
         {
             pstContact->ucIsStar = TRUE;
             return SUCCESS;
         }
 
-        if (SIP_RULE_MATCH(pstNode, SIP_ABNF_RULE_CONTACT_PARAM))
+        if (ABNF_RULE_MATCH(pstNode, g_astSipAppRuleTbl, SIP_ABNF_RULE_CONTACT_PARAM))
         {
             ulRet = SIP_GET_PARSE_FUNC(SIP_ABNF_RULE_CONTACT_PARAM)(pstNode,
                                                                     pucString,
