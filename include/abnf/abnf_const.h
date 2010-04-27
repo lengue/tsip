@@ -10,3 +10,8 @@
 #define ABNF_APP_RULE_HEADER \
     UCHAR aucName[ABNF_MAX_RULE_NAME_LEN + 1];   /* ABNF规则名字 */\
     ULONG ulRuleIndex;                           /* ABNF解析规则索引 */
+
+/* 检查是否匹配应用规则 */
+#define ABNF_RULE_MATCH(pstNode, pstAppRule, ulAppRuleIndex) \
+ ((pstNode->bCoreFlag == FALSE) \
+&&(pstNode->ulIndex == pstAppRule[ulAppRuleIndex].ulRuleIndex))
