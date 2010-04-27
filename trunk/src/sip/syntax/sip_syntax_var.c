@@ -36,7 +36,7 @@
 BOOL         g_bSipSyntaxInit = FALSE;
 UCHAR *g_pucSipSyntaxBuffer = NULL_PTR;
 
-ABNF_RULE_LIST_S *g_pstSipRuleList = NULL_PTR;
+VOID  *g_pstSipRuleList = NULL_PTR;
 
 /* SIP ABNF规则算法表，包括编码，解析和克隆 */
 SIP_APP_RULE_S g_astSipAppRuleTbl[SIP_ABNF_RULE_BUTT] =
