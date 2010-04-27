@@ -66,7 +66,7 @@ ULONG ABNF_Init()
 /* 构建规则，文本必须采用ABNF描述 */
 ULONG ABNF_BuildRuleList(UCHAR *pucText,
                          ULONG  ulLen,
-                         ABNF_RULE_LIST_S **ppstRuleList)
+                         void **ppstRuleList)
 {
     ULONG ulRet;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
@@ -93,33 +93,58 @@ ULONG ABNF_BuildRuleList(UCHAR *pucText,
 }
 
 /* 释放一个元素 */
-ULONG ABNF_FreeRuleList(ABNF_RULE_LIST_S *pstRuleList)
+ULONG ABNF_FreeRuleList(void *pstRuleList)
 {
     ULONG ulLoop;
+    ABNF_RULE_LIST_S *pstRuleListTemp = NULL_PTR;
 
     if (pstRuleList == NULL_PTR)
     {
         return SUCCESS;
     }
 
+    pstRuleListTemp = (ABNF_RULE_LIST_S *)pstRuleList;
+
     /* 释放规则数组 */
-    if (pstRuleList->pstRules != NULL_PTR)
+    if (pstRuleListTemp->pstRules != NULL_PTR)
     {
         /* 先释放每个规则下的元素 */
-        for(ulLoop = 0; ulLoop < pstRuleList->ulRuleNum; ulLoop++)
+        for(ulLoop = 0; ulLoop < pstRuleListTemp->ulRuleNum; ulLoop++)
         {
-            if(pstRuleList->pstRules[ulLoop].pstElements != NULL_PTR)
+            if(pstRuleListTemp->pstRules[ulLoop].pstElements != NULL_PTR)
             {
-                ABNF_FreeElement(pstRuleList->pstRules[ulLoop].pstElements);
+                ABNF_FreeElement(pstRuleListTemp->pstRules[ulLoop].pstElements);
             }
         }
 
-        free(pstRuleList->pstRules);
+        free(pstRuleListTemp->pstRules);
     }
 
     /* 最后释放规则列表 */
-    free(pstRuleList);
+    free(pstRuleListTemp);
     return SUCCESS;
+}
+
+/* 获取应用规则索引*/
+ULONG ABNF_GetRuleIndex(void *pstRuleList, UCHAR *pucRuleName, ULONG *pulRuleIndex)
+{
+    ULONG ulLoop;
+    ULONG ulRet;
+    ABNF_RULE_LIST_S *pstRuleListTemp = NULL_PTR;
+
+    pstRuleListTemp = (ABNF_RULE_LIST_S *)pstRuleList;
+    for (ulLoop = 0; ulLoop < pstRuleListTemp->ulRuleNum; ulLoop++)
+    {
+        ulRet = strcmp(pucRuleName,
+                       pstRuleListTemp->pstRules[ulLoop].aucName);
+        if (ulRet == SUCCESS)
+        {
+            *pulRuleIndex = ulLoop;
+            return SUCCESS;
+        }
+    }
+
+    return FAIL;
 }
 
 /* 文本解析，先解析文法，在构造语法结构
@@ -131,8 +156,8 @@ ABNF_GRAMMAR_NODE_S **ppstNode  匹配生成的文法描述
 */
 ULONG ABNF_GrammarParse(UCHAR *pucText,
                         ULONG  ulLen,
-                        ABNF_RULE_LIST_S *pstRuleList,
-                        ULONG ulMatchRule,
+                        void  *pstRuleList,
+                        ULONG  ulMatchRule,
                         ABNF_GRAMMAR_NODE_S **ppstNode)
 {
     ULONG ulSize   = 0;
@@ -140,10 +165,13 @@ ULONG ABNF_GrammarParse(UCHAR *pucText,
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
     ABNF_ELEMENT_S       stRuleElement;
     ABNF_MATCH_TARGET_S  stMatchTarget;
+    ABNF_RULE_LIST_S *pstRuleListTemp = NULL_PTR;
+
+    pstRuleListTemp = (ABNF_RULE_LIST_S *)pstRuleList;
 
     stMatchTarget.pucText = pucText;
     stMatchTarget.ulLen = ulLen;
-    stMatchTarget.pstRuleList = pstRuleList;
+    stMatchTarget.pstRuleList = pstRuleListTemp;
 
     ABNF_SuccessRecord();
 
@@ -163,7 +191,7 @@ ULONG ABNF_GrammarParse(UCHAR *pucText,
     else
     {
         printf("\r\nABNF match fail![Name:%s Pos:%d]",
-                pstRuleList->pstRules[ulMatchRule].aucName,
+                pstRuleListTemp->pstRules[ulMatchRule].aucName,
                 g_ulAbnfFailPos);
     }
 
@@ -1364,7 +1392,6 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
                 pucText + pstTempNode2->ulOffset,
                 pstTempNode2->ulSize);
         pstRule[ulLoop].aucName[pstTempNode2->ulSize] = '\0';
-        pstRule[ulLoop].ulAppRuleIndex = NULL_ULONG;
         pstRule[ulLoop].pstElements    = NULL_PTR;
 
         ulLoop++;

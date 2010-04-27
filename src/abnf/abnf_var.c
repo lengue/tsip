@@ -25,22 +25,22 @@
 /* 初始化核心规则表 */
 ABNF_RULE_S g_astCoreRuleTbl[ABNF_CORE_RULE_BUTT] =
 {
-    {"ALPHA",   NULL_ULONG, NULL_PTR},
-    {"BIT",     NULL_ULONG, NULL_PTR},
-    {"CHAR",    NULL_ULONG, NULL_PTR},
-    {"CR",      NULL_ULONG, NULL_PTR},
-    {"CRLF",    NULL_ULONG, NULL_PTR},
-    {"CTL",     NULL_ULONG, NULL_PTR},
-    {"DIGIT",   NULL_ULONG, NULL_PTR},
-    {"DQUOTE",  NULL_ULONG, NULL_PTR},
-    {"HEXDIG",  NULL_ULONG, NULL_PTR},
-    {"HTAB",    NULL_ULONG, NULL_PTR},
-    {"LF",      NULL_ULONG, NULL_PTR},
-    {"LWSP",    NULL_ULONG, NULL_PTR},
-    {"OCTET",   NULL_ULONG, NULL_PTR},
-    {"SP",      NULL_ULONG, NULL_PTR},
-    {"VCHAR",   NULL_ULONG, NULL_PTR},
-    {"WSP",     NULL_ULONG, NULL_PTR}
+    {"ALPHA",  NULL_PTR},
+    {"BIT",    NULL_PTR},
+    {"CHAR",   NULL_PTR},
+    {"CR",     NULL_PTR},
+    {"CRLF",   NULL_PTR},
+    {"CTL",    NULL_PTR},
+    {"DIGIT",  NULL_PTR},
+    {"DQUOTE", NULL_PTR},
+    {"HEXDIG", NULL_PTR},
+    {"HTAB",   NULL_PTR},
+    {"LF",     NULL_PTR},
+    {"LWSP",   NULL_PTR},
+    {"OCTET",  NULL_PTR},
+    {"SP",     NULL_PTR},
+    {"VCHAR",  NULL_PTR},
+    {"WSP",    NULL_PTR}
 };
 
 ABNF_RULE_LIST_S g_stCoreRules = {ABNF_CORE_RULE_BUTT, g_astCoreRuleTbl};
@@ -48,27 +48,27 @@ ABNF_RULE_LIST_S g_stCoreRules = {ABNF_CORE_RULE_BUTT, g_astCoreRuleTbl};
 /* 初始化ABNF规则表 */
 ABNF_RULE_S g_astAbnfRuleTbl[ABNF_RULE_BUTT] =
 {
-    {"rulelist"     , ABNF_RULE_RULELIST,       NULL_PTR},
-    {"rule"         , ABNF_RULE_RULE,           NULL_PTR},
-    {"rulename"     , ABNF_RULE_RULENAME,       NULL_PTR},
-    {"defined-as"   , ABNF_RULE_DEFINED_AS,     NULL_PTR},
-    {"elements"     , ABNF_RULE_ELEMENTS,       NULL_PTR},
-    {"c-wsp"        , ABNF_RULE_C_WSP,          NULL_PTR},
-    {"c-nl"         , ABNF_RULE_C_NL,           NULL_PTR},
-    {"comment"      , ABNF_RULE_COMMENT,        NULL_PTR},
-    {"alternation"  , ABNF_RULE_ALTERNATION,    NULL_PTR},
-    {"concatenation", ABNF_RULE_CONCATENATION,  NULL_PTR},
-    {"repetition"   , ABNF_RULE_REPETITION,     NULL_PTR},
-    {"repeat"       , ABNF_RULE_REPEAT,         NULL_PTR},
-    {"element"      , ABNF_RULE_ELEMENT,        NULL_PTR},
-    {"group"        , ABNF_RULE_GROUP,          NULL_PTR},
-    {"option"       , ABNF_RULE_OPTION,         NULL_PTR},
-    {"char-val"     , ABNF_RULE_CHAR_VAL,       NULL_PTR},
-    {"num-val"      , ABNF_RULE_NUM_VAL,        NULL_PTR},
-    {"bin-val "     , ABNF_RULE_BIN_VAL,        NULL_PTR},
-    {"dec-val"      , ABNF_RULE_DEC_VAL,        NULL_PTR},
-    {"hex-val"      , ABNF_RULE_HEX_VAL,        NULL_PTR},
-    {"prose-val"    , ABNF_RULE_PROSE_VAL,      NULL_PTR}
+    {"rulelist"     , NULL_PTR},
+    {"rule"         , NULL_PTR},
+    {"rulename"     , NULL_PTR},
+    {"defined-as"   , NULL_PTR},
+    {"elements"     , NULL_PTR},
+    {"c-wsp"        , NULL_PTR},
+    {"c-nl"         , NULL_PTR},
+    {"comment"      , NULL_PTR},
+    {"alternation"  , NULL_PTR},
+    {"concatenation", NULL_PTR},
+    {"repetition"   , NULL_PTR},
+    {"repeat"       , NULL_PTR},
+    {"element"      , NULL_PTR},
+    {"group"        , NULL_PTR},
+    {"option"       , NULL_PTR},
+    {"char-val"     , NULL_PTR},
+    {"num-val"      , NULL_PTR},
+    {"bin-val "     , NULL_PTR},
+    {"dec-val"      , NULL_PTR},
+    {"hex-val"      , NULL_PTR},
+    {"prose-val"    , NULL_PTR}
 };
 
 ABNF_RULE_LIST_S g_stAbnfRules = {ABNF_RULE_BUTT, g_astAbnfRuleTbl};

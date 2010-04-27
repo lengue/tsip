@@ -7,11 +7,14 @@
 ULONG ABNF_Init();
 ULONG ABNF_BuildRuleList(UCHAR *pucText,
                          ULONG  ulLen,
-                         ABNF_RULE_LIST_S **ppstRuleList);
-ULONG ABNF_FreeRuleList(ABNF_RULE_LIST_S *pstRuleList);
+                         void **ppstRuleList);
+ULONG ABNF_FreeRuleList(void *pstRuleList);
+ULONG ABNF_GetRuleIndex(void *pstRuleList, 
+                        UCHAR *pucRuleName, 
+                        ULONG *pulRuleIndex);
 ULONG ABNF_GrammarParse(UCHAR *pucText,
                         ULONG  ulLen,
-                        ABNF_RULE_LIST_S *pstRuleList,
+                        void *pstRuleList,
                         ULONG ulMatchRule,
                         ABNF_GRAMMAR_NODE_S **ppstNode);
 ULONG ABNF_AddCharElement(ABNF_ELEMENT_S **ppstElement,

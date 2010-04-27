@@ -32,7 +32,6 @@
 ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg)
 {
     ULONG ulLoop;
-    ULONG ulLoop2;
     ULONG ulRet;
 
     /* 本模块只能初始化一次，后续一律直接返回OK */
@@ -66,19 +65,10 @@ ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg)
     /* 构建SIP应用规则表，应用规则可以比匹配的ABNF规则少 */
     for (ulLoop = 0; ulLoop < SIP_ABNF_RULE_BUTT; ulLoop++)
     {
-        for (ulLoop2 = 0; ulLoop2 < g_pstSipRuleList->ulRuleNum; ulLoop2++)
-        {
-            ulRet = strcmp(g_astSipAppRuleTbl[ulLoop].aucName,
-                           g_pstSipRuleList->pstRules[ulLoop2].aucName);
-            if (ulRet == SUCCESS)
-            {
-                g_pstSipRuleList->pstRules[ulLoop2].ulAppRuleIndex = ulLoop;
-                g_astSipAppRuleTbl[ulLoop].ulRuleIndex = ulLoop2;
-                break;
-            }
-        }
-
-        if (ulLoop2 >= g_pstSipRuleList->ulRuleNum)
+        ulRet = ABNF_GetRuleIndex(g_pstSipRuleList, 
+                                  g_astSipAppRuleTbl[ulLoop].aucName, 
+                                 &g_astSipAppRuleTbl[ulLoop].ulRuleIndex);
+        if (ulRet != SUCCESS)
         {
             return FAIL;
         }
