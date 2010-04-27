@@ -77,11 +77,6 @@ typedef enum tagSIP_ABNF_RULE_E
 #define SIP_GET_HEADER_RULE_INDEX(eHeader) g_astSipSyntaxHeaderTbl[eHeader].ulAppRuleIndex
 #define SIP_GET_HEADER_SPEC_SIZE(eHeader)  g_astSipSyntaxHeaderTbl[eHeader].ulStructSize
 
-/* SIP规则匹配判断宏 */
-#define SIP_RULE_MATCH(pstNode, ulAppRuleIndex) \
- ((pstNode->bCoreFlag == FALSE) \
-&&(pstNode->ulIndex == g_astSipAppRuleTbl[ulAppRuleIndex].ulRuleIndex))
-
 /* 获取偏移后的地址指针 */
 #define SIP_GET_OFFSET_POINT(pucString, ulOffset) pucString + (ulOffset)
 

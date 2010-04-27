@@ -64,8 +64,4 @@ typedef enum tagABNF_RULE_E
     ABNF_RULE_BUTT
 }ABNF_RULE_E;
 
-#define ABNF_RULE_MATCH(pstNode, ulAppRuleIndex) \
- ((pstNode->bCoreFlag == FALSE) \
-&&(pstNode->ulIndex == g_astAbnfAppRule[ulAppRuleIndex].ulRuleIndex))
-
 #define ABNF_RULE_PARSE_FUNC(ulAppRuleIndex) g_astAbnfAppRule[ulAppRuleIndex].pfnParseFunc

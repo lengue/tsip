@@ -1365,7 +1365,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_RULE))
+        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULE))
         {
             ulRuleNum++;
         }
@@ -1380,7 +1380,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_RULE))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULE))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1402,7 +1402,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_RULE))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULE))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1438,7 +1438,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStru
     /* 查找构造的规则索引 */
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_RULENAME))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULENAME))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1465,7 +1465,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStru
     pstTempNode = pstTempNode->pstNextNode;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_ELEMENTS))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ELEMENTS))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1525,7 +1525,7 @@ ULONG ABNF_ParseElements(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while(pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_ALTERNATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1555,7 +1555,7 @@ ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void *
     pstTempNode = pstNode->pstChild;
     while(pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_CONCATENATION))
+        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_CONCATENATION))
         {
             ulElementNum++;
         }
@@ -1577,7 +1577,7 @@ ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void *
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_CONCATENATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_CONCATENATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1613,7 +1613,7 @@ ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void
     pstTempNode = pstNode->pstChild;
     while(pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_REPETITION))
+        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_REPETITION))
         {
             ulElementNum++;
         }
@@ -1635,7 +1635,7 @@ ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_REPETITION))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_REPETITION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1665,7 +1665,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_ELEMENT))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ELEMENT))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1683,7 +1683,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_REPEAT))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_REPEAT))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1784,27 +1784,27 @@ ULONG ABNF_ParseElement(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppS
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_RULENAME))
+        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULENAME))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULENAME)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_GROUP))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_GROUP))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_GROUP)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_OPTION))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_OPTION))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_OPTION)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_CHAR_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_CHAR_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_CHAR_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_NUM_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_NUM_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_NUM_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_PROSE_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_PROSE_VAL))
         {
             //ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_PROSE_VAL)(pstTempNode, pucText,  ppStruct);
         }
@@ -1836,7 +1836,7 @@ ULONG ABNF_ParseGroup(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStr
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_ALTERNATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1866,7 +1866,7 @@ ULONG ABNF_ParseOption(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppSt
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_ALTERNATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1921,15 +1921,15 @@ ULONG ABNF_ParseNumVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppSt
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_BIN_VAL))
+        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_BIN_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_BIN_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_DEC_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_DEC_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_DEC_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_HEX_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_HEX_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_HEX_VAL)(pstTempNode, pucText, ppStruct);
         }
