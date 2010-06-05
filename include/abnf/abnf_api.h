@@ -4,16 +4,15 @@
 创建日期: 200.01.10
 修改记录:
 *******************************************************************************/
-extern ULONG ABNF_Init();
-extern ULONG ABNF_BuildRuleList(UCHAR *pucText,
-                                ULONG  ulLen,
-                                void **ppstRuleList);
-extern ULONG ABNF_GetRuleIndex(void *pstRuleList, 
-                               UCHAR *pucRuleName, 
-                               ULONG *pulRuleIndex);
+extern ULONG ABNF_RegistRuleList(UCHAR *pucText,
+                                 ULONG  ulLen,
+                                 UCHAR *pucDepends,
+                                 UCHAR  ucDependNum,
+                                 UCHAR *pucRuleListIndex);
+extern ULONG ABNF_GetRuleIndex(UCHAR ucRuleListIndex, UCHAR *pucRuleName, ULONG *pulRuleIndex);
 extern ULONG ABNF_GrammarParse(UCHAR *pucText,
-                                ULONG ulLen,
-                                void *pstRuleList,
-                                ULONG ulMatchRule,
-                                ABNF_GRAMMAR_NODE_S **ppstNode);
+                        ULONG  ulLen,
+                        UCHAR  ucRuleListIndex,
+                        ULONG  ulMatchRule,
+                        ABNF_GRAMMAR_NODE_S **ppstNode);
 extern ULONG ABNF_FreeNodeTree(ABNF_GRAMMAR_NODE_S *pstGrammarNode);

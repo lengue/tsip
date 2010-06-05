@@ -12,6 +12,10 @@
     ULONG ulRuleIndex;                           /* ABNF解析规则索引 */
 
 /* 检查是否匹配应用规则 */
-#define ABNF_RULE_MATCH(pstNode, pstAppRule, ulAppRuleIndex) \
- ((pstNode->bCoreFlag == FALSE) \
+#define ABNF_RULE_MATCH(pstNode, _ucRuleListIndex, pstAppRule, ulAppRuleIndex) \
+ ((pstNode->ucRuleListIndex == _ucRuleListIndex) \
 &&(pstNode->ulIndex == pstAppRule[ulAppRuleIndex].ulRuleIndex))
+
+#define ABNF_GET_RULE_INDEX(pstAppRule, ulAppRuleIndex) pstAppRule[ulAppRuleIndex].ulRuleIndex
+
+#define ABNF_MAX_DEPEND_RULE_NUM 10

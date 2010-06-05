@@ -9,7 +9,7 @@ typedef struct tagABNF_GRAMMAR_NODE_S
 {
     ULONG                ulOffset;     /* 节点偏移 */
     ULONG                ulSize;       /* 节点长度 */
-    BOOL                 bCoreFlag;   /* 是否匹配核心规则 */
+    UCHAR                ucRuleListIndex;   /* 是否匹配核心规则 */
     ULONG                ulIndex;      /* 规则索引 */
     struct tagABNF_GRAMMAR_NODE_S *pstChild;     /* 第一个子子规则 */
     struct tagABNF_GRAMMAR_NODE_S *pstNextNode;  /* 顺序的下一条子规则 */
