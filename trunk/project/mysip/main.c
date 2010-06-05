@@ -8,7 +8,7 @@
 #include "common\common.h"
 #include "system\system.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
 #include "sip\sip.h"
 #include "app\app.h"
 
