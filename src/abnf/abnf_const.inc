@@ -4,6 +4,14 @@
 创建日期: 200.01.10
 修改记录:
 *******************************************************************************/
+
+/* 注册的最大规则数目 */
+#define ABNF_MAX_RULE_NUM 10
+
+/* 核心规则和ABNF规则索引固定为0和1 */
+#define ABNF_CORE_RULE_LIST_INDEX 0
+#define ABNF_RULE_LIST_INDEX      1
+
 /* 每条规则的基本组成元素的类型 */
 typedef enum tagABNF_ELEMENT_TYPE_E
 {

@@ -11,7 +11,8 @@
 #include "common\common.h"
 #include "abnf\abnf.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
+#include "syntax_comm\syntax_comm.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "..\..\include\sip\sip_const.h"
@@ -33,13 +34,12 @@
 #include "sip_syntax_var.inc"
 
 /* 判断模块是否初始化标记 */
-BOOL         g_bSipSyntaxInit = FALSE;
+BOOL   g_bSipSyntaxInit     = FALSE;
 UCHAR *g_pucSipSyntaxBuffer = NULL_PTR;
-
-VOID  *g_pstSipRuleList = NULL_PTR;
+UCHAR  g_ucSipRuleListIndex = NULL_UCHAR;
 
 /* SIP ABNF规则算法表，包括编码，解析和克隆 */
-SIP_APP_RULE_S g_astSipAppRuleTbl[SIP_ABNF_RULE_BUTT] =
+SYNTAX_APP_RULE_S g_astSipAppRuleTbl[SIP_ABNF_RULE_BUTT] =
 {
     //SIP_ABNF_RULE_SIP_MESSAGE,
     {"SIP-message"     , NULL_ULONG, SIP_CodeSIPmessage,            SIP_ParseSIPmessage,            SIP_CloneSIPmessage},

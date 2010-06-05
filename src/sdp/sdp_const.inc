@@ -73,8 +73,10 @@ typedef enum tagSDP_ABNF_RULE_E
     SDP_ABNF_RULE_ALPHA_NUMERIC,
     SDP_ABNF_RULE_POS_DIGIT,
     SDP_ABNF_RULE_DECIMAL_UCHAR,
-    SDP_ABNF_RULE_ALPHA_NUMERIC,
 
     SDP_ABNF_RULE_BUTT
 }SDP_ABNF_RULE_E;
 
+#define SDP_GET_CODE_FUNC(ulAppRuleIndex)  g_astSdpAppRuleTbl[ulAppRuleIndex].pfnCode
+#define SDP_GET_DECODE_FUNC(ulAppRuleIndex) g_astSdpAppRuleTbl[ulAppRuleIndex].pfnParse
+#define SDP_GET_CLONE_FUNC(ulAppRuleIndex) g_astSdpAppRuleTbl[ulAppRuleIndex].pfnClone

@@ -8,14 +8,15 @@
 1、 所有的编码函数形参一致
     UBUF_HEADER_S *pstUbufMsg     : 存储结构的UBUF
     void *pstStruct               : 编码结构的指针，结构体根据函数不同而不同
-    SIP_SYNTAX_BUFFER_S *pstBuffer: 编码缓存结构
+    SYNTAX_BUFFER_S *pstBuffer: 编码缓存结构
 2、 每个函数首要的任务是明确pstStruct的结构类型
 *******************************************************************************/
 /* 外部依赖模块头文件 */
 #include "common\common.h"
 #include "abnf\abnf.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
+#include "syntax_comm\syntax_comm.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "..\..\include\sip\sip_const.h"
@@ -38,7 +39,7 @@
 SIP-message    =  Request / Response
 *******************************************************************************/
 ULONG SIP_CodeSIPmessage(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_MSG_S *pstSipMsg= NULL_PTR;
 
@@ -62,7 +63,7 @@ Request        =  Request-Line
                   [ message-body ]
 *******************************************************************************/
 ULONG SIP_CodeRequest(void *pstStruct,
-                      SIP_SYNTAX_BUFFER_S *pstBuffer)
+                      SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_MSG_S *pstSipMsg= NULL_PTR;
@@ -81,7 +82,7 @@ ULONG SIP_CodeRequest(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, "\r\n");
+    SYNTAX_ADD_STRING(pstBuffer, "\r\n");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstSipMsg, pstBuffer);
     if (ulRet!= SUCCESS)
@@ -99,7 +100,7 @@ Response          =  Status-Line
                      [ message-body ]
 *******************************************************************************/
 ULONG SIP_CodeResponse(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_MSG_S *pstSipMsg= NULL_PTR;
@@ -117,7 +118,7 @@ ULONG SIP_CodeResponse(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, "\r\n");
+    SYNTAX_ADD_STRING(pstBuffer, "\r\n");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_MESSAGE_BODY)(pstSipMsg, pstBuffer);
     if (ulRet!= SUCCESS)
@@ -132,7 +133,7 @@ ULONG SIP_CodeResponse(void *pstStruct,
 Request-Line   =  Method SP Request-URI SP SIP-Version CRLF
 *******************************************************************************/
 ULONG SIP_CodeRequestLine(void *pstStruct,
-                          SIP_SYNTAX_BUFFER_S *pstBuffer)
+                          SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_REQUEST_LINE_S *pstRequestLine = NULL_PTR;
@@ -144,7 +145,7 @@ ULONG SIP_CodeRequestLine(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, " ");
+    SYNTAX_ADD_STRING(pstBuffer, " ");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_REQUEST_URI)(pstRequestLine->pstRequestURI, pstBuffer);
     if (ulRet!= SUCCESS)
@@ -152,7 +153,7 @@ ULONG SIP_CodeRequestLine(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, " ");
+    SYNTAX_ADD_STRING(pstBuffer, " ");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(&pstRequestLine->ucVersion, pstBuffer);
     if (ulRet!= SUCCESS)
@@ -160,7 +161,7 @@ ULONG SIP_CodeRequestLine(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, "\r\n");
+    SYNTAX_ADD_STRING(pstBuffer, "\r\n");
     return SUCCESS;
 }
 
@@ -168,7 +169,7 @@ ULONG SIP_CodeRequestLine(void *pstStruct,
 Status-Line     =  SIP-Version SP Status-Code SP Reason-Phrase CRLF
 *******************************************************************************/
 ULONG SIP_CodeStatusLine(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_STATUS_LINE_S *pstStateLine = NULL_PTR;
@@ -180,7 +181,7 @@ ULONG SIP_CodeStatusLine(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, " ");
+    SYNTAX_ADD_STRING(pstBuffer, " ");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_STATUS_CODE)(&pstStateLine->eStatusCode, pstBuffer);
     if (ulRet!= SUCCESS)
@@ -188,7 +189,7 @@ ULONG SIP_CodeStatusLine(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, " ");
+    SYNTAX_ADD_STRING(pstBuffer, " ");
 
     ulRet = SIP_CodeReasonPhrase(&pstStateLine->eStatusCode, pstBuffer);
     if (ulRet!= SUCCESS)
@@ -196,7 +197,7 @@ ULONG SIP_CodeStatusLine(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, "\r\n");
+    SYNTAX_ADD_STRING(pstBuffer, "\r\n");
     return SUCCESS;
 }
 
@@ -248,7 +249,7 @@ message-header  =  (Accept
                 /  extension-header) CRLF
 *******************************************************************************/
 ULONG SIP_CodeMessageHeader(void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+                            SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     ULONG ulLoop;
@@ -275,7 +276,7 @@ ULONG SIP_CodeMessageHeader(void *pstStruct,
                                                   pstBuffer);
             if (ulRet == SUCCESS)
             {
-                SIP_ADD_STRING(pstBuffer, "\r\n");
+                SYNTAX_ADD_STRING(pstBuffer, "\r\n");
             }
             else
             {
@@ -293,7 +294,7 @@ ULONG SIP_CodeMessageHeader(void *pstStruct,
 message-body  =  *OCTET
 *******************************************************************************/
 ULONG SIP_CodeMessageBody(void *pstStruct,
-                          SIP_SYNTAX_BUFFER_S *pstBuffer)
+                          SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_MSG_S *pstSipMsg = NULL_PTR;
 
@@ -307,7 +308,7 @@ Method            =  INVITEm / ACKm / OPTIONSm / BYEm
                      / extension-method
 *******************************************************************************/
 ULONG SIP_CodeMethod(void *pstStruct,
-                     SIP_SYNTAX_BUFFER_S *pstBuffer)
+                     SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_METHOD_E eMethod;
 
@@ -315,27 +316,27 @@ ULONG SIP_CodeMethod(void *pstStruct,
     switch(eMethod)
     {
         case SIP_METHOD_INVITE:
-            SIP_ADD_STRING(pstBuffer, "INVITE");
+            SYNTAX_ADD_STRING(pstBuffer, "INVITE");
             break;
 
         case SIP_METHOD_ACK:
-            SIP_ADD_STRING(pstBuffer, "ACK");
+            SYNTAX_ADD_STRING(pstBuffer, "ACK");
             break;
 
         case SIP_METHOD_OPTIONS:
-            SIP_ADD_STRING(pstBuffer,"OPTIONS");
+            SYNTAX_ADD_STRING(pstBuffer,"OPTIONS");
             break;
 
         case SIP_METHOD_BYE:
-            SIP_ADD_STRING(pstBuffer, "BYE");
+            SYNTAX_ADD_STRING(pstBuffer, "BYE");
             break;
 
         case SIP_METHOD_CANCEL:
-            SIP_ADD_STRING(pstBuffer, "CANCEL");
+            SYNTAX_ADD_STRING(pstBuffer, "CANCEL");
             break;
 
         case SIP_METHOD_REGISTER:
-            SIP_ADD_STRING(pstBuffer, "REGISTER");
+            SYNTAX_ADD_STRING(pstBuffer, "REGISTER");
             break;
 
        default:
@@ -349,7 +350,7 @@ ULONG SIP_CodeMethod(void *pstStruct,
 Request-URI    =  SIP-URI / SIPS-URI / absoluteURI
 *******************************************************************************/
 ULONG SIP_CodeRequestURI(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     URI_S *pstRequestURI = NULL_PTR;
 
@@ -370,15 +371,15 @@ ULONG SIP_CodeRequestURI(void *pstStruct,
 SIP-Version    =  "SIP" "/" 1*DIGIT "." 1*DIGIT
 *******************************************************************************/
 ULONG SIP_CodeSIPVersion(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR ucVersion;
 
     ucVersion = *((UCHAR *)pstStruct);
-    SIP_ADD_STRING(pstBuffer, "SIP/");
-    SIP_ADD_DEC_NUM(pstBuffer, ucVersion);
+    SYNTAX_ADD_STRING(pstBuffer, "SIP/");
+    SYNTAX_ADD_DEC_NUM(pstBuffer, ucVersion);
     /*小数部分直接设0*/
-    SIP_ADD_STRING(pstBuffer, ".0");
+    SYNTAX_ADD_STRING(pstBuffer, ".0");
     return SUCCESS;
 }
 
@@ -387,7 +388,7 @@ SIP-URI          =  "sip:" [ userinfo ] hostport
                     uri-parameters [ headers ]
 *******************************************************************************/
 ULONG SIP_CodeSipURI(void *pstStruct,
-                     SIP_SYNTAX_BUFFER_S *pstBuffer)
+                     SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_USER_INFO_S *pstUserInfo = NULL_PTR;
@@ -395,7 +396,7 @@ ULONG SIP_CodeSipURI(void *pstStruct,
 
     pstSipURI = (SIP_URI_S *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "sip:");
+    SYNTAX_ADD_STRING(pstBuffer, "sip:");
 
     if (pstSipURI->pstUserInfo != NULL_PTR)
     {
@@ -422,14 +423,14 @@ SIPS-URI         =  "sips:" [ userinfo ] hostport
                     uri-parameters [ headers ]
 *******************************************************************************/
 ULONG SIP_CodeSipsURI(void *pstStruct,
-                      SIP_SYNTAX_BUFFER_S *pstBuffer)
+                      SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_USER_INFO_S *pstUserInfo = NULL_PTR;
     SIP_URI_S *pstSipsURI = NULL_PTR;
 
     pstSipsURI = (SIP_URI_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, "sips:");
+    SYNTAX_ADD_STRING(pstBuffer, "sips:");
 
     if (pstSipsURI->pstUserInfo != NULL_PTR)
     {
@@ -455,7 +456,7 @@ ULONG SIP_CodeSipsURI(void *pstStruct,
 userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 *******************************************************************************/
 ULONG SIP_CodeUserinfo(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     UCHAR *pucString = NULL_PTR;
@@ -471,12 +472,12 @@ ULONG SIP_CodeUserinfo(void *pstStruct,
 
     if (pstUserInfo->pucPassword!= NULL_PTR)
     {
-        SIP_ADD_STRING(pstBuffer, ":");
+        SYNTAX_ADD_STRING(pstBuffer, ":");
         pucString = pstUserInfo->pucPassword;
-        SIP_ADD_STRING(pstBuffer, pucString);
+        SYNTAX_ADD_STRING(pstBuffer, pucString);
     }
 
-    SIP_ADD_STRING(pstBuffer, "@");
+    SYNTAX_ADD_STRING(pstBuffer, "@");
 
     return SUCCESS;
 }
@@ -485,12 +486,12 @@ ULONG SIP_CodeUserinfo(void *pstStruct,
 userinfo         =  ( user / telephone-subscriber ) [ ":" password ] "@"
 *******************************************************************************/
 ULONG SIP_CodeUser(void *pstStruct,
-                   SIP_SYNTAX_BUFFER_S *pstBuffer)
+                   SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucUserInfo = NULL_PTR;
 
     pucUserInfo = (UCHAR *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, pucUserInfo);
+    SYNTAX_ADD_STRING(pstBuffer, pucUserInfo);
     return SUCCESS;
 }
 
@@ -498,7 +499,7 @@ ULONG SIP_CodeUser(void *pstStruct,
 hostport         =  host [ ":" port ]
 *******************************************************************************/
 ULONG SIP_CodeHostport(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_HOST_PORT_S *pstHostPort = NULL_PTR;
@@ -512,7 +513,7 @@ ULONG SIP_CodeHostport(void *pstStruct,
 
     if (pstHostPort->usPort != NULL_USHORT)
     {
-        SIP_ADD_STRING(pstBuffer, ":");
+        SYNTAX_ADD_STRING(pstBuffer, ":");
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_PORT)(&pstHostPort->usPort, pstBuffer);
     }
 
@@ -523,14 +524,14 @@ ULONG SIP_CodeHostport(void *pstStruct,
 host             =  hostname / IPv4address / IPv6reference
 *******************************************************************************/
 ULONG SIP_CodeHost(void *pstStruct,
-                   SIP_SYNTAX_BUFFER_S *pstBuffer)
+                   SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR      *pucString = NULL_PTR;
     URI_HOST_S *pstHost = NULL_PTR;
 
     pstHost = (URI_HOST_S*)pstStruct;
     pucString = pstHost->pucAddrStr;
-    SIP_ADD_STRING(pstBuffer, pucString);
+    SYNTAX_ADD_STRING(pstBuffer, pucString);
 
     return SUCCESS;
 }
@@ -539,12 +540,12 @@ ULONG SIP_CodeHost(void *pstStruct,
 port           =  1*DIGIT
 *******************************************************************************/
 ULONG SIP_CodePort(void *pstStruct,
-                   SIP_SYNTAX_BUFFER_S *pstBuffer)
+                   SYNTAX_BUFFER_S *pstBuffer)
 {
     USHORT usPort;
 
     usPort = *((USHORT *)pstStruct);
-    SIP_ADD_DEC_NUM(pstBuffer, usPort);
+    SYNTAX_ADD_DEC_NUM(pstBuffer, usPort);
     return SUCCESS;
 }
 
@@ -558,12 +559,12 @@ Status-Code     =  Informational
                /   extension-code
 *******************************************************************************/
 ULONG SIP_CodeStatusCode(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_STATUS_CODE_E eStatusCode;
 
     eStatusCode = *((SIP_STATUS_CODE_E *)pstStruct);
-    SIP_ADD_DEC_NUM(pstBuffer, eStatusCode);
+    SYNTAX_ADD_DEC_NUM(pstBuffer, eStatusCode);
 
     return SUCCESS;
 }
@@ -573,7 +574,7 @@ Reason-Phrase   =  *(reserved / unreserved / escaped
                    / UTF8-NONASCII / UTF8-CONT / SP / HTAB)
 *******************************************************************************/
 ULONG SIP_CodeReasonPhrase(void *pstStruct,
-                           SIP_SYNTAX_BUFFER_S *pstBuffer)
+                           SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_STATUS_CODE_E eStatusCode;
 
@@ -581,207 +582,207 @@ ULONG SIP_CodeReasonPhrase(void *pstStruct,
     switch (eStatusCode)
     {
         case SIP_STATUS_CODE_100:
-            SIP_ADD_STRING(pstBuffer, "Trying");
+            SYNTAX_ADD_STRING(pstBuffer, "Trying");
             break;
 
         case SIP_STATUS_CODE_180:
-            SIP_ADD_STRING(pstBuffer, "Ringing");
+            SYNTAX_ADD_STRING(pstBuffer, "Ringing");
             break;
 
         case SIP_STATUS_CODE_181:
-            SIP_ADD_STRING(pstBuffer, "Call Is Being Forwarded");
+            SYNTAX_ADD_STRING(pstBuffer, "Call Is Being Forwarded");
             break;
 
         case SIP_STATUS_CODE_182:
-            SIP_ADD_STRING(pstBuffer, "Queued");
+            SYNTAX_ADD_STRING(pstBuffer, "Queued");
             break;
 
         case SIP_STATUS_CODE_183:
-            SIP_ADD_STRING(pstBuffer, "Session Progress");
+            SYNTAX_ADD_STRING(pstBuffer, "Session Progress");
             break;
 
         case SIP_STATUS_CODE_200:
-            SIP_ADD_STRING(pstBuffer, "OK");
+            SYNTAX_ADD_STRING(pstBuffer, "OK");
             break;
 
         case SIP_STATUS_CODE_300:
-            SIP_ADD_STRING(pstBuffer, "Multiple Choices");
+            SYNTAX_ADD_STRING(pstBuffer, "Multiple Choices");
             break;
 
         case SIP_STATUS_CODE_301:
-            SIP_ADD_STRING(pstBuffer, "Moved Permanently");
+            SYNTAX_ADD_STRING(pstBuffer, "Moved Permanently");
             break;
 
         case SIP_STATUS_CODE_302:
-            SIP_ADD_STRING(pstBuffer, "Moved Temporarily");
+            SYNTAX_ADD_STRING(pstBuffer, "Moved Temporarily");
             break;
 
         case SIP_STATUS_CODE_305:
-            SIP_ADD_STRING(pstBuffer, "Use Proxy");
+            SYNTAX_ADD_STRING(pstBuffer, "Use Proxy");
             break;
 
         case SIP_STATUS_CODE_380:
-            SIP_ADD_STRING(pstBuffer, "Alternative Service");
+            SYNTAX_ADD_STRING(pstBuffer, "Alternative Service");
             break;
 
         case SIP_STATUS_CODE_400:
-            SIP_ADD_STRING(pstBuffer, "Bad Request");
+            SYNTAX_ADD_STRING(pstBuffer, "Bad Request");
             break;
 
         case SIP_STATUS_CODE_401:
-            SIP_ADD_STRING(pstBuffer, "Unauthorized");
+            SYNTAX_ADD_STRING(pstBuffer, "Unauthorized");
             break;
 
         case SIP_STATUS_CODE_402:
-            SIP_ADD_STRING(pstBuffer, "Payment Required");
+            SYNTAX_ADD_STRING(pstBuffer, "Payment Required");
             break;
 
         case SIP_STATUS_CODE_403:
-            SIP_ADD_STRING(pstBuffer, "Forbidden");
+            SYNTAX_ADD_STRING(pstBuffer, "Forbidden");
             break;
 
         case SIP_STATUS_CODE_404:
-            SIP_ADD_STRING(pstBuffer, "Not Found");
+            SYNTAX_ADD_STRING(pstBuffer, "Not Found");
             break;
 
         case SIP_STATUS_CODE_405:
-            SIP_ADD_STRING(pstBuffer, "Method Not Allowed");
+            SYNTAX_ADD_STRING(pstBuffer, "Method Not Allowed");
             break;
 
         case SIP_STATUS_CODE_406:
-            SIP_ADD_STRING(pstBuffer, "Not Acceptable");
+            SYNTAX_ADD_STRING(pstBuffer, "Not Acceptable");
             break;
 
         case SIP_STATUS_CODE_407:
-            SIP_ADD_STRING(pstBuffer, "Proxy Authentication Required");
+            SYNTAX_ADD_STRING(pstBuffer, "Proxy Authentication Required");
             break;
 
         case SIP_STATUS_CODE_408:
-            SIP_ADD_STRING(pstBuffer, "Request Timeout");
+            SYNTAX_ADD_STRING(pstBuffer, "Request Timeout");
             break;
 
         case SIP_STATUS_CODE_410:
-            SIP_ADD_STRING(pstBuffer, "Gone");
+            SYNTAX_ADD_STRING(pstBuffer, "Gone");
             break;
 
         case SIP_STATUS_CODE_413:
-            SIP_ADD_STRING(pstBuffer, "Request Entity Too Large");
+            SYNTAX_ADD_STRING(pstBuffer, "Request Entity Too Large");
             break;
 
         case SIP_STATUS_CODE_414:
-            SIP_ADD_STRING(pstBuffer, "Request-URI Too Long");
+            SYNTAX_ADD_STRING(pstBuffer, "Request-URI Too Long");
             break;
 
         case SIP_STATUS_CODE_415:
-            SIP_ADD_STRING(pstBuffer, "Unsupported Media Type");
+            SYNTAX_ADD_STRING(pstBuffer, "Unsupported Media Type");
             break;
 
         case SIP_STATUS_CODE_416:
-            SIP_ADD_STRING(pstBuffer, "Unsupported URI Scheme");
+            SYNTAX_ADD_STRING(pstBuffer, "Unsupported URI Scheme");
             break;
 
         case SIP_STATUS_CODE_420:
-            SIP_ADD_STRING(pstBuffer, "Bad Extensione");
+            SYNTAX_ADD_STRING(pstBuffer, "Bad Extensione");
             break;
 
         case SIP_STATUS_CODE_421:
-            SIP_ADD_STRING(pstBuffer, "Extension Required");
+            SYNTAX_ADD_STRING(pstBuffer, "Extension Required");
             break;
 
         case SIP_STATUS_CODE_423:
-            SIP_ADD_STRING(pstBuffer, "Interval Too Brief");
+            SYNTAX_ADD_STRING(pstBuffer, "Interval Too Brief");
             break;
 
         case SIP_STATUS_CODE_480:
-            SIP_ADD_STRING(pstBuffer, "Temporarily Unavailable");
+            SYNTAX_ADD_STRING(pstBuffer, "Temporarily Unavailable");
             break;
 
         case SIP_STATUS_CODE_481:
-            SIP_ADD_STRING(pstBuffer, "Call/Transaction Does Not Exist");
+            SYNTAX_ADD_STRING(pstBuffer, "Call/Transaction Does Not Exist");
             break;
 
         case SIP_STATUS_CODE_482:
-            SIP_ADD_STRING(pstBuffer, "Loop Detected");
+            SYNTAX_ADD_STRING(pstBuffer, "Loop Detected");
             break;
 
         case SIP_STATUS_CODE_483:
-            SIP_ADD_STRING(pstBuffer, "Too Many Hops");
+            SYNTAX_ADD_STRING(pstBuffer, "Too Many Hops");
             break;
 
         case SIP_STATUS_CODE_484:
-            SIP_ADD_STRING(pstBuffer, "Address Incomplete");
+            SYNTAX_ADD_STRING(pstBuffer, "Address Incomplete");
             break;
 
         case SIP_STATUS_CODE_485:
-            SIP_ADD_STRING(pstBuffer, "Ambiguous");
+            SYNTAX_ADD_STRING(pstBuffer, "Ambiguous");
             break;
 
         case SIP_STATUS_CODE_486:
-            SIP_ADD_STRING(pstBuffer,"Busy Here");
+            SYNTAX_ADD_STRING(pstBuffer,"Busy Here");
             break;
 
         case SIP_STATUS_CODE_487:
-            SIP_ADD_STRING(pstBuffer, "Request Terminated");
+            SYNTAX_ADD_STRING(pstBuffer, "Request Terminated");
             break;
 
         case SIP_STATUS_CODE_488:
-            SIP_ADD_STRING(pstBuffer, "Not Acceptable Here");
+            SYNTAX_ADD_STRING(pstBuffer, "Not Acceptable Here");
             break;
 
         case SIP_STATUS_CODE_491:
-            SIP_ADD_STRING(pstBuffer, "Request Pending");
+            SYNTAX_ADD_STRING(pstBuffer, "Request Pending");
             break;
 
         case SIP_STATUS_CODE_493:
-            SIP_ADD_STRING(pstBuffer, "Undecipherable");
+            SYNTAX_ADD_STRING(pstBuffer, "Undecipherable");
             break;
 
         case SIP_STATUS_CODE_500:
-            SIP_ADD_STRING(pstBuffer, "Server Internal Error");
+            SYNTAX_ADD_STRING(pstBuffer, "Server Internal Error");
             break;
 
         case SIP_STATUS_CODE_501:
-            SIP_ADD_STRING(pstBuffer, "Not Implemented");
+            SYNTAX_ADD_STRING(pstBuffer, "Not Implemented");
             break;
 
         case SIP_STATUS_CODE_502:
-            SIP_ADD_STRING(pstBuffer, "Bad Gateway");
+            SYNTAX_ADD_STRING(pstBuffer, "Bad Gateway");
             break;
 
         case SIP_STATUS_CODE_503:
-            SIP_ADD_STRING(pstBuffer, "Service Unavailable");
+            SYNTAX_ADD_STRING(pstBuffer, "Service Unavailable");
             break;
 
         case SIP_STATUS_CODE_504:
-            SIP_ADD_STRING(pstBuffer, "Server Time-out");
+            SYNTAX_ADD_STRING(pstBuffer, "Server Time-out");
             break;
 
         case SIP_STATUS_CODE_505:
-            SIP_ADD_STRING(pstBuffer, "Version Not Supported");
+            SYNTAX_ADD_STRING(pstBuffer, "Version Not Supported");
             break;
 
         case SIP_STATUS_CODE_513:
-            SIP_ADD_STRING(pstBuffer, "Message Too Large");
+            SYNTAX_ADD_STRING(pstBuffer, "Message Too Large");
             break;
 
         case SIP_STATUS_CODE_600:
-            SIP_ADD_STRING(pstBuffer, "Busy Everywhere");
+            SYNTAX_ADD_STRING(pstBuffer, "Busy Everywhere");
             break;
 
         case SIP_STATUS_CODE_603:
-            SIP_ADD_STRING(pstBuffer, "Decline");
+            SYNTAX_ADD_STRING(pstBuffer, "Decline");
             break;
 
         case SIP_STATUS_CODE_604:
-            SIP_ADD_STRING(pstBuffer, "Does Not Exist Anywhere");
+            SYNTAX_ADD_STRING(pstBuffer, "Does Not Exist Anywhere");
             break;
 
         case SIP_STATUS_CODE_606:
-            SIP_ADD_STRING(pstBuffer, "Not Acceptable");
+            SYNTAX_ADD_STRING(pstBuffer, "Not Acceptable");
             break;
 
         default:
-            SIP_ADD_STRING(pstBuffer, "Unknown Status Code");
+            SYNTAX_ADD_STRING(pstBuffer, "Unknown Status Code");
             break;
     }
 
@@ -793,7 +794,7 @@ from-spec   =  ( name-addr / addr-spec )
                *( SEMI from-param )
 *******************************************************************************/
 ULONG SIP_CodeFromSpec(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
@@ -828,7 +829,7 @@ ULONG SIP_CodeFromSpec(void *pstStruct,
 from-param  =  tag-param / generic-param
 *******************************************************************************/
 ULONG SIP_CodeFromParam(void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+                        SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucString = NULL_PTR;
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
@@ -836,10 +837,10 @@ ULONG SIP_CodeFromParam(void *pstStruct,
     pstFrom = (SIP_HEADER_FROM_S *)pstStruct;
     if (pstFrom->pucTag != NULL_PTR)
     {
-        SIP_ADD_STRING(pstBuffer, ";");
-        SIP_ADD_STRING(pstBuffer, "tag=");
+        SYNTAX_ADD_STRING(pstBuffer, ";");
+        SYNTAX_ADD_STRING(pstBuffer, "tag=");
         pucString = pstFrom->pucTag;
-        SIP_ADD_STRING(pstBuffer, pucString);
+        SYNTAX_ADD_STRING(pstBuffer, pucString);
     }
 
     return SUCCESS;
@@ -849,7 +850,7 @@ ULONG SIP_CodeFromParam(void *pstStruct,
 to-param  =  tag-param / generic-param
 *******************************************************************************/
 ULONG SIP_CodeToParam(void *pstStruct,
-                      SIP_SYNTAX_BUFFER_S *pstBuffer)
+                      SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucString = NULL_PTR;
     SIP_HEADER_TO_S *pstTo = NULL_PTR;
@@ -857,10 +858,10 @@ ULONG SIP_CodeToParam(void *pstStruct,
     pstTo = (SIP_HEADER_TO_S *)pstStruct;
     if (pstTo->pucTag != NULL_PTR)
     {
-        SIP_ADD_STRING(pstBuffer, ";");
-        SIP_ADD_STRING(pstBuffer, "tag=");
+        SYNTAX_ADD_STRING(pstBuffer, ";");
+        SYNTAX_ADD_STRING(pstBuffer, "tag=");
         pucString = pstTo->pucTag;
-        SIP_ADD_STRING(pstBuffer, pucString);
+        SYNTAX_ADD_STRING(pstBuffer, pucString);
     }
 
     return SUCCESS;
@@ -870,7 +871,7 @@ ULONG SIP_CodeToParam(void *pstStruct,
 via-parm          =  sent-protocol LWS sent-by *( SEMI via-params )
 *******************************************************************************/
 ULONG SIP_CodeViaParm(void *pstStruct,
-                      SIP_SYNTAX_BUFFER_S *pstBuffer)
+                      SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_VIA_PARM_S *pstViaParm = NULL_PTR;
@@ -882,7 +883,7 @@ ULONG SIP_CodeViaParm(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, " ");
+    SYNTAX_ADD_STRING(pstBuffer, " ");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_SENT_BY)(&pstViaParm->stSendBy, pstBuffer);
     if (ulRet != SUCCESS)
@@ -904,13 +905,13 @@ sent-protocol     =  protocol-name SLASH protocol-version
                      SLASH transport
 *******************************************************************************/
 ULONG SIP_CodeSentProtocol(void *pstStruct,
-                           SIP_SYNTAX_BUFFER_S *pstBuffer)
+                           SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_TRANSPORT_PROTOCOL_E  eProtocolType;
 
     eProtocolType = *((SIP_TRANSPORT_PROTOCOL_E *)pstStruct);
 
-    SIP_ADD_STRING(pstBuffer, "SIP/2.0/");
+    SYNTAX_ADD_STRING(pstBuffer, "SIP/2.0/");
 
     return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_TRANSPORT)(&eProtocolType, pstBuffer);
 }
@@ -920,7 +921,7 @@ transport         =  "UDP" / "TCP" / "TLS" / "SCTP"
                      / other-transport
 *******************************************************************************/
 ULONG SIP_CodeTransport(void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+                        SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_TRANSPORT_PROTOCOL_E  eProtocolType;
 
@@ -928,19 +929,19 @@ ULONG SIP_CodeTransport(void *pstStruct,
     switch (eProtocolType)
     {
         case SIP_TRANSPORT_PROTOCOL_TCP:
-            SIP_ADD_STRING(pstBuffer, "TCP");
+            SYNTAX_ADD_STRING(pstBuffer, "TCP");
             break;
 
         case SIP_TRANSPORT_PROTOCOL_TLS:
-            SIP_ADD_STRING(pstBuffer, "TLS");
+            SYNTAX_ADD_STRING(pstBuffer, "TLS");
             break;
 
         case SIP_TRANSPORT_PROTOCOL_UDP:
-            SIP_ADD_STRING(pstBuffer, "UDP");
+            SYNTAX_ADD_STRING(pstBuffer, "UDP");
             break;
 
         case SIP_TRANSPORT_PROTOCOL_SCTP:
-            SIP_ADD_STRING(pstBuffer, "SCTP");
+            SYNTAX_ADD_STRING(pstBuffer, "SCTP");
             break;
 
         default:
@@ -954,7 +955,7 @@ ULONG SIP_CodeTransport(void *pstStruct,
 sent-by           =  host [ COLON port ]
 *******************************************************************************/
 ULONG SIP_CodeSentBy(void *pstStruct,
-                     SIP_SYNTAX_BUFFER_S *pstBuffer)
+                     SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_HOST_PORT_S *pstSendBy = NULL_PTR;
@@ -968,7 +969,7 @@ ULONG SIP_CodeSentBy(void *pstStruct,
 
     if (pstSendBy->usPort != NULL_USHORT)
     {
-        SIP_ADD_STRING(pstBuffer, ":");
+        SYNTAX_ADD_STRING(pstBuffer, ":");
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_PORT)(&pstSendBy->usPort, pstBuffer);
         if (ulRet != SUCCESS)
         {
@@ -985,7 +986,7 @@ via-params        =  via-ttl / via-maddr
                      / via-extension
 *******************************************************************************/
 ULONG SIP_CodeViaParams(void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+                        SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     UCHAR      *pucString = NULL_PTR;
@@ -996,7 +997,7 @@ ULONG SIP_CodeViaParams(void *pstStruct,
     pstViaParm = (SIP_VIA_PARM_S *)pstStruct;
     if (pstViaParm->ulTtl != NULL_ULONG)
     {
-        SIP_ADD_STRING(pstBuffer, ";");
+        SYNTAX_ADD_STRING(pstBuffer, ";");
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_TTL)(&pstViaParm->ulTtl, pstBuffer);
         if (ulRet!= SUCCESS)
         {
@@ -1006,7 +1007,7 @@ ULONG SIP_CodeViaParams(void *pstStruct,
 
     if (pstViaParm->pucBranch != NULL_PTR)
     {
-        SIP_ADD_STRING(pstBuffer, ";");
+        SYNTAX_ADD_STRING(pstBuffer, ";");
         pucString = pstViaParm->pucBranch;
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_BRANCH)(pucString, pstBuffer);
         if (ulRet!= SUCCESS)
@@ -1017,7 +1018,7 @@ ULONG SIP_CodeViaParams(void *pstStruct,
 
     if (pstViaParm->pstMaddr != NULL_PTR)
     {
-        SIP_ADD_STRING(pstBuffer, ";");
+        SYNTAX_ADD_STRING(pstBuffer, ";");
         pstMaddr = pstViaParm->pstMaddr;
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_MADDR)(pstMaddr, pstBuffer);
         if (ulRet!= SUCCESS)
@@ -1028,7 +1029,7 @@ ULONG SIP_CodeViaParams(void *pstStruct,
 
     if (pstViaParm->pstReceived != NULL_PTR)
     {
-        SIP_ADD_STRING(pstBuffer, ";");
+        SYNTAX_ADD_STRING(pstBuffer, ";");
         pstReceived = pstViaParm->pstReceived;
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_RECEIVED)(pstReceived, pstBuffer);
         if (ulRet!= SUCCESS)
@@ -1044,13 +1045,13 @@ ULONG SIP_CodeViaParams(void *pstStruct,
 via-ttl           =  "ttl" EQUAL ttl
 *******************************************************************************/
 ULONG SIP_CodeViaTtl(void *pstStruct,
-                     SIP_SYNTAX_BUFFER_S *pstBuffer)
+                     SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulTtl;
 
     ulTtl = *((ULONG *)pstStruct);
-    SIP_ADD_STRING(pstBuffer, "ttl=");
-    SIP_ADD_DEC_NUM(pstBuffer, ulTtl);
+    SYNTAX_ADD_STRING(pstBuffer, "ttl=");
+    SYNTAX_ADD_DEC_NUM(pstBuffer, ulTtl);
     return SUCCESS;
 }
 
@@ -1058,12 +1059,12 @@ ULONG SIP_CodeViaTtl(void *pstStruct,
 via-maddr         =  "maddr" EQUAL host
 *******************************************************************************/
 ULONG SIP_CodeViaMaddr(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     URI_HOST_S *pstMaddr = NULL_PTR;
 
     pstMaddr= (URI_HOST_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer,"maddr=");
+    SYNTAX_ADD_STRING(pstBuffer,"maddr=");
     return SIP_GET_CODE_FUNC(SIP_ABNF_RULE_HOST)(pstMaddr, pstBuffer);
 }
 
@@ -1071,22 +1072,22 @@ ULONG SIP_CodeViaMaddr(void *pstStruct,
 via-received      =  "received" EQUAL (IPv4address / IPv6address)
 *******************************************************************************/
 ULONG SIP_CodeViaReceived(void *pstStruct,
-                          SIP_SYNTAX_BUFFER_S *pstBuffer)
+                          SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucString = NULL_PTR;
     SIP_VIA_RECEIVED_S *pstReceived = NULL_PTR;
 
     pstReceived = (SIP_VIA_RECEIVED_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, "received=");
+    SYNTAX_ADD_STRING(pstBuffer, "received=");
     if (pstReceived->eIpType == SIP_IP_TYPE_IPV4)
     {
         pucString = pstReceived->u.pucIPV4;
-        SIP_ADD_STRING(pstBuffer, pucString);
+        SYNTAX_ADD_STRING(pstBuffer, pucString);
     }
     else
     {
         pucString = pstReceived->u.pucIPV6;
-        SIP_ADD_STRING(pstBuffer, pucString);
+        SYNTAX_ADD_STRING(pstBuffer, pucString);
     }
 
     return SUCCESS;
@@ -1096,13 +1097,13 @@ ULONG SIP_CodeViaReceived(void *pstStruct,
 via-branch        =  "branch" EQUAL token
 *******************************************************************************/
 ULONG SIP_CodeViaBranch(void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+                        SYNTAX_BUFFER_S *pstBuffer)
 {
     UCHAR *pucBranch = NULL_PTR;
     pucBranch = (UCHAR *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "branch=");
-    SIP_ADD_STRING(pstBuffer, pucBranch);
+    SYNTAX_ADD_STRING(pstBuffer, "branch=");
+    SYNTAX_ADD_STRING(pstBuffer, pucBranch);
     return SUCCESS;
 }
 
@@ -1110,7 +1111,7 @@ ULONG SIP_CodeViaBranch(void *pstStruct,
 name-addr      =  [ display-name ] LAQUOT addr-spec RAQUOT
 *******************************************************************************/
 ULONG SIP_CodeNameAddr(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     UCHAR *pucString = NULL_PTR;
@@ -1121,10 +1122,10 @@ ULONG SIP_CodeNameAddr(void *pstStruct,
     if (pstNameAddr->pucName != NULL_PTR)
     {
         pucString = pstNameAddr->pucName;
-        SIP_ADD_STRING(pstBuffer, pucString);
+        SYNTAX_ADD_STRING(pstBuffer, pucString);
     }
 
-    SIP_ADD_STRING(pstBuffer, "<");
+    SYNTAX_ADD_STRING(pstBuffer, "<");
 
     pstUri = pstNameAddr->pstUri;
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_ADDR_SPEC)(pstUri, pstBuffer);
@@ -1133,7 +1134,7 @@ ULONG SIP_CodeNameAddr(void *pstStruct,
         return ulRet;
     }
 
-    SIP_ADD_STRING(pstBuffer, ">");
+    SYNTAX_ADD_STRING(pstBuffer, ">");
 
     return SUCCESS;
 }
@@ -1142,7 +1143,7 @@ ULONG SIP_CodeNameAddr(void *pstStruct,
 addr-spec      =  SIP-URI / SIPS-URI / absoluteURI
 *******************************************************************************/
 ULONG SIP_CodeAddrSpec(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     URI_S *pstAddrSpec = NULL_PTR;
@@ -1169,7 +1170,7 @@ ULONG SIP_CodeAddrSpec(void *pstStruct,
 contact-param  =  (name-addr / addr-spec) *(SEMI contact-params)
 *******************************************************************************/
 ULONG SIP_CodeContactParam(void *pstStruct,
-                           SIP_SYNTAX_BUFFER_S *pstBuffer)
+                           SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_CONTACT_PARAM_S *pstContactParam = NULL_PTR;
@@ -1202,13 +1203,13 @@ Accept         =  "Accept" HCOLON
                    [ accept-range *(COMMA accept-range) ]
 *******************************************************************************/
 ULONG SIP_CodeHeaderAccept(void *pstStruct,
-                           SIP_SYNTAX_BUFFER_S *pstBuffer)
+                           SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_ACCEPT_S *pstAccept = NULL_PTR;
 
     pstAccept = (SIP_HEADER_ACCEPT_S *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "Accept: ");
+    SYNTAX_ADD_STRING(pstBuffer, "Accept: ");
 
     return SUCCESS;
 }
@@ -1218,12 +1219,12 @@ Accept-Encoding  =  "Accept-Encoding" HCOLON
                      [ encoding *(COMMA encoding) ]
 *******************************************************************************/
 ULONG SIP_CodeHeaderAcceptEncoding(void *pstStruct,
-                                   SIP_SYNTAX_BUFFER_S *pstBuffer)
+                                   SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_ACCEPT_ENCODING_S *pstAcceptEncoding = NULL_PTR;
 
     pstAcceptEncoding = (SIP_HEADER_ACCEPT_ENCODING_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, "Accept-Encoding: ");
+    SYNTAX_ADD_STRING(pstBuffer, "Accept-Encoding: ");
 
     return SUCCESS;
 }
@@ -1232,16 +1233,16 @@ ULONG SIP_CodeHeaderAcceptEncoding(void *pstStruct,
 Call-ID  =  ( "Call-ID" / "i" ) HCOLON callid
 *******************************************************************************/
 ULONG SIP_CodeHeaderCallID(void *pstStruct,
-                           SIP_SYNTAX_BUFFER_S *pstBuffer)
+                           SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_CALL_ID_S *pstCallID= NULL_PTR;
     UCHAR *pucString = NULL_PTR;
 
     pstCallID = (SIP_HEADER_CALL_ID_S *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "Call-ID: ");
+    SYNTAX_ADD_STRING(pstBuffer, "Call-ID: ");
     pucString = pstCallID->pucCallID;
-    SIP_ADD_STRING(pstBuffer, pucString);
+    SYNTAX_ADD_STRING(pstBuffer, pucString);
     return SUCCESS;
 }
 
@@ -1249,16 +1250,16 @@ ULONG SIP_CodeHeaderCallID(void *pstStruct,
 CSeq  =  "CSeq" HCOLON 1*DIGIT LWS Method
 *******************************************************************************/
 ULONG SIP_CodeHeaderCseq(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_CSEQ_S *pstCseq = NULL_PTR;
 
     pstCseq = (SIP_HEADER_CSEQ_S *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "CSeq: ");
-    SIP_ADD_DEC_NUM(pstBuffer, pstCseq->ulSeq);
-    SIP_ADD_STRING(pstBuffer, " ");
+    SYNTAX_ADD_STRING(pstBuffer, "CSeq: ");
+    SYNTAX_ADD_DEC_NUM(pstBuffer, pstCseq->ulSeq);
+    SYNTAX_ADD_STRING(pstBuffer, " ");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_METHOD)(&pstCseq->eMethod, pstBuffer);
 
@@ -1269,13 +1270,13 @@ ULONG SIP_CodeHeaderCseq(void *pstStruct,
 From        =  ( "From" / "f" ) HCOLON from-spec
 *******************************************************************************/
 ULONG SIP_CodeHeaderFrom(void *pstStruct,
-                         SIP_SYNTAX_BUFFER_S *pstBuffer)
+                         SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_FROM_S *pstFrom = NULL_PTR;
 
     pstFrom = (SIP_HEADER_FROM_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, "From: ");
+    SYNTAX_ADD_STRING(pstBuffer, "From: ");
 
     ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstFrom, pstBuffer);
     return ulRet;
@@ -1286,7 +1287,7 @@ To        =  ( "To" / "t" ) HCOLON ( name-addr
              / addr-spec ) *( SEMI to-param )
 *******************************************************************************/
 ULONG SIP_CodeHeaderTo(void *pstStruct,
-                       SIP_SYNTAX_BUFFER_S *pstBuffer)
+                       SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_HEADER_TO_S *pstTo = NULL_PTR;
@@ -1294,7 +1295,7 @@ ULONG SIP_CodeHeaderTo(void *pstStruct,
 
     pstTo = (SIP_HEADER_TO_S *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "To: ");
+    SYNTAX_ADD_STRING(pstBuffer, "To: ");
 
     if (pstTo->stNameAddr.bName == TRUE)
     {
@@ -1324,7 +1325,7 @@ ULONG SIP_CodeHeaderTo(void *pstStruct,
 Via               =  ( "Via" / "v" ) HCOLON via-parm *(COMMA via-parm)
 *******************************************************************************/
 ULONG SIP_CodeHeaderVia(void *pstStruct,
-                        SIP_SYNTAX_BUFFER_S *pstBuffer)
+                        SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_VIA_PARM_S   *pstViaParm = NULL_PTR;
@@ -1332,14 +1333,14 @@ ULONG SIP_CodeHeaderVia(void *pstStruct,
     BOOL  bFirst = TRUE;
 
     pstVia = (SIP_HEADER_VIA_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, "Via: ");
+    SYNTAX_ADD_STRING(pstBuffer, "Via: ");
 
     pstViaParm = pstVia->pstViaParm;
     while(pstViaParm != NULL_PTR)
     {
         if (bFirst != TRUE)
         {
-            SIP_ADD_STRING(pstBuffer, ",");
+            SYNTAX_ADD_STRING(pstBuffer, ",");
         }
 
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_VIA_PARM)(pstViaParm, pstBuffer);
@@ -1359,14 +1360,14 @@ ULONG SIP_CodeHeaderVia(void *pstStruct,
 Max-Forwards  =  "Max-Forwards" HCOLON 1*DIGIT
 *******************************************************************************/
 ULONG SIP_CodeHeaderMaxForwards(void *pstStruct,
-                                SIP_SYNTAX_BUFFER_S *pstBuffer)
+                                SYNTAX_BUFFER_S *pstBuffer)
 {
     SIP_HEADER_MAX_FORWARDS_S *pstMaxForwards = NULL_PTR;
 
     pstMaxForwards = (SIP_HEADER_MAX_FORWARDS_S *)pstStruct;
 
-    SIP_ADD_STRING(pstBuffer, "Max-Forwards: ");
-    SIP_ADD_DEC_NUM(pstBuffer, pstMaxForwards->ulMaxForwards);
+    SYNTAX_ADD_STRING(pstBuffer, "Max-Forwards: ");
+    SYNTAX_ADD_DEC_NUM(pstBuffer, pstMaxForwards->ulMaxForwards);
 
     return SUCCESS;
 }
@@ -1376,7 +1377,7 @@ Contact        =  ("Contact" / "m" ) HCOLON
                   ( STAR / (contact-param *(COMMA contact-param)))
 *******************************************************************************/
 ULONG SIP_CodeHeaderContact(void *pstStruct,
-                            SIP_SYNTAX_BUFFER_S *pstBuffer)
+                            SYNTAX_BUFFER_S *pstBuffer)
 {
     ULONG ulRet;
     SIP_CONTACT_PARAM_S   *pstContactParam = NULL_PTR;
@@ -1384,11 +1385,11 @@ ULONG SIP_CodeHeaderContact(void *pstStruct,
     BOOL  bFirst = TRUE;
 
     pstContact = (SIP_HEADER_CONTACT_S *)pstStruct;
-    SIP_ADD_STRING(pstBuffer, "Contact: ");
+    SYNTAX_ADD_STRING(pstBuffer, "Contact: ");
 
     if (pstContact->ucIsStar == TRUE)
     {
-        SIP_ADD_STRING(pstBuffer, "*");    
+        SYNTAX_ADD_STRING(pstBuffer, "*");    
         return SUCCESS;
     }
 
@@ -1397,7 +1398,7 @@ ULONG SIP_CodeHeaderContact(void *pstStruct,
     {
         if (bFirst != TRUE)
         {
-            SIP_ADD_STRING(pstBuffer, ",");
+            SYNTAX_ADD_STRING(pstBuffer, ",");
         }
 
         ulRet = SIP_GET_CODE_FUNC(SIP_ABNF_RULE_CONTACT_PARAM)(pstContactParam, pstBuffer);

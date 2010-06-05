@@ -8,7 +8,8 @@
 #include "common\common.h"
 #include "abnf\abnf.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
+#include "syntax_comm\syntax_comm.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "sip\sip_const.h"
@@ -70,7 +71,7 @@ ULONG SIP_CloneRequest(void          *pSrcStruct,
 
     /* 获取原结构和目标结构指针 */
     pstSrcSipMsg = (SIP_MSG_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
 
     /* 如果目标是一个结构，需要使用临时指针用于参数传入 */
     pstDstStruct = &pstDstSipMsg->uStartLine.stRequstLine;
@@ -117,7 +118,7 @@ ULONG SIP_CloneResponse(void          *pSrcStruct,
     void      *pstDstStruct = NULL_PTR;
 
     pstSrcSipMsg = (SIP_MSG_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstSipMsg->uStartLine.stStatusLine;
     ulRet = SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_STATUS_LINE)(&pstSrcSipMsg->uStartLine.stStatusLine,
@@ -160,7 +161,7 @@ ULONG SIP_CloneRequestLine(void          *pSrcStruct,
     void               *pstDstStruct      = NULL_PTR;
 
     pstSrcRequestLine = (SIP_REQUEST_LINE_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstRequestLine, SIP_REQUEST_LINE_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstRequestLine, SIP_REQUEST_LINE_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstRequestLine->eMethod;
     ulRet = SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_METHOD)(&pstSrcRequestLine->eMethod,
@@ -204,7 +205,7 @@ ULONG SIP_CloneStatusLine(void          *pSrcStruct,
     void              *pstDstStruct    = NULL_PTR;
 
     pstSrcStateLine = (SIP_STATUS_LINE_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstStateLine, SIP_STATUS_LINE_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstStateLine, SIP_STATUS_LINE_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstStateLine->ucVersion;
     ulRet = SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_SIP_VERSION)(&pstSrcStateLine->ucVersion,
@@ -287,7 +288,7 @@ ULONG SIP_CloneMessageHeader(void          *pSrcStruct,
     SIP_HEADER_S **ppstDstHeader  = NULL_PTR;
 
     pstSrcSipMsg = (SIP_MSG_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstSipMsg, SIP_MSG_S, pstDstUbufMsg, ppDstStruct);
 
     for (ulLoop = 0; ulLoop < SIP_HEADER_BUTT; ulLoop++)
     {
@@ -342,7 +343,7 @@ ULONG SIP_CloneMethod(void          *pSrcStruct,
     SIP_METHOD_E *peDstMethod = NULL_PTR;
 
     peSrcMethod = (SIP_METHOD_E *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(peDstMethod, SIP_METHOD_E, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(peDstMethod, SIP_METHOD_E, pstDstUbufMsg, ppDstStruct);
 
     *peDstMethod = *peSrcMethod;
 
@@ -361,7 +362,7 @@ ULONG SIP_CloneRequestURI(void          *pSrcStruct,
     void  *pstDstStruct     = NULL_PTR;
 
     pstSrcRequestURI = (URI_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstRequestURI, URI_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstRequestURI, URI_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcRequestURI->eUriType == URI_TYPE_SIP)
     {
@@ -394,7 +395,7 @@ ULONG SIP_CloneSIPVersion(void          *pSrcStruct,
     UCHAR *pucDstVersion = NULL_PTR;
 
     pucSrcVersion = (UCHAR *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pucDstVersion, UCHAR, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pucDstVersion, UCHAR, pstDstUbufMsg, ppDstStruct);
 
     *pucDstVersion = *pucSrcVersion;
 
@@ -415,7 +416,7 @@ ULONG SIP_CloneSipURI(void          *pSrcStruct,
     void      *pstDstStruct = NULL_PTR;
 
     pstSrcSipURI = (SIP_URI_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstSipURI, SIP_URI_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstSipURI, SIP_URI_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcSipURI->pstUserInfo != NULL_PTR)
     {
@@ -456,7 +457,7 @@ ULONG SIP_CloneSipsURI(void          *pSrcStruct,
     void      *pstDstStruct = NULL_PTR;
 
     pstSrcSipURI = (SIP_URI_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstSipURI, SIP_URI_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstSipURI, SIP_URI_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcSipURI->pstUserInfo != NULL_PTR)
     {
@@ -494,15 +495,15 @@ ULONG SIP_CloneUserinfo(void          *pSrcStruct,
     URI_USER_INFO_S *pstDstUserInfo = NULL_PTR;
 
     pstSrcUserInfo = (URI_USER_INFO_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstUserInfo, URI_USER_INFO_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstUserInfo, URI_USER_INFO_S, pstDstUbufMsg, ppDstStruct);
 
-    SIP_CLONE_STRING(pstDstUbufMsg,
+    SYNTAX_CLONE_STRING(pstDstUbufMsg,
                      pstDstUserInfo->pucUserInfo,
                      pstSrcUserInfo->pucUserInfo);
 
     if (pstSrcUserInfo->pucPassword != NULL_PTR)
     {
-        SIP_CLONE_STRING(pstDstUbufMsg, 
+        SYNTAX_CLONE_STRING(pstDstUbufMsg, 
                          pstDstUserInfo->pucPassword,
                          pstSrcUserInfo->pucPassword);
     }
@@ -523,7 +524,7 @@ ULONG SIP_CloneHostport(void          *pSrcStruct,
     void            *pstDstStruct   = NULL_PTR;
 
     pstSrcHostPort = (URI_HOST_PORT_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstHostPort, URI_HOST_PORT_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstHostPort, URI_HOST_PORT_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstHostPort->stHost;
     ulRet = SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_HOST)(&pstSrcHostPort->stHost,
@@ -550,14 +551,14 @@ ULONG SIP_CloneHost(void          *pSrcStruct,
     URI_HOST_S *pstDstHost = NULL_PTR;
 
     pstSrcHost = (URI_HOST_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstHost, URI_HOST_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstHost, URI_HOST_S, pstDstUbufMsg, ppDstStruct);
     if(pstSrcHost->pucAddrStr == NULL_PTR)
     {
         return SUCCESS;
     }
     
     pstDstHost->eHostType = pstSrcHost->eHostType;
-    SIP_CLONE_STRING(pstDstUbufMsg, 
+    SYNTAX_CLONE_STRING(pstDstUbufMsg, 
                      pstDstHost->pucAddrStr,
                      pstSrcHost->pucAddrStr);
 
@@ -575,7 +576,7 @@ ULONG SIP_ClonePort(void          *pSrcStruct,
     USHORT *pusDstPort = NULL_PTR;
 
     pusSrcPort = (USHORT *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pusDstPort, USHORT, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pusDstPort, USHORT, pstDstUbufMsg, ppDstStruct);
 
     *pusDstPort = *pusSrcPort;
 
@@ -599,7 +600,7 @@ ULONG SIP_CloneStatusCode(void          *pSrcStruct,
     SIP_STATUS_CODE_E *peDstStatusCode = NULL_PTR;
 
     peSrcStatusCode = (SIP_STATUS_CODE_E *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(peDstStatusCode, SIP_STATUS_CODE_E, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(peDstStatusCode, SIP_STATUS_CODE_E, pstDstUbufMsg, ppDstStruct);
 
     *peDstStatusCode = *peSrcStatusCode;
 
@@ -620,7 +621,7 @@ ULONG SIP_CloneFromSpec(void          *pSrcStruct,
     void              *pstDstStruct = NULL_PTR;
 
     pstSrcFrom = (SIP_HEADER_FROM_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstFrom, SIP_HEADER_FROM_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstFrom, SIP_HEADER_FROM_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcFrom->stNameAddr.bName == TRUE)
     {
@@ -665,11 +666,11 @@ ULONG SIP_CloneFromParam(void          *pSrcStruct,
     SIP_HEADER_FROM_S *pstDstFrom = NULL_PTR;
 
     pstSrcFrom = (SIP_HEADER_FROM_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstFrom, SIP_HEADER_FROM_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstFrom, SIP_HEADER_FROM_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcFrom->pucTag != NULL_PTR)
     {
-        SIP_CLONE_STRING(pstDstUbufMsg,
+        SYNTAX_CLONE_STRING(pstDstUbufMsg,
                          pstDstFrom->pucTag,
                          pstSrcFrom->pucTag);
     }
@@ -688,11 +689,11 @@ ULONG SIP_CloneToParam(void          *pSrcStruct,
     SIP_HEADER_TO_S *pstDstTo = NULL_PTR;
 
     pstSrcTo = (SIP_HEADER_TO_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstTo, SIP_HEADER_TO_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstTo, SIP_HEADER_TO_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcTo->pucTag != NULL_PTR)
     {
-        SIP_CLONE_STRING(pstDstUbufMsg,
+        SYNTAX_CLONE_STRING(pstDstUbufMsg,
                          pstDstTo->pucTag,
                          pstSrcTo->pucTag);
     }
@@ -713,7 +714,7 @@ ULONG SIP_CloneViaParm(void          *pSrcStruct,
     void           *pstDstStruct  = NULL_PTR;
 
     pstSrcViaParm = (SIP_VIA_PARM_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstViaParm, SIP_VIA_PARM_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstViaParm, SIP_VIA_PARM_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstViaParm->eProtocolType;
     ulRet = SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_SENT_PROTOCOL)(&pstSrcViaParm->eProtocolType,
@@ -756,7 +757,7 @@ ULONG SIP_CloneSentProtocol(void          *pSrcStruct,
     SIP_TRANSPORT_PROTOCOL_E  *peDstProtocolType = NULL_PTR;
 
     peSrcProtocolType = (SIP_TRANSPORT_PROTOCOL_E *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(peDstProtocolType, SIP_TRANSPORT_PROTOCOL_E, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(peDstProtocolType, SIP_TRANSPORT_PROTOCOL_E, pstDstUbufMsg, ppDstStruct);
 
     return SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_TRANSPORT)(peSrcProtocolType,
                                                       pstDstUbufMsg,
@@ -775,7 +776,7 @@ ULONG SIP_CloneTransport(void          *pSrcStruct,
     SIP_TRANSPORT_PROTOCOL_E  *peDstProtocolType = NULL_PTR;
 
     peSrcProtocolType = (SIP_TRANSPORT_PROTOCOL_E *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(peDstProtocolType, SIP_TRANSPORT_PROTOCOL_E, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(peDstProtocolType, SIP_TRANSPORT_PROTOCOL_E, pstDstUbufMsg, ppDstStruct);
 
     *peDstProtocolType = *peSrcProtocolType;
     return SUCCESS;
@@ -794,7 +795,7 @@ ULONG SIP_CloneSentBy(void          *pSrcStruct,
     void            *pstDstStruct = NULL_PTR;
 
     pstSrcSendBy = (URI_HOST_PORT_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstSendBy, URI_HOST_PORT_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstSendBy, URI_HOST_PORT_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstSendBy->stHost;
     ulRet = SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_HOST)(&pstSrcSendBy->stHost,
@@ -835,7 +836,7 @@ ULONG SIP_CloneViaParams(void          *pSrcStruct,
     void           *pstDstStruct  = NULL_PTR;
 
     pstSrcViaParm = (SIP_VIA_PARM_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstViaParm, SIP_VIA_PARM_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstViaParm, SIP_VIA_PARM_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcViaParm->ulTtl != NULL_ULONG)
     {
@@ -851,7 +852,7 @@ ULONG SIP_CloneViaParams(void          *pSrcStruct,
 
     if (pstSrcViaParm->pucBranch != NULL_PTR)
     {
-        SIP_CLONE_STRING(pstDstUbufMsg,
+        SYNTAX_CLONE_STRING(pstDstUbufMsg,
                          pstDstViaParm->pucBranch,
                          pstSrcViaParm->pucBranch);
     }
@@ -892,7 +893,7 @@ ULONG SIP_CloneViaTtl(void          *pSrcStruct,
     ULONG *pulDstTtl = NULL_PTR;
 
     pulSrcTtl = (ULONG *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pulDstTtl, ULONG, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pulDstTtl, ULONG, pstDstUbufMsg, ppDstStruct);
 
     *pulDstTtl = *pulSrcTtl;
 
@@ -910,7 +911,7 @@ ULONG SIP_CloneViaMaddr(void          *pSrcStruct,
     URI_HOST_S *pstDstMaddr = NULL_PTR;
 
     pstSrcMaddr = (URI_HOST_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstMaddr, URI_HOST_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstMaddr, URI_HOST_S, pstDstUbufMsg, ppDstStruct);
 
     return SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_HOST)(pstSrcMaddr,
                                                   pstDstUbufMsg,
@@ -929,19 +930,19 @@ ULONG SIP_CloneViaReceived(void          *pSrcStruct,
     SIP_VIA_RECEIVED_S *pstDstReceived = NULL_PTR;
 
     pstSrcReceived = (SIP_VIA_RECEIVED_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstReceived, SIP_VIA_RECEIVED_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstReceived, SIP_VIA_RECEIVED_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcReceived->eIpType == SIP_IP_TYPE_IPV4)
     {
         pstDstReceived->eIpType = SIP_IP_TYPE_IPV4;
-        SIP_CLONE_STRING(pstDstUbufMsg,
+        SYNTAX_CLONE_STRING(pstDstUbufMsg,
                          pstDstReceived->u.pucIPV4,
                          pstSrcReceived->u.pucIPV4);
     }
     else
     {
         pstDstReceived->eIpType = SIP_IP_TYPE_IPV6;
-        SIP_CLONE_STRING(pstDstUbufMsg,
+        SYNTAX_CLONE_STRING(pstDstUbufMsg,
                          pstDstReceived->u.pucIPV6,
                          pstSrcReceived->u.pucIPV6);
     }
@@ -961,11 +962,11 @@ ULONG SIP_CloneNameAddr(void          *pSrcStruct,
     SIP_NAME_ADDR_S *pstDstNameAddr = NULL_PTR;
 
     pstSrcNameAddr = (SIP_NAME_ADDR_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstNameAddr, SIP_NAME_ADDR_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstNameAddr, SIP_NAME_ADDR_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcNameAddr->pucName != NULL_PTR)
     {
-        SIP_CLONE_STRING(pstDstUbufMsg,
+        SYNTAX_CLONE_STRING(pstDstUbufMsg,
                          pstDstNameAddr->pucName,
                          pstSrcNameAddr->pucName);
     }
@@ -994,7 +995,7 @@ ULONG SIP_CloneAddrSpec(void          *pSrcStruct,
     void  *pstDstStruct   = NULL_PTR;
 
     pstSrcAddrSpec = (URI_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstAddrSpec, URI_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstAddrSpec, URI_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstStruct = &pstDstAddrSpec->u.stSipUri;
     switch (pstSrcAddrSpec->eUriType)
@@ -1031,9 +1032,9 @@ ULONG SIP_CloneHeaderAccept(void          *pSrcStruct,
     SIP_HEADER_ACCEPT_S *pstDstAccept = NULL_PTR;
 
     pstSrcAccept = (SIP_HEADER_ACCEPT_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstAccept, SIP_HEADER_ACCEPT_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstAccept, SIP_HEADER_ACCEPT_S, pstDstUbufMsg, ppDstStruct);
 
-    SIP_CLONE_STRING(pstDstUbufMsg,
+    SYNTAX_CLONE_STRING(pstDstUbufMsg,
                      pstDstAccept->pucTemp,
                      pstSrcAccept->pucTemp);
 
@@ -1052,9 +1053,9 @@ ULONG SIP_CloneHeaderAcceptEncoding(void          *pSrcStruct,
     SIP_HEADER_ACCEPT_ENCODING_S *pstDstAcceptEncoding = NULL_PTR;
 
     pstSrcAcceptEncoding = (SIP_HEADER_ACCEPT_ENCODING_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstAcceptEncoding, SIP_HEADER_ACCEPT_ENCODING_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstAcceptEncoding, SIP_HEADER_ACCEPT_ENCODING_S, pstDstUbufMsg, ppDstStruct);
 
-    SIP_CLONE_STRING(pstDstUbufMsg,
+    SYNTAX_CLONE_STRING(pstDstUbufMsg,
                      pstDstAcceptEncoding->pucTemp,
                      pstSrcAcceptEncoding->pucTemp);
 
@@ -1072,9 +1073,9 @@ ULONG SIP_CloneHeaderCallID(void          *pSrcStruct,
     SIP_HEADER_CALL_ID_S *pstDstCallID= NULL_PTR;
 
     pstSrcCallID = (SIP_HEADER_CALL_ID_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstCallID, SIP_HEADER_CALL_ID_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstCallID, SIP_HEADER_CALL_ID_S, pstDstUbufMsg, ppDstStruct);
 
-    SIP_CLONE_STRING(pstDstUbufMsg,
+    SYNTAX_CLONE_STRING(pstDstUbufMsg,
                      pstDstCallID->pucCallID,
                      pstSrcCallID->pucCallID);
 
@@ -1094,7 +1095,7 @@ ULONG SIP_CloneHeaderCseq(void          *pSrcStruct,
     void              *pstDstStruct = NULL_PTR;
 
     pstSrcCseq = (SIP_HEADER_CSEQ_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstCseq, SIP_HEADER_CSEQ_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstCseq, SIP_HEADER_CSEQ_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstCseq->ulSeq = pstSrcCseq->ulSeq;
 
@@ -1117,7 +1118,7 @@ ULONG SIP_CloneHeaderFrom(void          *pSrcStruct,
     SIP_HEADER_FROM_S *pstDstFrom = NULL_PTR;
 
     pstSrcFrom = (SIP_HEADER_FROM_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstFrom, SIP_HEADER_FROM_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstFrom, SIP_HEADER_FROM_S, pstDstUbufMsg, ppDstStruct);
 
     return SIP_GET_CLONE_FUNC(SIP_ABNF_RULE_FROM_SPEC)(pstSrcFrom,
                                                        pstDstUbufMsg,
@@ -1138,7 +1139,7 @@ ULONG SIP_CloneHeaderTo(void          *pSrcStruct,
     void            *pstDstStruct = NULL_PTR;
 
     pstSrcTo = (SIP_HEADER_TO_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstTo, SIP_HEADER_TO_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstTo, SIP_HEADER_TO_S, pstDstUbufMsg, ppDstStruct);
 
     if (pstSrcTo->stNameAddr.bName == TRUE)
     {
@@ -1186,7 +1187,7 @@ ULONG SIP_CloneHeaderVia(void          *pSrcStruct,
     SIP_VIA_PARM_S   **ppstDstViaParm = NULL_PTR;
 
     pstSrcVia = (SIP_HEADER_VIA_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstVia, SIP_HEADER_VIA_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstVia, SIP_HEADER_VIA_S, pstDstUbufMsg, ppDstStruct);
 
     ppstSrcViaParm = &pstSrcVia->pstViaParm;
     ppstDstViaParm = &pstDstVia->pstViaParm;
@@ -1218,7 +1219,7 @@ ULONG SIP_CloneHeaderMaxForwards(void          *pSrcStruct,
     SIP_HEADER_MAX_FORWARDS_S *pstDstMaxForwards = NULL_PTR;
 
     pstSrcMaxForwards = (SIP_HEADER_MAX_FORWARDS_S *)pSrcStruct;
-    SIP_GET_COMPONET_PTR(pstDstMaxForwards, SIP_HEADER_MAX_FORWARDS_S, pstDstUbufMsg, ppDstStruct);
+    SYNTAX_GET_COMPONET_PTR(pstDstMaxForwards, SIP_HEADER_MAX_FORWARDS_S, pstDstUbufMsg, ppDstStruct);
 
     pstDstMaxForwards->ulMaxForwards = pstSrcMaxForwards->ulMaxForwards;
 

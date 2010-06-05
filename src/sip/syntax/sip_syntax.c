@@ -8,7 +8,8 @@
 #include "common\common.h"
 #include "abnf\abnf.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
+#include "syntax_comm\syntax_comm.h"
 
 /* 本模块对外提供的常量和结构头文件 */
 #include "..\..\include\sip\sip_const.h"
@@ -46,16 +47,12 @@ ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg)
 
     g_pucSipSyntaxBuffer = malloc(SIP_MAX_TEXT_MSG_LEN);
 
-    /* 初始化依赖模块 */
-    ulRet = ABNF_Init();
-    if (ulRet != SUCCESS)
-    {
-        printf("\r\nABNF_Init failed");
-        return FAIL;
-    }
-
     /* 构建SIP的ABNF规则表 */
-    ulRet = ABNF_BuildRuleList(pstCfg->pucAbnfDes, pstCfg->ulLen, &g_pstSipRuleList);
+    ulRet = ABNF_RegistRuleList(pstCfg->pucAbnfDes, 
+                                pstCfg->ulLen, 
+                                NULL_PTR, 
+                                0, 
+                                &g_ucSipRuleListIndex);
     if (ulRet != SUCCESS)
     {
         printf("\r\nABNF_BuildRuleList failed");
@@ -65,7 +62,7 @@ ULONG SIP_Syntax_Init(SIP_SYNTAX_CFG_S *pstCfg)
     /* 构建SIP应用规则表，应用规则可以比匹配的ABNF规则少 */
     for (ulLoop = 0; ulLoop < SIP_ABNF_RULE_BUTT; ulLoop++)
     {
-        ulRet = ABNF_GetRuleIndex(g_pstSipRuleList, 
+        ulRet = ABNF_GetRuleIndex(g_ucSipRuleListIndex, 
                                   g_astSipAppRuleTbl[ulLoop].aucName, 
                                  &g_astSipAppRuleTbl[ulLoop].ulRuleIndex);
         if (ulRet != SUCCESS)
@@ -102,7 +99,7 @@ ULONG SIP_Syntax_Code(ULONG  ulRuleIndex,
                       ULONG *pulMsgLen)
 {
     ULONG ulRet;
-    SIP_SYNTAX_BUFFER_S stBuffer;
+    SYNTAX_BUFFER_S stBuffer;
 
     stBuffer.pucBuffer    = pucBuffer;
     stBuffer.ulBufferLen  = ulBufferLen;
@@ -133,15 +130,15 @@ ULONG SIP_Syntax_Decode(ULONG  ulRuleIndex,
 
     ulRet = ABNF_GrammarParse(pucMsgString,
                               ulMsgLen,
-                              g_pstSipRuleList,
-                              SIP_GET_RULE_INDEX(ulRuleIndex),
+                              g_ucSipRuleListIndex,
+                              ABNF_GET_RULE_INDEX(g_astSipAppRuleTbl,ulRuleIndex),
                              &pstNode);
     if (ulRet != SUCCESS)
     {
         return FAIL;
     }
 
-    ulRet = SIP_GET_PARSE_FUNC(ulRuleIndex)(pstNode,
+    ulRet = SIP_GET_DECODE_FUNC(ulRuleIndex)(pstNode,
                                             pucMsgString,
                                             pstUBuf,
                                             ppstStruct);

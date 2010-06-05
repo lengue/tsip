@@ -5,17 +5,17 @@
 ÐÞ¸Ä¼ÇÂ¼:
 *******************************************************************************/
 ULONG ABNF_Init();
-ULONG ABNF_BuildRuleList(UCHAR *pucText,
-                         ULONG  ulLen,
-                         void **ppstRuleList);
-ULONG ABNF_FreeRuleList(void *pstRuleList);
-ULONG ABNF_GetRuleIndex(void *pstRuleList, 
-                        UCHAR *pucRuleName, 
-                        ULONG *pulRuleIndex);
+ULONG ABNF_RegistRuleList(UCHAR *pucText,
+                          ULONG  ulLen,
+                          UCHAR *pucDepends,
+                          UCHAR  ucDependNum,
+                          UCHAR *pucRuleListIndex);
+ULONG ABNF_FreeRuleList(UCHAR ucRuleIndex);
+ULONG ABNF_GetRuleIndex(UCHAR ucRuleListIndex, UCHAR *pucRuleName, ULONG *pulRuleIndex);
 ULONG ABNF_GrammarParse(UCHAR *pucText,
                         ULONG  ulLen,
-                        void *pstRuleList,
-                        ULONG ulMatchRule,
+                        UCHAR  ucRuleListIndex,
+                        ULONG  ulMatchRule,
                         ABNF_GRAMMAR_NODE_S **ppstNode);
 ULONG ABNF_AddCharElement(ABNF_ELEMENT_S **ppstElement,
                           ULONG ulMinRepeat,
@@ -30,7 +30,7 @@ ULONG ABNF_AddStringElement(ABNF_ELEMENT_S **ppstElement,
 ULONG ABNF_AddRuleElement(ABNF_ELEMENT_S **ppstElement,
                           ULONG ulMinRepeat,
                           ULONG ulMaxRepeat,
-                          BOOL  bCoreFlag,
+                          UCHAR ucRuleListIndex,
                           ULONG ulIndex);
 ULONG ABNF_AddSequenceElement(ABNF_ELEMENT_S **ppstElement,
                               ULONG ulMinRepeat,
@@ -41,7 +41,7 @@ ULONG ABNF_AddOptionalElement(ABNF_ELEMENT_S **ppstElement,
 ULONG ABNF_FreeElement(ABNF_ELEMENT_S *pstElement);
 ULONG ABNF_InitCoreRuleTree();
 ULONG ABNF_InitAbnfRuleTree();
-ABNF_GRAMMAR_NODE_S* ABNF_AllocNode(ULONG ulOffset, BOOL bCoreFlag, ULONG ulIndex);
+ABNF_GRAMMAR_NODE_S* ABNF_AllocNode(ULONG ulOffset, UCHAR ucRuleListIndex, ULONG ulIndex);
 ULONG ABNF_FreeNodeTree(ABNF_GRAMMAR_NODE_S *pstGrammarNode);
 ULONG ABNF_MatchElement(ABNF_MATCH_TARGET_S *pstTarget,
                         ULONG ulOffset,
@@ -74,7 +74,7 @@ ULONG ABNF_MatchOptionalElement(ABNF_MATCH_TARGET_S *pstTarget,
                                 ULONG *pulSize,
                                 ABNF_GRAMMAR_NODE_S **ppstNode);
 ULONG ABNF_FindRuleByName(UCHAR *pucName,
-                          BOOL  *pbCoreFlag,
+                          UCHAR *ucRuleListIndex,
                           ULONG *pulRuleIndex);
 ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct);
 ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct);

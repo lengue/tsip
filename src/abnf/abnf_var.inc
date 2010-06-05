@@ -10,5 +10,6 @@ extern ABNF_RULE_S g_astAbnfRuleTbl[ABNF_RULE_BUTT];
 extern ABNF_RULE_LIST_S g_stAbnfRules;
 extern ABNF_APP_RULE_S g_astAbnfAppRule[ABNF_RULE_BUTT];
 extern BOOL        g_bAbnfInit;
-extern ABNF_RULE_LIST_S *g_pstAbnfBuiltRuleList;
+extern UCHAR g_ucAbnfRegistRuleIndex;
 extern ULONG        g_ulAbnfFailPos;
+extern ABNF_RULE_LIST_S *g_apstAbnfRuleList[2 + ABNF_MAX_RULE_NUM];

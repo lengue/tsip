@@ -7,7 +7,7 @@
 /* 外部依赖模块头文件 */
 #include "common\common.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
 #include "sip\sip.h"
 
 #include "..\..\include\syntax\sip_syntax.h"
