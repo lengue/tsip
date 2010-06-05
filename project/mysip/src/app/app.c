@@ -9,7 +9,7 @@
 #include "system\system.h"
 #include "timer\timer.h"
 #include "ubuf\ubuf.h"
-#include "sip\uri.h"
+#include "uri\uri.h"
 #include "sip\sip.h"
 
 /* 本模块对外提供的常量和结构头文件 */
