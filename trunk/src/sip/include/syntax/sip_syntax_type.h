@@ -4,9 +4,3 @@
 创建日期: 200.01.10
 修改记录:
 *******************************************************************************/
-typedef struct tagSIP_SYNTAX_BUFFER_S
-{
-    ULONG  ulBufferLen;  /* 缓存长度 */
-    ULONG  ulCurrentLen; /* 缓存使用长度 */
-    UCHAR *pucBuffer;    /* 缓存指针 */
-}SIP_SYNTAX_BUFFER_S;

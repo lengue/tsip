@@ -28,8 +28,8 @@ typedef struct tagABNF_ELEMENT_S
         /* 标记索引 */
         struct
         {
-            BOOL  bCoreFlag;  /* 标识是否是核心规则 */
-            ULONG ulIndex;    /* 规则索引 */
+            UCHAR ucRuleListIndex;  /* 标识匹配成功的规则列表 */
+            ULONG ulIndex;          /* 规则索引 */
         }stRule;
 
         /* 基本字符串数据 */
@@ -54,8 +54,9 @@ typedef struct tagABNF_RULE_S
 /* 规则结构 */
 typedef struct tagABNF_RULE_LIST_S
 {
-    ULONG        ulRuleNum; /* 规则数目 */
-    ABNF_RULE_S *pstRules;  /* 规则数组 */
+    ULONG        ulRuleNum;   /* 规则数目 */
+    UCHAR        aucDepends[ABNF_MAX_DEPEND_RULE_NUM]; /* 被依赖规则索引*/
+    ABNF_RULE_S *pstRules;    /* 规则数组 */
 }ABNF_RULE_LIST_S;
 
 typedef ULONG (*ABNF_PARSE_FUNC)(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct);
@@ -70,5 +71,5 @@ typedef struct tagABNF_MATCH_TARGET_S
 {
     UCHAR            *pucText;
     ULONG             ulLen;
-    ABNF_RULE_LIST_S *pstRuleList;
+    UCHAR             ucRuleListIndex;
 }ABNF_MATCH_TARGET_S;

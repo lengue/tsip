@@ -47,33 +47,84 @@
 ULONG ABNF_Init()
 {
     ULONG ulRet;
-    if (g_bAbnfInit == TRUE)
-    {
-        /* 本模块只能初始化一次，后续一律直接返回OK */
-        return SUCCESS;
-    }
-    else
-    {
-        g_bAbnfInit = TRUE;
-    }
 
     ulRet = ABNF_InitCoreRuleTree();
     ulRet |= ABNF_InitAbnfRuleTree();
 
+    memset(g_apstAbnfRuleList, 0x0, sizeof(g_apstAbnfRuleList));
+
+    /* 核心规则和ABNF规则索引固定为0和1 */
+    g_apstAbnfRuleList[ABNF_CORE_RULE_LIST_INDEX] = &g_stCoreRules;
+    g_apstAbnfRuleList[ABNF_RULE_LIST_INDEX] = &g_stAbnfRules;
+
     return ulRet;
 }
 
-/* 构建规则，文本必须采用ABNF描述 */
-ULONG ABNF_BuildRuleList(UCHAR *pucText,
-                         ULONG  ulLen,
-                         void **ppstRuleList)
+/* 申请规则索引 */
+ULONG ABNF_AllocRuleListIndex(UCHAR *pucRuleListIndex)
+{
+    UCHAR ucLoop;
+    
+    for (ucLoop = 0; ucLoop < ABNF_MAX_RULE_NUM; ucLoop++)
+    {
+        if (g_apstAbnfRuleList[2+ucLoop] == NULL_PTR)
+        {
+            *pucRuleListIndex = 2 + ucLoop;
+            return SUCCESS;
+        }
+    }
+
+    return FAIL;
+}
+
+/* 注册规则，文本必须采用ABNF描述 
+pucText 规则文本
+ulLen     规则文本长度
+pucDepend 依赖规则列表
+pucRuleIndex 返回规则索引
+*/
+ULONG ABNF_RegistRuleList(UCHAR *pucText,
+                          ULONG  ulLen,
+                          UCHAR *pucDepends,
+                          UCHAR  ucDependNum,
+                          UCHAR *pucRuleListIndex)
 {
     ULONG ulRet;
+    UCHAR ucRuleListIndex;
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
 
+    /* 如果模块还没有初始化，先初始化 */
+    if (g_bAbnfInit == FALSE)
+    {
+        ABNF_Init();
+        g_bAbnfInit = TRUE;
+    }
+
+    /* 先申请规则索引 */
+    ulRet = ABNF_AllocRuleListIndex(&ucRuleListIndex);
+    if (ulRet != SUCCESS) 
+    {
+        return ulRet;
+    }
+
+    *pucRuleListIndex = ucRuleListIndex;
+    g_apstAbnfRuleList[ucRuleListIndex] = malloc(sizeof(ABNF_RULE_LIST_S));
+    g_apstAbnfRuleList[ucRuleListIndex]->ulRuleNum = 0;
+    memset(g_apstAbnfRuleList[ucRuleListIndex]->aucDepends, 
+           0xff, 
+           sizeof(g_apstAbnfRuleList[ucRuleListIndex]->aucDepends));
+
+    if (ucDependNum != 0)
+    {
+        memcpy(g_apstAbnfRuleList[ucRuleListIndex]->aucDepends,
+               pucDepends,
+               ucDependNum * sizeof(UCHAR));
+    }
+
+    /* 解析成文法结构*/
     ulRet = ABNF_GrammarParse(pucText,
                               ulLen,
-                             &g_stAbnfRules,
+                              ABNF_RULE_LIST_INDEX,
                               ABNF_RULE_RULELIST,
                              &pstNode);
     if (ulRet != SUCCESS)
@@ -81,11 +132,13 @@ ULONG ABNF_BuildRuleList(UCHAR *pucText,
         return FAIL;
     }
 
-    ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULELIST)(pstNode, pucText, ppstRuleList);
+    /* 解析成规则结构 */
+    g_ucAbnfRegistRuleIndex = ucRuleListIndex;
+    ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULELIST)(pstNode, pucText, &g_apstAbnfRuleList[ucRuleListIndex]);
     if (ulRet != SUCCESS)
     {
-        ABNF_FreeRuleList(*ppstRuleList);
-        *ppstRuleList = NULL_PTR;
+        ABNF_FreeRuleList(ucRuleListIndex);
+        g_apstAbnfRuleList[ucRuleListIndex] = NULL_PTR;
     }
 
     ABNF_FreeNodeTree(pstNode);
@@ -93,17 +146,12 @@ ULONG ABNF_BuildRuleList(UCHAR *pucText,
 }
 
 /* 释放一个元素 */
-ULONG ABNF_FreeRuleList(void *pstRuleList)
+ULONG ABNF_FreeRuleList(UCHAR ucRuleListIndex)
 {
     ULONG ulLoop;
     ABNF_RULE_LIST_S *pstRuleListTemp = NULL_PTR;
 
-    if (pstRuleList == NULL_PTR)
-    {
-        return SUCCESS;
-    }
-
-    pstRuleListTemp = (ABNF_RULE_LIST_S *)pstRuleList;
+    pstRuleListTemp = g_apstAbnfRuleList[ucRuleListIndex];
 
     /* 释放规则数组 */
     if (pstRuleListTemp->pstRules != NULL_PTR)
@@ -126,13 +174,13 @@ ULONG ABNF_FreeRuleList(void *pstRuleList)
 }
 
 /* 获取应用规则索引*/
-ULONG ABNF_GetRuleIndex(void *pstRuleList, UCHAR *pucRuleName, ULONG *pulRuleIndex)
+ULONG ABNF_GetRuleIndex(UCHAR ucRuleListIndex, UCHAR *pucRuleName, ULONG *pulRuleIndex)
 {
     ULONG ulLoop;
     ULONG ulRet;
     ABNF_RULE_LIST_S *pstRuleListTemp = NULL_PTR;
 
-    pstRuleListTemp = (ABNF_RULE_LIST_S *)pstRuleList;
+    pstRuleListTemp = g_apstAbnfRuleList[ucRuleListIndex];
     for (ulLoop = 0; ulLoop < pstRuleListTemp->ulRuleNum; ulLoop++)
     {
         ulRet = strcmp(pucRuleName,
@@ -156,7 +204,7 @@ ABNF_GRAMMAR_NODE_S **ppstNode  匹配生成的文法描述
 */
 ULONG ABNF_GrammarParse(UCHAR *pucText,
                         ULONG  ulLen,
-                        void  *pstRuleList,
+                        UCHAR  ucRuleListIndex,
                         ULONG  ulMatchRule,
                         ABNF_GRAMMAR_NODE_S **ppstNode)
 {
@@ -167,11 +215,11 @@ ULONG ABNF_GrammarParse(UCHAR *pucText,
     ABNF_MATCH_TARGET_S  stMatchTarget;
     ABNF_RULE_LIST_S *pstRuleListTemp = NULL_PTR;
 
-    pstRuleListTemp = (ABNF_RULE_LIST_S *)pstRuleList;
+    pstRuleListTemp = (ABNF_RULE_LIST_S *)g_apstAbnfRuleList[ucRuleListIndex];
 
     stMatchTarget.pucText = pucText;
     stMatchTarget.ulLen = ulLen;
-    stMatchTarget.pstRuleList = pstRuleListTemp;
+    stMatchTarget.ucRuleListIndex = ucRuleListIndex;
 
     ABNF_SuccessRecord();
 
@@ -179,7 +227,7 @@ ULONG ABNF_GrammarParse(UCHAR *pucText,
     stRuleElement.ulMinRepeat = 1;
     stRuleElement.ulMaxRepeat = 1;
     stRuleElement.eType       = ABNF_ELEMENT_RULE;
-    stRuleElement.u.stRule.bCoreFlag  = FALSE;
+    stRuleElement.u.stRule.ucRuleListIndex  = ucRuleListIndex;
     stRuleElement.u.stRule.ulIndex    = ulMatchRule;
     stRuleElement.pNextElement    = NULL_PTR;
 
@@ -261,16 +309,16 @@ ULONG ABNF_AddStringElement(ABNF_ELEMENT_S **ppstElement,
 ULONG ABNF_AddRuleElement(ABNF_ELEMENT_S **ppstElement,
                           ULONG ulMinRepeat,
                           ULONG ulMaxRepeat,
-                          BOOL  bCoreFlag,
+                          UCHAR ucRuleListIndex,
                           ULONG ulIndex)
 {
     ABNF_ELEMENT_S *pstElement = NULL_PTR;
 
 #if DEBUG_ABNF_CORE
-    printf("\r\nAddRuleElement(%u,%u) Core(%u) index(%u)",
+    printf("\r\nAddRuleElement(%u,%u) Rule(%u) index(%u)",
             ulMinRepeat,
             ulMaxRepeat,
-            bCoreFlag,
+            ucRuleListIndex,
             ulIndex);
 #endif
 
@@ -278,7 +326,7 @@ ULONG ABNF_AddRuleElement(ABNF_ELEMENT_S **ppstElement,
     pstElement->ulMinRepeat = ulMinRepeat;
     pstElement->ulMaxRepeat = ulMaxRepeat;
     pstElement->eType       = ABNF_ELEMENT_RULE;
-    pstElement->u.stRule.bCoreFlag  = bCoreFlag;
+    pstElement->u.stRule.ucRuleListIndex  = ucRuleListIndex;
     pstElement->u.stRule.ulIndex    = ulIndex;
     pstElement->pNextElement    = NULL_PTR;
     *ppstElement = pstElement;
@@ -363,6 +411,11 @@ ULONG ABNF_InitCoreRuleTree()
 {
     ABNF_ELEMENT_S **ppstElement = NULL_PTR;
 
+    /* 初始化规则结构 */
+    g_stCoreRules.ulRuleNum = ABNF_CORE_RULE_BUTT;
+    memset(g_stCoreRules.aucDepends, 0xff, sizeof(g_stCoreRules.aucDepends));
+    g_stCoreRules.pstRules = g_astCoreRuleTbl;
+
     /* ALPHA  = %x41-5A / %x61-7A  ; A-Z / a-z */
     ppstElement = &g_astCoreRuleTbl[ABNF_CORE_RULE_ALPHA].pstElements;
     ABNF_AddOptionalElement(ppstElement, 1, 1);
@@ -391,10 +444,10 @@ ULONG ABNF_InitCoreRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_CR);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_CR);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_LF);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_LF);
     }
 
     /* CTL    = %x00-1F / %x7F */
@@ -421,7 +474,7 @@ ULONG ABNF_InitCoreRuleTree()
     ABNF_AddOptionalElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_DIGIT);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddCharElement(ppstElement, 1, 1, 'a', 'f');
@@ -443,16 +496,16 @@ ULONG ABNF_InitCoreRuleTree()
     ABNF_AddOptionalElement(ppstElement, 0, NULL_ULONG);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_WSP);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddSequenceElement(ppstElement, 1, 1);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_CRLF);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_CRLF);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_WSP);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_WSP);
         }
     }
 
@@ -473,10 +526,10 @@ ULONG ABNF_InitCoreRuleTree()
     ABNF_AddOptionalElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_SP);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_SP);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_HTAB);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_HTAB);
     }
 
     return SUCCESS;
@@ -488,21 +541,26 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_ELEMENT_S **ppstMark    = NULL_PTR;
     ABNF_ELEMENT_S **ppstElement = NULL_PTR;
 
+    /* 初始化规则结构 */
+    g_stAbnfRules.ulRuleNum = ABNF_RULE_BUTT;
+    memset(g_stAbnfRules.aucDepends, 0xff, sizeof(g_stAbnfRules.aucDepends));
+    g_stAbnfRules.pstRules = g_astAbnfRuleTbl;
+
     /* rulelist = 1*( rule / (*c-wsp c-nl) ) */
     ppstElement = &g_astAbnfRuleTbl[ABNF_RULE_RULELIST].pstElements;
     ABNF_AddOptionalElement(ppstElement, 1, NULL_ULONG);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_RULE);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_RULE);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddSequenceElement(ppstElement, 1, 1);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_C_NL);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_NL);
         }
     }
 
@@ -511,16 +569,16 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_RULENAME);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_RULENAME);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_DEFINED_AS);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_DEFINED_AS);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_ELEMENTS);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_ELEMENTS);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_C_NL);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_NL);
     }
 
     /* rulename = ALPHA *(ALPHA / DIGIT / "-") */
@@ -528,16 +586,16 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_ALPHA);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_ALPHA);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddOptionalElement(ppstElement, 0, NULL_ULONG);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_ALPHA);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_ALPHA);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_DIGIT);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
 
             ppstElement = &(*ppstElement)->pNextElement;
             ABNF_AddCharElement(ppstElement, 1, 1, '-', '-');
@@ -549,7 +607,7 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddOptionalElement(ppstElement, 1, 1);
@@ -564,7 +622,7 @@ ULONG ABNF_InitAbnfRuleTree()
 
         ppstElement = ppstMark;
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
     }
 
     /* elements = alternation *c-wsp */
@@ -572,10 +630,10 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_ALTERNATION);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_ALTERNATION);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
     }
 
     /* c-wsp = WSP / (c-nl WSP) */
@@ -583,16 +641,16 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddOptionalElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_WSP);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddSequenceElement(ppstElement, 1, 1);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_C_NL);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_NL);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_WSP);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_WSP);
         }
     }
 
@@ -601,10 +659,10 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddOptionalElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_COMMENT);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_COMMENT);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_CRLF);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_CRLF);
     }
 
     /* comment = ";" *(WSP / VCHAR) CRLF */
@@ -619,15 +677,15 @@ ULONG ABNF_InitAbnfRuleTree()
         ppstMark = ppstElement;
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_WSP);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_WSP);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_VCHAR);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_VCHAR);
         }
 
         ppstElement = ppstMark;
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_CRLF);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_CRLF);
     }
 
     /* alternation    =  concatenation *(*c-wsp "/" *c-wsp concatenation) */
@@ -635,22 +693,22 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_CONCATENATION);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_CONCATENATION);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddSequenceElement(ppstElement, 0, NULL_ULONG);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
             ppstElement = &(*ppstElement)->pNextElement;
             ABNF_AddCharElement(ppstElement, 1, 1, '/', '/');
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_CONCATENATION);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_CONCATENATION);
         }
     }
 
@@ -659,16 +717,16 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_REPETITION);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_REPETITION);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddSequenceElement(ppstElement, 0, NULL_ULONG);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+            ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_REPETITION);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_REPETITION);
         }
     }
 
@@ -677,10 +735,10 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 0, 1, FALSE, ABNF_RULE_REPEAT);
+        ABNF_AddRuleElement(ppstElement, 0, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_REPEAT);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_ELEMENT);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_ELEMENT);
     }
 
     /* repeat = 1*DIGIT / (*DIGIT "*" *DIGIT) */
@@ -694,18 +752,18 @@ ULONG ABNF_InitAbnfRuleTree()
         ppstMark = ppstElement;
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, TRUE, ABNF_CORE_RULE_DIGIT);
+            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
 
             ppstElement = &(*ppstElement)->pNextElement;
             ABNF_AddCharElement(ppstElement, 1, 1, '*', '*');
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, TRUE, ABNF_CORE_RULE_DIGIT);
+            ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
         }
 
         ppstElement = ppstMark;
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, TRUE, ABNF_CORE_RULE_DIGIT);
+        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
     }
 
     /* element = rulename / group / option / char-val / num-val / prose-val */
@@ -713,22 +771,22 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddOptionalElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_RULENAME);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_RULENAME);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_GROUP);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_GROUP);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_OPTION);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_OPTION);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_CHAR_VAL);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_CHAR_VAL);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_NUM_VAL);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_NUM_VAL);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_PROSE_VAL);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_PROSE_VAL);
     }
 
     /* group = "(" *c-wsp alternation *c-wsp ")" */
@@ -739,13 +797,13 @@ ULONG ABNF_InitAbnfRuleTree()
         ABNF_AddCharElement(ppstElement, 1, 1, '(', '(');
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_ALTERNATION);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_ALTERNATION);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddCharElement(ppstElement, 1, 1, ')', ')');
@@ -759,13 +817,13 @@ ULONG ABNF_InitAbnfRuleTree()
         ABNF_AddCharElement(ppstElement, 1, 1, '[', '[');
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_ALTERNATION);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_ALTERNATION);
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, FALSE, ABNF_RULE_C_WSP);
+        ABNF_AddRuleElement(ppstElement, 0, NULL_ULONG, ABNF_RULE_LIST_INDEX, ABNF_RULE_C_WSP);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddCharElement(ppstElement, 1, 1, ']', ']');
@@ -776,7 +834,7 @@ ULONG ABNF_InitAbnfRuleTree()
     ABNF_AddSequenceElement(ppstElement, 1, 1);
     {
         ppstElement = &(*ppstElement)->u.pstFirstChild;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_DQUOTE);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DQUOTE);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddOptionalElement(ppstElement, 0, NULL_ULONG);
@@ -791,7 +849,7 @@ ULONG ABNF_InitAbnfRuleTree()
 
         ppstElement = ppstMark;
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, 1, TRUE, ABNF_CORE_RULE_DQUOTE);
+        ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DQUOTE);
     }
 
     /* num-val = "%" (bin-val / dec-val / hex-val) */
@@ -805,13 +863,13 @@ ULONG ABNF_InitAbnfRuleTree()
         ABNF_AddOptionalElement(ppstElement, 1, 1);
         {
             ppstElement = &(*ppstElement)->u.pstFirstChild;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_BIN_VAL);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_BIN_VAL);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_DEC_VAL);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_DEC_VAL);
 
             ppstElement = &(*ppstElement)->pNextElement;
-            ABNF_AddRuleElement(ppstElement, 1, 1, FALSE, ABNF_RULE_HEX_VAL);
+            ABNF_AddRuleElement(ppstElement, 1, 1, ABNF_RULE_LIST_INDEX, ABNF_RULE_HEX_VAL);
         }
     }
 
@@ -823,7 +881,7 @@ ULONG ABNF_InitAbnfRuleTree()
         ABNF_AddStringElement(ppstElement, 1, 1, FALSE, "b");
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, TRUE, ABNF_CORE_RULE_BIT);
+        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_BIT);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddOptionalElement(ppstElement, 0, 1);
@@ -836,7 +894,7 @@ ULONG ABNF_InitAbnfRuleTree()
                 ABNF_AddCharElement(ppstElement, 1, 1, '.', '.');
 
                 ppstElement = &(*ppstElement)->pNextElement;
-                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, TRUE, ABNF_CORE_RULE_BIT);
+                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_BIT);
             }
 
             ppstElement = ppstMark;
@@ -847,7 +905,7 @@ ULONG ABNF_InitAbnfRuleTree()
                 ABNF_AddCharElement(ppstElement, 1, 1, '-', '-');
 
                 ppstElement = &(*ppstElement)->pNextElement;
-                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, TRUE, ABNF_CORE_RULE_BIT);
+                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_BIT);
             }
         }
     }
@@ -860,7 +918,7 @@ ULONG ABNF_InitAbnfRuleTree()
         ABNF_AddStringElement(ppstElement, 1, 1, FALSE, "d");
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, TRUE, ABNF_CORE_RULE_DIGIT);
+        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddOptionalElement(ppstElement, 0, 1);
@@ -873,7 +931,7 @@ ULONG ABNF_InitAbnfRuleTree()
                 ABNF_AddCharElement(ppstElement, 1, 1, '.', '.');
 
                 ppstElement = &(*ppstElement)->pNextElement;
-                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, TRUE, ABNF_CORE_RULE_DIGIT);
+                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
             }
 
             ppstElement = ppstMark;
@@ -884,7 +942,7 @@ ULONG ABNF_InitAbnfRuleTree()
                 ABNF_AddCharElement(ppstElement, 1, 1, '-', '-');
 
                 ppstElement = &(*ppstElement)->pNextElement;
-                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, TRUE, ABNF_CORE_RULE_DIGIT);
+                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_DIGIT);
             }
         }
     }
@@ -897,7 +955,7 @@ ULONG ABNF_InitAbnfRuleTree()
         ABNF_AddStringElement(ppstElement, 1, 1, FALSE, "x");
 
         ppstElement = &(*ppstElement)->pNextElement;
-        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, TRUE, ABNF_CORE_RULE_HEXDIG);
+        ABNF_AddRuleElement(ppstElement, 1, NULL_ULONG, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_HEXDIG);
 
         ppstElement = &(*ppstElement)->pNextElement;
         ABNF_AddOptionalElement(ppstElement, 0, 1);
@@ -910,7 +968,7 @@ ULONG ABNF_InitAbnfRuleTree()
                 ABNF_AddCharElement(ppstElement, 1, 1, '.', '.');
 
                 ppstElement = &(*ppstElement)->pNextElement;
-                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, TRUE, ABNF_CORE_RULE_HEXDIG);
+                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_HEXDIG);
             }
 
             ppstElement = ppstMark;
@@ -921,7 +979,7 @@ ULONG ABNF_InitAbnfRuleTree()
                 ABNF_AddCharElement(ppstElement, 1, 1, '-', '-');
 
                 ppstElement = &(*ppstElement)->pNextElement;
-                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, TRUE, ABNF_CORE_RULE_HEXDIG);
+                ABNF_AddRuleElement(ppstElement, 1, NULL_UCHAR, ABNF_CORE_RULE_LIST_INDEX, ABNF_CORE_RULE_HEXDIG);
             }
         }
     }
@@ -953,14 +1011,14 @@ ULONG ABNF_InitAbnfRuleTree()
 }
 
 /* 增加一个节点 */
-ABNF_GRAMMAR_NODE_S* ABNF_AllocNode(ULONG ulOffset, BOOL bCoreFlag, ULONG ulIndex)
+ABNF_GRAMMAR_NODE_S* ABNF_AllocNode(ULONG ulOffset, UCHAR ucRuleListIndex, ULONG ulIndex)
 {
     ABNF_GRAMMAR_NODE_S *pstNode = NULL_PTR;
 
     pstNode = malloc(sizeof(ABNF_GRAMMAR_NODE_S));
     pstNode->ulOffset    = ulOffset;
     pstNode->ulSize      = 0;
-    pstNode->bCoreFlag   = bCoreFlag;
+    pstNode->ucRuleListIndex   = ucRuleListIndex;
     pstNode->ulIndex     = ulIndex;
     pstNode->pstChild    = NULL_PTR;
     pstNode->pstNextNode = NULL_PTR;
@@ -1169,32 +1227,22 @@ ULONG ABNF_MatchRuleElement(ABNF_MATCH_TARGET_S *pstTarget,
     ABNF_GRAMMAR_NODE_S *pstNode    = NULL_PTR;
     ULONG ulRet;
     ULONG ulSize;
-    BOOL bCoreFlag;
+    UCHAR ucRuleListIndex;
     ULONG ulIndex;
 
-    bCoreFlag = pstElement->u.stRule.bCoreFlag;
+    ucRuleListIndex = pstElement->u.stRule.ucRuleListIndex;
     ulIndex = pstElement->u.stRule.ulIndex;
+    pstMatchElement = g_apstAbnfRuleList[ucRuleListIndex]->pstRules[ulIndex].pstElements;
 
-    if (bCoreFlag == TRUE)
-    {
-        pstMatchElement = g_stCoreRules.pstRules[ulIndex].pstElements;
-    }
-    else
-    {
-        #if DEBUG_ABNF_CORE
-        printf("\r\nMatchRule(%s) start at %d", pstTarget->pstRuleList->pstRules[ulIndex].aucName, ulOffset);
-        #endif
-        pstMatchElement = pstTarget->pstRuleList->pstRules[ulIndex].pstElements;
-    }
-
-    pstNode = ABNF_AllocNode(ulOffset, bCoreFlag, ulIndex);
-
-    ulRet = ABNF_MatchElement(pstTarget, ulOffset, pstMatchElement, &ulSize, &pstNode->pstChild);
     #if DEBUG_ABNF_CORE
-    if (bCoreFlag != TRUE)
-    {
-        printf("\r\nMatchRule(%s) result is %d", pstTarget->pstRuleList->pstRules[ulIndex].aucName, ulRet);
-    }
+    printf("\r\nMatchRule(%s) start at %d", g_apstAbnfRuleList[ucRuleListIndex]->pstRules[ulIndex].aucName, ulOffset);
+    #endif
+
+    pstNode = ABNF_AllocNode(ulOffset, ucRuleListIndex, ulIndex);
+    ulRet = ABNF_MatchElement(pstTarget, ulOffset, pstMatchElement, &ulSize, &pstNode->pstChild);
+    
+    #if DEBUG_ABNF_CORE
+    printf("\r\nMatchRule(%s) result is %d", g_apstAbnfRuleList[ucRuleListIndex]->pstRules[ulIndex].aucName, ulRet);
     #endif
     
     if(ulRet != SUCCESS)
@@ -1301,36 +1349,50 @@ ULONG ABNF_MatchOptionalElement(ABNF_MATCH_TARGET_S *pstTarget,
     return FAIL;
 }
 
-/* 查找规则在规则表中的序号，可以是核心规则，也可以是应用协议规则 */
+/* 查找规则在规则表中的序号，可以是被依赖的规则，也可以是应用协议规则 */
 ULONG ABNF_FindRuleByName(UCHAR *pucName,
-                          BOOL  *pbCoreFlag,
+                          UCHAR *pucRuleListIndex,
                           ULONG *pulRuleIndex)
 {
     ULONG ulLoop;
     ULONG ulRet;
+    UCHAR ucFindRuleIndex;
+    UCHAR *pucDepends = NULL_PTR;
 
     /* 先在核心规则中寻找 */
-    for (ulLoop = 0; ulLoop < g_stCoreRules.ulRuleNum; ulLoop++)
+    ucFindRuleIndex = ABNF_CORE_RULE_LIST_INDEX;
+    ulRet = ABNF_GetRuleIndex(ucFindRuleIndex, pucName, pulRuleIndex);
+    if (ulRet == SUCCESS)
     {
-        ulRet = strcmp(pucName, g_stCoreRules.pstRules[ulLoop].aucName);
-        if(ulRet == SUCCESS)
-        {
-            *pbCoreFlag   = TRUE;
-            *pulRuleIndex = ulLoop;
-            return SUCCESS;
-        }
+        *pucRuleListIndex = ucFindRuleIndex;
+        return ulRet;
     }
 
-    /* 再在应用规则中寻找 */
-    for (ulLoop = 0; ulLoop < g_pstAbnfBuiltRuleList->ulRuleNum; ulLoop++)
+    /* 再在被依赖规则中找 */
+    pucDepends = g_apstAbnfRuleList[g_ucAbnfRegistRuleIndex]->aucDepends;
+    for (ulLoop = 0; ulLoop < ABNF_MAX_DEPEND_RULE_NUM; ulLoop++)
     {
-        ulRet = strcmp(pucName, g_pstAbnfBuiltRuleList->pstRules[ulLoop].aucName);
-        if(ulRet == SUCCESS)
+        ucFindRuleIndex = pucDepends[ulLoop];
+        if (ucFindRuleIndex == NULL_UCHAR)
         {
-            *pbCoreFlag   = FALSE;
-            *pulRuleIndex = ulLoop;
-            return SUCCESS;
+            break;
         }
+        
+        ulRet = ABNF_GetRuleIndex(ucFindRuleIndex, pucName, pulRuleIndex);
+        if (ulRet == SUCCESS)
+        {
+            *pucRuleListIndex = ucFindRuleIndex;
+            return ulRet;
+        }
+    }
+    
+    /* 最后在自己的规则中寻找 */
+    ucFindRuleIndex = g_ucAbnfRegistRuleIndex;
+    ulRet = ABNF_GetRuleIndex(ucFindRuleIndex, pucName, pulRuleIndex);
+    if (ulRet == SUCCESS)
+    {
+        *pucRuleListIndex = ucFindRuleIndex;
+        return ulRet;
     }
 
     /* 都找不到就出错了 */
@@ -1355,23 +1417,20 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
     ABNF_GRAMMAR_NODE_S *pstTempNode2 = NULL_PTR;
 
-    pstRuleList = malloc(sizeof(ABNF_RULE_LIST_S));
-    pstRuleList->ulRuleNum = 0;
-
-    g_pstAbnfBuiltRuleList = pstRuleList;
-    *ppStruct = pstRuleList;
+    pstRuleList = (ABNF_RULE_LIST_S *)*ppStruct;
 
     /* 构造规则列表，先简单认为规则名不重复，不处理=/的情况 */
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULE))
+        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_RULE))
         {
             ulRuleNum++;
         }
 
         pstTempNode = pstTempNode->pstNextNode;
     }
+    
     pstRuleList->ulRuleNum = ulRuleNum;
     pstRuleList->pstRules = malloc(ulRuleNum * sizeof(ABNF_RULE_S));
     pstRule = pstRuleList->pstRules;
@@ -1380,7 +1439,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULE))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_RULE))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1402,7 +1461,7 @@ ULONG ABNF_ParseRuleList(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULE))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_RULE))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1428,8 +1487,8 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStru
 {
     ABNF_RULE_S      *pstRule     = NULL_PTR;
     ABNF_GRAMMAR_NODE_S *pstTempNode  = NULL_PTR;
-    BOOL  bCoreFlag;
     ULONG ulRuleIndex;
+    UCHAR ucRuleListIndex;
     ULONG ulRet = SUCCESS;
     UCHAR aucRuleName[ABNF_MAX_RULE_NAME_LEN + 1];
 
@@ -1438,7 +1497,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStru
     /* 查找构造的规则索引 */
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULENAME))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_RULENAME))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1450,11 +1509,11 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStru
         aucRuleName[pstTempNode->ulSize] = '\0';
 
         ulRet = ABNF_FindRuleByName(aucRuleName,
-                                    &bCoreFlag,
+                                    &ucRuleListIndex,
                                     &ulRuleIndex);
-        if ((bCoreFlag == TRUE) || (ulRet != SUCCESS))
+        if ((ucRuleListIndex != g_ucAbnfRegistRuleIndex) || (ulRet != SUCCESS))
         {
-            /* 不能和核心规则命名相同 */
+            /* 名字不能和被依赖的相同 */
             return FAIL;
         }
         break;
@@ -1465,7 +1524,7 @@ ULONG ABNF_ParseRule(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStru
     pstTempNode = pstTempNode->pstNextNode;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ELEMENTS))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_ELEMENTS))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1487,7 +1546,7 @@ rulename       =  ALPHA *(ALPHA / DIGIT / "-")
 *******************************************************************************/
 ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStruct)
 {
-    BOOL  bCoreFlag;
+    UCHAR ucRuleListIndex;
     ULONG ulRuleIndex;
     ULONG ulRet = SUCCESS;
     UCHAR aucRuleName[ABNF_MAX_RULE_NAME_LEN+1];
@@ -1498,7 +1557,7 @@ ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     aucRuleName[pstNode->ulSize] ='\0';
 
     ulRet = ABNF_FindRuleByName(aucRuleName,
-                               &bCoreFlag,
+                               &ucRuleListIndex,
                                &ulRuleIndex);
     if (ulRet != SUCCESS)
     {
@@ -1508,7 +1567,7 @@ ULONG ABNF_ParseRuleName(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     ABNF_AddRuleElement((ABNF_ELEMENT_S **)ppStruct,
                         1,
                         1,
-                        bCoreFlag,
+                        ucRuleListIndex,
                         ulRuleIndex);
 
     return SUCCESS;
@@ -1525,7 +1584,7 @@ ULONG ABNF_ParseElements(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **pp
     pstTempNode = pstNode->pstChild;
     while(pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1555,7 +1614,7 @@ ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void *
     pstTempNode = pstNode->pstChild;
     while(pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_CONCATENATION))
+        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_CONCATENATION))
         {
             ulElementNum++;
         }
@@ -1577,7 +1636,7 @@ ULONG ABNF_ParseAlternation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void *
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_CONCATENATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_CONCATENATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1613,7 +1672,7 @@ ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void
     pstTempNode = pstNode->pstChild;
     while(pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_REPETITION))
+        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_REPETITION))
         {
             ulElementNum++;
         }
@@ -1635,7 +1694,7 @@ ULONG ABNF_ParseConcatenation(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_REPETITION))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_REPETITION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1665,7 +1724,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ELEMENT))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_ELEMENT))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1683,7 +1742,7 @@ ULONG ABNF_ParseRepetition(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_REPEAT))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_REPEAT))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1784,27 +1843,27 @@ ULONG ABNF_ParseElement(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppS
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_RULENAME))
+        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_RULENAME))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_RULENAME)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_GROUP))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_GROUP))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_GROUP)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_OPTION))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_OPTION))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_OPTION)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_CHAR_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_CHAR_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_CHAR_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_NUM_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_NUM_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_NUM_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_PROSE_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_PROSE_VAL))
         {
             //ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_PROSE_VAL)(pstTempNode, pucText,  ppStruct);
         }
@@ -1836,7 +1895,7 @@ ULONG ABNF_ParseGroup(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppStr
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1866,7 +1925,7 @@ ULONG ABNF_ParseOption(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppSt
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (!ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
+        if (!ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_ALTERNATION))
         {
             pstTempNode = pstTempNode->pstNextNode;
             continue;
@@ -1921,15 +1980,15 @@ ULONG ABNF_ParseNumVal(ABNF_GRAMMAR_NODE_S *pstNode, UCHAR *pucText, void **ppSt
     pstTempNode = pstNode->pstChild;
     while (pstTempNode != NULL_PTR)
     {
-        if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_BIN_VAL))
+        if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_BIN_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_BIN_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_DEC_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_DEC_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_DEC_VAL)(pstTempNode, pucText, ppStruct);
         }
-        else if (ABNF_RULE_MATCH(pstTempNode, g_astAbnfAppRule, ABNF_RULE_HEX_VAL))
+        else if (ABNF_RULE_MATCH(pstTempNode, ABNF_RULE_LIST_INDEX, g_astAbnfAppRule, ABNF_RULE_HEX_VAL))
         {
             ulRet = ABNF_RULE_PARSE_FUNC(ABNF_RULE_HEX_VAL)(pstTempNode, pucText, ppStruct);
         }

@@ -43,7 +43,7 @@ ABNF_RULE_S g_astCoreRuleTbl[ABNF_CORE_RULE_BUTT] =
     {"WSP",    NULL_PTR}
 };
 
-ABNF_RULE_LIST_S g_stCoreRules = {ABNF_CORE_RULE_BUTT, g_astCoreRuleTbl};
+ABNF_RULE_LIST_S g_stCoreRules;
 
 /* 初始化ABNF规则表 */
 ABNF_RULE_S g_astAbnfRuleTbl[ABNF_RULE_BUTT] =
@@ -71,7 +71,7 @@ ABNF_RULE_S g_astAbnfRuleTbl[ABNF_RULE_BUTT] =
     {"prose-val"    , NULL_PTR}
 };
 
-ABNF_RULE_LIST_S g_stAbnfRules = {ABNF_RULE_BUTT, g_astAbnfRuleTbl};
+ABNF_RULE_LIST_S g_stAbnfRules;
 
 /* ABNF的应用规则和匹配规则一一对应，但是其他规则需要按照规则名字匹配ABNF规则 */
 ABNF_APP_RULE_S g_astAbnfAppRule[ABNF_RULE_BUTT] =
@@ -102,7 +102,11 @@ ABNF_APP_RULE_S g_astAbnfAppRule[ABNF_RULE_BUTT] =
 /* 判断模块是否初始化标记 */
 BOOL        g_bAbnfInit = FALSE;
 
-ABNF_RULE_LIST_S *g_pstAbnfBuiltRuleList;
+/* 正在注册的规则索引*/
+UCHAR g_ucAbnfRegistRuleIndex = NULL_UCHAR;
 
 /* 栈顶 */
 ULONG        g_ulAbnfFailPos = NULL_ULONG;
+
+/* 规则列表，包括核心规则和ABNF规则 */
+ABNF_RULE_LIST_S *g_apstAbnfRuleList[2 + ABNF_MAX_RULE_NUM];
