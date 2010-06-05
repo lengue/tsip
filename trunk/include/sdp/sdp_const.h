@@ -1,0 +1,1 @@
+#define SDP_MAX_TEXT_MSG_LEN 1000
